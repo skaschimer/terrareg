@@ -64,6 +64,7 @@ type TestServer struct {
 	serverCtx       context.Context
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
+	originalWd      string  // Original working directory to restore on shutdown
 }
 
 // NewTestServer creates and starts a new test Terrareg server.
@@ -89,6 +90,29 @@ func NewTestServer(t *testing.T, configOverrides map[string]string) *TestServer 
 
 // setup initializes the test server following the bootstrap pattern from cmd/server/main.go
 func (ts *TestServer) setup() {
+	// Change to terrareg-go directory so relative paths work correctly
+	// This ensures ./static finds the correct static files directory
+	wd, err := os.Getwd()
+	if err != nil {
+		ts.t.Fatalf("Failed to get working directory: %v", err)
+	}
+	// Save original directory to restore later
+	ts.originalWd = wd
+
+	// Change to the directory containing this test file (terrareg-go/test/selenium)
+	// Then go up two levels to reach terrareg-go root
+	testDir, _ := os.Getwd()
+	if filepath.Base(testDir) == "selenium" {
+		// Already in test/selenium, go up two levels
+		err = os.Chdir("../..")
+	} else {
+		// Try to find terrareg-go directory
+		err = os.Chdir("/app/terrareg-go")
+	}
+	if err != nil {
+		ts.t.Fatalf("Failed to chdir to terrareg-go: %v", err)
+	}
+
 	// Set default config values if not provided
 	// Python reference: /app/test/selenium/__init__.py - _get_database_path() returns 'temp-selenium.db'
 	defaults := map[string]string{
@@ -349,5 +373,10 @@ func (ts *TestServer) Shutdown() {
 	// Close database
 	if ts.db != nil {
 		ts.db.Close()
+	}
+
+	// Restore original working directory
+	if ts.originalWd != "" {
+		os.Chdir(ts.originalWd)
 	}
 }

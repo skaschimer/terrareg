@@ -91,9 +91,17 @@ func (st *SeleniumTest) setupBrowser() {
 
 	// Create the browser context from the allocator context
 	// This is the standard chromedp pattern - the allocator is inherited from the parent
-	ctx, cancel := chromedp.NewContext(allocatorCtx)
+	ctx, cancel := chromedp.NewContext(allocatorCtx, chromedp.WithLogf(log.Printf))
 	st.AllocCtx = ctx
 	st.ctxCancel = cancel
+
+	// Set a 20-second timeout for all chromedp operations
+	ctx, cancel = context.WithTimeout(ctx, 20*time.Second)
+	st.ctxCancel = func() {
+		cancel() // Cancel the timeout context
+		st.ctxCancel() // Cancel the chromedp context
+	}
+	st.AllocCtx = ctx
 
 	// Allocate the browser by running an initial task
 	// The executor will be embedded in the context after this call
