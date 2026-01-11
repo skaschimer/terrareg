@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -26,17 +27,21 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 
 		// Content Security Policy
-		csp := "default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-			"style-src 'self' 'unsafe-inline'; " +
-			"img-src 'self' data: https:; " +
-			"font-src 'self' data:; " +
-			"connect-src 'self'; " +
-			"frame-ancestors 'none'; " +
-			"base-uri 'self'; " +
-			"form-action 'self';"
+		// Only set CSP in production (HTTPS) - Python terrareg doesn't set CSP at all
+		// This allows external CDN scripts (e.g., cdn.datatables.net) in development
+		if !isDevelopmentMode() {
+			csp := "default-src 'self'; " +
+				"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.datatables.net; " +
+				"style-src 'self' 'unsafe-inline'; " +
+				"img-src 'self' data: https:; " +
+				"font-src 'self' data:; " +
+				"connect-src 'self'; " +
+				"frame-ancestors 'none'; " +
+				"base-uri 'self'; " +
+				"form-action 'self';"
 
-		w.Header().Set("Content-Security-Policy", csp)
+			w.Header().Set("Content-Security-Policy", csp)
+		}
 
 		// Permissions Policy (formerly Feature Policy)
 		permissionsPolicy := "geolocation=(), " +
@@ -123,7 +128,7 @@ func CORSMiddleware(allowedOrigins []string, allowedMethods []string, allowedHea
 
 // isDevelopmentMode checks if we're running in development mode
 func isDevelopmentMode() bool {
-	// Check environment variable or configuration
-	// This is a simple implementation - in a real app, check config
-	return false // Default to production mode
+	// Check DEBUG environment variable (matching Python terrareg behavior)
+	// Python reference: /app/terrareg/config.py - Config.debug property
+	return os.Getenv("DEBUG") == "true"
 }
