@@ -72,6 +72,9 @@ func (e *EnvironmentLoader) LoadAllEnvironmentVariables() map[string]string {
 
 		// UI Customization (infrastructure)
 		"APPLICATION_NAME", "LOGO_URL", "SITE_WARNING",
+
+		// Terraform OIDC settings (infrastructure)
+		"TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH", "TERRAFORM_OIDC_IDP_SUBJECT_ID_HASH_SALT", "TERRAFORM_OIDC_IDP_SESSION_EXPIRY",
 	}
 
 	// Load all environment variables

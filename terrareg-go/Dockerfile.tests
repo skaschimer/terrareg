@@ -11,7 +11,7 @@ RUN apt-get update && \
         pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl \
         xmlsec1 libgraphviz-dev libmagic1 \
         gcc g++ libffi-dev python3-gpg \
-        ca-certificates && \
+        ca-certificates chromium && \
     apt-get clean all
 
 # Download terraform-docs
