@@ -12,6 +12,7 @@ import (
 
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
 	authCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/auth"
+	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	gpgkeyCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/gpgkey"
 	moduleCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
@@ -19,6 +20,7 @@ import (
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
+	userGroupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/user_group"
 	configQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/config"
 	gpgkeyQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/gpgkey"
 	graphQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/graph"
@@ -192,6 +194,13 @@ type Container struct {
 	SamlLoginCmd    *authCmd.SamlLoginCommand
 	SamlMetadataCmd *authCmd.SamlMetadataCommand
 	GithubOAuthCmd  *authCmd.GithubOAuthCommand
+
+	// User Group Commands and Queries
+	ListUserGroupsQuery                      *userGroupQuery.ListUserGroupsQuery
+	CreateUserGroupCmd                       *userGroupCmd.CreateUserGroupCommand
+	DeleteUserGroupCmd                       *userGroupCmd.DeleteUserGroupCommand
+	CreateUserGroupNamespacePermissionCmd    *userGroupCmd.CreateUserGroupNamespacePermissionCommand
+	DeleteUserGroupNamespacePermissionCmd    *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
 
 	// Terraform Authentication Commands
 	AuthenticateOIDCTokenCmd *terraformCmd.AuthenticateOIDCTokenCommand
@@ -704,6 +713,13 @@ func NewContainer(
 	c.IsAuthenticatedQuery = authQuery.NewIsAuthenticatedQuery()
 	c.GetAuditHistoryQuery = auditQuery.NewGetAuditHistoryQuery(auditService)
 
+	// User group commands and queries
+	c.ListUserGroupsQuery = userGroupQuery.NewListUserGroupsQuery(c.UserGroupRepo, c.NamespaceRepo)
+	c.CreateUserGroupCmd = userGroupCmd.NewCreateUserGroupCommand(c.UserGroupRepo)
+	c.DeleteUserGroupCmd = userGroupCmd.NewDeleteUserGroupCommand(c.UserGroupRepo)
+	c.CreateUserGroupNamespacePermissionCmd = userGroupCmd.NewCreateUserGroupNamespacePermissionCommand(c.UserGroupRepo, c.NamespaceRepo)
+	c.DeleteUserGroupNamespacePermissionCmd = userGroupCmd.NewDeleteUserGroupNamespacePermissionCommand(c.UserGroupRepo, c.NamespaceRepo)
+
 	// Graph queries
 	c.GetModuleDependencyGraphQuery = graphQuery.NewGetModuleDependencyGraphQuery(c.GraphService)
 
@@ -801,6 +817,11 @@ func NewContainer(
 		c.AuthenticationService,
 		c.StateStorageService,
 		infraConfig,
+		c.ListUserGroupsQuery,
+		c.CreateUserGroupCmd,
+		c.DeleteUserGroupCmd,
+		c.CreateUserGroupNamespacePermissionCmd,
+		c.DeleteUserGroupNamespacePermissionCmd,
 	)
 	c.ProviderSourceHandler = terrareg.NewProviderSourceHandler(c.ProviderSourceFactory, c.AuthenticationService)
 	c.AuditHandler = terrareg.NewAuditHandler(c.GetAuditHistoryQuery)

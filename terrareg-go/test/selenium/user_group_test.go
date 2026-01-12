@@ -256,11 +256,17 @@ func testDeleteUserGroup(t *testing.T) {
 	// Python: user_group_table = self.wait_for_element(By.ID, 'user-group-table')
 	_ = st.WaitForElement("#user-group-table")
 
+	// Wait for the DataTable to be fully initialized and the delete button to be present
+	// The DataTable is initialized asynchronously, so we need to wait for the button to be clickable
+	time.Sleep(2 * time.Second)
+
 	// Python: Find delete user group button and click
 	findElementByTextAndClick(st, "#user-group-table", "Delete user group")
 
+	// Wait for the delete operation to complete (AJAX call + table refresh)
 	// Python: assert len(UserGroup.get_all_user_groups()) == 0
 	// In Go, we verify the UI no longer shows the user group
+	time.Sleep(2 * time.Second)
 
 	// Verify user group is no longer in table
 	userGroupTable := st.WaitForElement("#user-group-table")

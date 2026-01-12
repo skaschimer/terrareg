@@ -818,40 +818,26 @@ func (s *Server) handleAuditHistory(w http.ResponseWriter, r *http.Request) {
 	s.auditHandler.HandleAuditHistoryGet(w, r)
 }
 func (s *Server) handleUserGroupList(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "User group list not yet implemented",
-	})
+	s.authHandler.HandleUserGroupList(w, r)
 }
 func (s *Server) handleUserGroupCreate(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "User group creation not yet implemented",
-	})
+	s.authHandler.HandleUserGroupCreate(w, r)
 }
 func (s *Server) handleUserGroupDetails(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
+	// User group details not currently exposed via separate endpoint
+	// Python: ApiTerraregAuthUserGroup is for DELETE only
 	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
 		"message": "User group details not yet implemented",
 	})
 }
 func (s *Server) handleUserGroupDelete(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "User group deletion not yet implemented",
-	})
+	s.authHandler.HandleUserGroupDelete(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissions(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "User group namespace permissions not yet implemented",
-	})
+	s.authHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissionsUpdate(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "User group namespace permissions update not yet implemented",
-	})
+	s.authHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
 }
 func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	s.authHandler.HandleAdminLogin(w, r)

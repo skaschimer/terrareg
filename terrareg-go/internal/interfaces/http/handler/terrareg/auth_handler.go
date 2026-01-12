@@ -3,13 +3,18 @@ package terrareg
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
 	authCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/auth"
+	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
+	userGroupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/user_group"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
@@ -28,6 +33,11 @@ type AuthHandler struct {
 	authService          *service.AuthenticationService
 	stateStorageService  *service.StateStorageService
 	infraConfig          *config.InfrastructureConfig
+	listUserGroupsQuery  *userGroupQuery.ListUserGroupsQuery
+	createUserGroupCmd   *userGroupCmd.CreateUserGroupCommand
+	deleteUserGroupCmd   *userGroupCmd.DeleteUserGroupCommand
+	createNsPermCmd      *userGroupCmd.CreateUserGroupNamespacePermissionCommand
+	deleteNsPermCmd      *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
 }
 
 // NewAuthHandler creates a new auth handler
@@ -43,6 +53,11 @@ func NewAuthHandler(
 	authService *service.AuthenticationService,
 	stateStorageService *service.StateStorageService,
 	infraConfig *config.InfrastructureConfig,
+	listUserGroupsQuery *userGroupQuery.ListUserGroupsQuery,
+	createUserGroupCmd *userGroupCmd.CreateUserGroupCommand,
+	deleteUserGroupCmd *userGroupCmd.DeleteUserGroupCommand,
+	createNsPermCmd *userGroupCmd.CreateUserGroupNamespacePermissionCommand,
+	deleteNsPermCmd *userGroupCmd.DeleteUserGroupNamespacePermissionCommand,
 ) *AuthHandler {
 	return &AuthHandler{
 		adminLoginCmd:        adminLoginCmd,
@@ -56,6 +71,11 @@ func NewAuthHandler(
 		authService:          authService,
 		stateStorageService:  stateStorageService,
 		infraConfig:          infraConfig,
+		listUserGroupsQuery:  listUserGroupsQuery,
+		createUserGroupCmd:   createUserGroupCmd,
+		deleteUserGroupCmd:   deleteUserGroupCmd,
+		createNsPermCmd:      createNsPermCmd,
+		deleteNsPermCmd:      deleteNsPermCmd,
 	}
 }
 
@@ -401,6 +421,234 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Successfully logged out",
 	})
+}
+
+// HandleUserGroupList handles GET /v1/terrareg/user-groups
+// Matches Python: ApiTerraregAuthUserGroups._get()
+func (h *AuthHandler) HandleUserGroupList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Only allow GET requests
+	if r.Method != http.MethodGet {
+		RespondJSON(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"message": "Method not allowed",
+		})
+		return
+	}
+
+	// Execute list user groups query
+	userGroups, err := h.listUserGroupsQuery.Execute(ctx)
+	if err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Return response matching Python format
+	RespondJSON(w, http.StatusOK, userGroups)
+}
+
+// HandleUserGroupCreate handles POST /v1/terrareg/user-groups
+// Matches Python: ApiTerraregAuthUserGroups._post()
+func (h *AuthHandler) HandleUserGroupCreate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Only allow POST requests
+	if r.Method != http.MethodPost {
+		RespondJSON(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"message": "Method not allowed",
+		})
+		return
+	}
+
+	// Parse request body
+	var req userGroupCmd.CreateUserGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	// Execute create user group command
+	response, err := h.createUserGroupCmd.Execute(ctx, req)
+	if err != nil {
+		// Handle specific errors with appropriate HTTP status codes
+		switch {
+		case errors.Is(err, userGroupCmd.ErrInvalidUserGroupName):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Invalid user group name",
+			})
+		case errors.Is(err, userGroupCmd.ErrInvalidSiteAdminValue):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "site_admin must be True or False",
+			})
+		case errors.Is(err, userGroupCmd.ErrUserGroupAlreadyExists):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "User group already exists",
+			})
+		default:
+			RespondError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	// Return response with 201 Created (matches Python)
+	RespondJSON(w, http.StatusCreated, response)
+}
+
+// HandleUserGroupDelete handles DELETE /v1/terrareg/user-groups/{group}
+// Matches Python: ApiTerraregAuthUserGroup._delete(user_group)
+func (h *AuthHandler) HandleUserGroupDelete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Only allow DELETE requests
+	if r.Method != http.MethodDelete {
+		RespondJSON(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"message": "Method not allowed",
+		})
+		return
+	}
+
+	// Extract user group name from URL parameter using chi
+	// URL pattern: /v1/terrareg/user-groups/{group}
+	userGroupName := chi.URLParam(r, "group")
+	if userGroupName == "" {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"message": "User group name is required",
+		})
+		return
+	}
+
+	// Execute delete user group command
+	err := h.deleteUserGroupCmd.Execute(ctx, userGroupName)
+	if err != nil {
+		if errors.Is(err, userGroupCmd.ErrUserGroupNotFound) {
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "User group does not exist",
+			})
+		} else {
+			RespondError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	// Return 200 OK with empty body (matches Python)
+	RespondJSON(w, http.StatusOK, map[string]interface{}{})
+}
+
+// HandleUserGroupNamespacePermissionsCreate handles POST /v1/terrareg/user-groups/{group}/permissions/{namespace}
+// Matches Python: ApiTerraregAuthUserGroupNamespacePermissions._post(user_group, namespace)
+func (h *AuthHandler) HandleUserGroupNamespacePermissionsCreate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Only allow POST requests
+	if r.Method != http.MethodPost {
+		RespondJSON(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"message": "Method not allowed",
+		})
+		return
+	}
+
+	// Parse request body
+	var req userGroupCmd.CreateNamespacePermissionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	// Extract user group name and namespace from URL parameters using chi
+	// URL pattern: /v1/terrareg/user-groups/{group}/permissions/{namespace}
+	userGroupName := chi.URLParam(r, "group")
+	namespaceName := chi.URLParam(r, "namespace")
+	if userGroupName == "" || namespaceName == "" {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"message": "User group name and namespace are required",
+		})
+		return
+	}
+
+	// Execute create namespace permission command
+	response, err := h.createNsPermCmd.Execute(ctx, userGroupName, namespaceName, req)
+	if err != nil {
+		// Handle specific errors with appropriate HTTP status codes
+		switch {
+		case errors.Is(err, userGroupCmd.ErrInvalidPermissionType):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Invalid namespace permission type",
+			})
+		case errors.Is(err, userGroupCmd.ErrUserGroupNotFound):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "User group does not exist",
+			})
+		case errors.Is(err, userGroupCmd.ErrNamespaceNotFound):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Namespace does not exist",
+			})
+		case errors.Is(err, userGroupCmd.ErrPermissionAlreadyExists):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Permission already exists for this user_group/namespace",
+			})
+		default:
+			RespondError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	// Return response with 201 Created (matches Python)
+	RespondJSON(w, http.StatusCreated, response)
+}
+
+// HandleUserGroupNamespacePermissionsDelete handles DELETE /v1/terrareg/user-groups/{group}/permissions/{namespace}
+// Matches Python: ApiTerraregAuthUserGroupNamespacePermissions._delete(user_group, namespace)
+func (h *AuthHandler) HandleUserGroupNamespacePermissionsDelete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Only allow DELETE requests
+	if r.Method != http.MethodDelete {
+		RespondJSON(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"message": "Method not allowed",
+		})
+		return
+	}
+
+	// Extract user group name and namespace from URL parameters using chi
+	// URL pattern: /v1/terrareg/user-groups/{group}/permissions/{namespace}
+	userGroupName := chi.URLParam(r, "group")
+	namespaceName := chi.URLParam(r, "namespace")
+	if userGroupName == "" || namespaceName == "" {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"message": "User group name and namespace are required",
+		})
+		return
+	}
+
+	// Execute delete namespace permission command
+	err := h.deleteNsPermCmd.Execute(ctx, userGroupName, namespaceName)
+	if err != nil {
+		// Handle specific errors with appropriate HTTP status codes
+		switch {
+		case errors.Is(err, userGroupCmd.ErrUserGroupNotFound):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "User group does not exist",
+			})
+		case errors.Is(err, userGroupCmd.ErrNamespaceNotFound):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Namespace does not exist",
+			})
+		case errors.Is(err, userGroupCmd.ErrPermissionNotFound):
+			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"message": "Permission does not exist",
+			})
+		default:
+			RespondError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	// Return 200 OK with empty body (matches Python)
+	RespondJSON(w, http.StatusOK, map[string]interface{}{})
 }
 
 // generateRandomState generates a random state parameter for CSRF protection

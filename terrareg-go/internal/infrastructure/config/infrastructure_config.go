@@ -120,10 +120,6 @@ type InfrastructureConfig struct {
 	// Terraform Presigned URL Configuration
 	TerraformPresignedUrlSecret        string `env:"TERRAFORM_PRESIGNED_URL_SECRET"`
 	TerraformPresignedUrlExpirySeconds int    `env:"TERRAFORM_PRESIGNED_URL_EXPIRY_SECONDS"`
-
-	// Additional infrastructure settings
-	// Note: Add any other infrastructure-specific settings here
-	// such as Redis connections, message queue settings, etc.
 }
 
 // ProviderSourceConfig holds configuration for external provider sources
