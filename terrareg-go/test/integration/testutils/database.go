@@ -497,3 +497,12 @@ func CreateTestWebhookHandler(t *testing.T, db *sqldb.Database, uploadAPIKeys []
 	// Create a new webhook handler with the provided upload API keys
 	return webhook.NewModuleWebhookHandler(cont.WebhookService, uploadAPIKeys)
 }
+
+// GetNamespace retrieves a namespace by name from the database
+// This is used by selenium tests to get namespace information for setting up permissions
+func GetNamespace(t *testing.T, db *sqldb.Database, name string) sqldb.NamespaceDB {
+	var namespace sqldb.NamespaceDB
+	err := db.DB.Where("name = ?", name).First(&namespace).Error
+	require.NoError(t, err, "Namespace should exist: %s", name)
+	return namespace
+}

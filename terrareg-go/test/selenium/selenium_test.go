@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,8 +97,9 @@ func (st *SeleniumTest) setupBrowser() {
 	st.AllocCtx = ctx
 	chromedpCancel := cancel  // Save the chromedp cancel function
 
-	// Set a 20-second timeout for all chromedp operations
-	ctx, timeoutCancel := context.WithTimeout(ctx, 20*time.Second)
+	// Set a 60-second timeout for all chromedp operations
+	// This must be longer than the longest individual wait (e.g., WaitForURL uses 30s)
+	ctx, timeoutCancel := context.WithTimeout(ctx, 60*time.Second)
 	st.AllocCtx = ctx
 	st.ctxCancel = func() {
 		timeoutCancel()  // Cancel the timeout context
@@ -105,7 +108,8 @@ func (st *SeleniumTest) setupBrowser() {
 
 	// Allocate the browser by running an initial task
 	// The executor will be embedded in the context after this call
-	if err := chromedp.Run(st.AllocCtx); err != nil {
+	// Navigate to about:blank to initialize the browser
+	if err := chromedp.Run(st.AllocCtx, chromedp.Navigate("about:blank")); err != nil {
 		st.t.Fatalf("Failed to start browser: %v", err)
 	}
 }
@@ -225,10 +229,22 @@ func (st *SeleniumTest) GetTitle() string {
 }
 
 // GetCurrentURL returns the current browser URL.
+// Uses a 5-second internal timeout to avoid blocking if the page is waiting for async operations.
 func (st *SeleniumTest) GetCurrentURL() string {
+	// Create a context with a short timeout for this specific operation
+	ctx, cancel := context.WithTimeout(st.AllocCtx, 5*time.Second)
+	defer cancel()
+
 	var url string
-	err := st.runChromedp(chromedp.Location(&url))
-	require.NoError(st.t, err, "Failed to get current URL")
+	err := chromedp.Run(ctx, chromedp.Location(&url))
+	if err != nil {
+		// If we get a context deadline exceeded, the page might be waiting for async operations
+		// Return an empty string rather than failing the test
+		if ctx.Err() == context.DeadlineExceeded {
+			return ""
+		}
+		require.NoError(st.t, err, "Failed to get current URL")
+	}
 	return url
 }
 
@@ -376,4 +392,193 @@ func (e *Element) Exists() bool {
 func (e *Element) SendKeys(keys string) {
 	err := e.st.runChromedp(chromedp.SendKeys(e.selector, keys, chromedp.ByQuery))
 	require.NoError(e.st.t, err, "Failed to send keys to element: %s", e.selector)
+}
+
+// WaitForURL waits for the current URL to match the expected path.
+func (st *SeleniumTest) WaitForURL(expectedPath string) {
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			require.Fail(st.t, "URL did not change to expected path")
+		case <-ticker.C:
+			currentURL := st.GetCurrentURL()
+			if strings.HasSuffix(currentURL, expectedPath) {
+				return
+			}
+		}
+	}
+}
+
+// GetAttribute retrieves an attribute value from an element.
+func (st *SeleniumTest) GetAttribute(selector, attr string) string {
+	var value string
+	err := st.runChromedp(chromedp.AttributeValue(selector, attr, &value, nil))
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
+// GetElementAttribute retrieves an attribute value from an element (on Element).
+func (e *Element) GetAttribute(attr string) string {
+	var value string
+	err := e.st.runChromedp(chromedp.AttributeValue(e.selector, attr, &value, nil))
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
+// SelectOption selects an option in a select dropdown.
+func (st *SeleniumTest) SelectOption(selector, value string) {
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					select.value = %q;
+					var event = new Event('change', { bubbles: true });
+					select.dispatchEvent(event);
+				})()
+			`, selector, value), nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err)
+}
+
+// SelectOptionOnElement selects an option in a select dropdown (on Element).
+func (e *Element) SelectOption(value string) {
+	err := e.st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					select.value = %q;
+					var event = new Event('change', { bubbles: true });
+					select.dispatchEvent(event);
+				})()
+			`, e.selector, value), nil).Do(ctx)
+		}),
+	)
+	require.NoError(e.st.t, err)
+}
+
+// IsElementChecked returns true if checkbox/radio is checked.
+func (st *SeleniumTest) IsElementChecked(selector string) bool {
+	var checked bool
+	err := st.runChromedp(
+		chromedp.Evaluate(fmt.Sprintf(`
+			(function() {
+				var el = document.querySelector(%q);
+				return el ? el.checked : false;
+			})()
+		`, selector), &checked),
+	)
+	if err != nil {
+		return false
+	}
+	return checked
+}
+
+// IsChecked returns true if the checkbox/radio element is checked.
+func (e *Element) IsChecked() bool {
+	var checked bool
+	err := e.st.runChromedp(
+		chromedp.Evaluate(fmt.Sprintf(`
+			(function() {
+				var el = document.querySelector(%q);
+				return el ? el.checked : false;
+			})()
+		`, e.selector), &checked),
+	)
+	if err != nil {
+		return false
+	}
+	return checked
+}
+
+// GetElementCount returns the number of elements matching selector.
+func (st *SeleniumTest) GetElementCount(selector string) int {
+	var count int64
+	err := st.runChromedp(
+		chromedp.Evaluate(fmt.Sprintf(`
+			(function() {
+				return document.querySelectorAll(%q).length;
+			})()
+		`, selector), &count),
+	)
+	if err != nil {
+		return 0
+	}
+	return int(count)
+}
+
+// GetProgressBarValue retrieves the value attribute of a progress bar element.
+func (st *SeleniumTest) GetProgressBarValue(selector string) int {
+	var value string
+	err := st.runChromedp(chromedp.AttributeValue(selector, "value", &value, nil))
+	if err != nil {
+		return 0
+	}
+	// Convert string to int
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
+// IsStruckThrough checks if an element has strike-through styling.
+func (st *SeleniumTest) IsStruckThrough(selector string) bool {
+	var struckThrough bool
+	err := st.runChromedp(
+		chromedp.Evaluate(fmt.Sprintf(`
+			(function() {
+				var el = document.querySelector(%q);
+				if (!el) return false;
+				// Check for <strike> or <s> tag
+				if (el.tagName === 'STRIKE' || el.tagName === 'S') return true;
+				// Check for text-decoration: line-through
+				var style = window.getComputedStyle(el);
+				return style.textDecoration === 'line-through';
+			})()
+		`, selector), &struckThrough),
+	)
+	if err != nil {
+		return false
+	}
+	return struckThrough
+}
+
+// GetInnerHTML returns the inner HTML of an element.
+func (st *SeleniumTest) GetInnerHTML(selector string) string {
+	var html string
+	err := st.runChromedp(chromedp.InnerHTML(selector, &html, chromedp.ByQuery))
+	if err != nil {
+		return ""
+	}
+	return html
+}
+
+// WaitForURLContains waits for the current URL to contain the expected string.
+func (st *SeleniumTest) WaitForURLContains(expectedStr string) {
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			require.Fail(st.t, "URL did not contain expected string")
+		case <-ticker.C:
+			currentURL := st.GetCurrentURL()
+			if strings.Contains(currentURL, expectedStr) {
+				return
+			}
+		}
+	}
 }

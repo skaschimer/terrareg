@@ -131,3 +131,35 @@ func mergeMaps(maps ...map[string]string) map[string]string {
 	}
 	return result
 }
+
+// ConfigForInitialSetupTests returns config for initial setup tests.
+// This creates an empty database scenario, like Python's _TEST_DATA = {}
+// Python reference: /app/test/selenium/test_initial_setup.py - TestInitialSetup
+func ConfigForInitialSetupTests() map[string]string {
+	baseConfig := getDefaultTestConfig()
+
+	// Override for initial setup - empty database triggers setup wizard
+	return mergeMaps(baseConfig, map[string]string{
+		"UPLOAD_API_KEYS":             "",
+		"ADMIN_AUTHENTICATION_TOKEN":  "",
+		// Keep ALLOW_MODULE_HOSTING and other settings
+		"ALLOW_MODULE_HOSTING":        "true",
+		"AUTO_CREATE_NAMESPACE":       "true",
+		"AUTO_CREATE_MODULE_PROVIDER": "true",
+	})
+}
+
+// ConfigForCreateNamespaceTests returns config for namespace creation tests.
+// This is the Go equivalent of Python's test_create_namespace with admin token.
+// Python reference: /app/test/selenium/test_create_namespace.py
+func ConfigForCreateNamespaceTests() map[string]string {
+	// Namespace creation tests use admin auth
+	return ConfigForAdminTokenTests()
+}
+
+// ConfigForCreateModuleProviderTests returns config for module provider tests.
+// Python reference: /app/test/selenium/test_create_module_provider.py
+func ConfigForCreateModuleProviderTests() map[string]string {
+	// Module provider creation tests use admin auth
+	return ConfigForAdminTokenTests()
+}

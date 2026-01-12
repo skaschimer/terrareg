@@ -293,3 +293,15 @@ func CreateTestCreateSessionCommand(t *testing.T, db *sqldb.Database) *auth.Crea
 	cookieSessionService, _ := CreateTestCookieSessionService(t, db)
 	return auth.NewCreateSessionCommand(cookieSessionService)
 }
+
+// CreateUserGroup is a wrapper for CreateTestAuthUserGroup with consistent naming
+// This is used by selenium tests for user group management
+func CreateUserGroup(t *testing.T, db *sqldb.Database, name string, siteAdmin bool) sqldb.UserGroupDB {
+	return CreateTestAuthUserGroup(t, db, name, siteAdmin)
+}
+
+// CreateUserGroupNamespacePermission is a wrapper for CreateTestNamespacePermission with consistent naming
+// This is used by selenium tests for user group permission management
+func CreateUserGroupNamespacePermission(t *testing.T, db *sqldb.Database, userGroupID, namespaceID int, permissionType string) sqldb.UserGroupNamespacePermissionDB {
+	return CreateTestNamespacePermission(t, db, userGroupID, namespaceID, sqldb.UserGroupNamespacePermissionType(permissionType))
+}
