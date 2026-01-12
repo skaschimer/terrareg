@@ -51,7 +51,8 @@ func (a *SessionAuthMethod) IsEnabled() bool {
 }
 
 // Authenticate validates session and returns a SessionAuthContext with authentication state
-func (a *SessionAuthMethod) Authenticate(ctx context.Context, sessionID string) (auth.AuthMethod, error) {
+// This implements the TokenAuthMethod interface, which should return AuthContext
+func (a *SessionAuthMethod) Authenticate(ctx context.Context, sessionID string) (auth.AuthContext, error) {
 	if sessionID == "" {
 		// No session ID provided, return nil to let other auth methods try
 		return nil, nil

@@ -25,6 +25,7 @@ type AuthFactory struct {
 	config                 *infraConfig.InfrastructureConfig
 	logger                 *zerolog.Logger
 	providerSourceFactory  *provider_source_service.ProviderSourceFactory
+	cookieService          *CookieService
 }
 
 // NewAuthFactory creates a new immutable authentication factory
@@ -35,6 +36,7 @@ func NewAuthFactory(
 	terraformIdpService *TerraformIdpService,
 	oidcService *OIDCService,
 	providerSourceFactory *provider_source_service.ProviderSourceFactory,
+	cookieService *CookieService,
 	logger *zerolog.Logger,
 ) *AuthFactory {
 	factory := &AuthFactory{
@@ -44,6 +46,7 @@ func NewAuthFactory(
 		config:                config,
 		logger:                logger,
 		providerSourceFactory: providerSourceFactory,
+		cookieService:         cookieService,
 	}
 
 	// Initialize immutable auth methods in priority order
@@ -145,9 +148,12 @@ func (af *AuthFactory) AuthenticateRequest(ctx context.Context, headers, formDat
 	sessionID := af.extractSessionID(headers)
 	authorizationHeader := headers["Authorization"]
 
-	// Create empty session data for SAML/OpenID Connect methods
-	// They can implement their own session loading if needed in future
+	// Create session data map and populate with session ID if available
+	// This allows SessionAuthMethod implementations to access the session ID
 	sessionData := make(map[string]interface{})
+	if sessionID != nil {
+		sessionData["session_id"] = *sessionID
+	}
 
 	// Try each auth method in priority order
 	for _, authMethod := range af.authMethods {
@@ -314,24 +320,38 @@ func (af *AuthFactory) getStringPtr(s string) *string {
 	return &s
 }
 
-// extractSessionID extracts session ID from headers/cookies
+// extractSessionID extracts and decrypts session ID from headers/cookies
+// The session cookie contains encrypted session data that must be decrypted first
 func (af *AuthFactory) extractSessionID(headers map[string]string) *string {
-	// Check for session ID in headers first
+	// Check for session ID in headers first (for testing purposes)
 	if sessionID, exists := headers["X-Session-ID"]; exists && sessionID != "" {
 		return &sessionID
 	}
 
-	// Check cookie header for session ID
+	// Check cookie header for encrypted session data
+	if af.cookieService == nil {
+		// No cookie service configured, can't decrypt session
+		return nil
+	}
+
 	if cookieHeader, exists := headers["Cookie"]; exists && cookieHeader != "" {
-		// Parse cookies
+		// Parse cookies to find the session cookie
 		cookies := strings.Split(cookieHeader, ";")
 		for _, cookie := range cookies {
 			cookie = strings.TrimSpace(cookie)
 			if strings.HasPrefix(cookie, "terrareg_session=") {
-				sessionID := strings.TrimPrefix(cookie, "terrareg_session=")
-				sessionID = strings.TrimSuffix(sessionID, "\"")
-				if sessionID != "" {
-					return &sessionID
+				encryptedSession := strings.TrimPrefix(cookie, "terrareg_session=")
+				encryptedSession = strings.TrimSuffix(encryptedSession, "\"")
+				if encryptedSession != "" {
+					// Decrypt the session cookie to get the actual session ID
+					sessionData, err := af.cookieService.DecryptSession(encryptedSession)
+					if err != nil {
+						af.logger.Debug().Err(err).Msg("Failed to decrypt session cookie")
+						return nil
+					}
+					if sessionData.SessionID != "" {
+						return &sessionData.SessionID
+					}
 				}
 			}
 		}

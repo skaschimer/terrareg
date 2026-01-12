@@ -167,9 +167,11 @@ func (s *Server) setupRoutes() {
 	// Terraform OIDC Identity Provider endpoints
 	s.router.Get("/.well-known/openid-configuration", s.terraformIDPHandler.HandleOpenIDConfiguration)
 	s.router.Get("/.well-known/jwks.json", s.terraformIDPHandler.HandleJWKS)
-	s.router.Route("/oauth2", func(r chi.Router) {
-		r.Get("/auth", s.terraformIDPHandler.HandleAuth)
+	// Terraform OAuth endpoints (matching Python's /terraform/oauth/* routes)
+	s.router.Route("/terraform/oauth", func(r chi.Router) {
+		r.Get("/authorization", s.terraformIDPHandler.HandleAuth)
 		r.Post("/token", s.terraformIDPHandler.HandleToken)
+		r.Get("/jwks", s.terraformIDPHandler.HandleJWKS)
 		r.Get("/userinfo", s.terraformIDPHandler.HandleUserInfo)
 	})
 

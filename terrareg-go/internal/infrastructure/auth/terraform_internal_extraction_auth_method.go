@@ -34,7 +34,8 @@ func (t *TerraformInternalExtractionAuthMethod) IsEnabled() bool {
 }
 
 // Authenticate authenticates an internal extraction request and returns a TerraformInternalExtractionAuthContext
-func (t *TerraformInternalExtractionAuthMethod) Authenticate(ctx context.Context, headers, formData, queryParams map[string]string) (auth.AuthMethod, error) {
+// This implements the HeaderAuthMethod interface, which should return AuthContext
+func (t *TerraformInternalExtractionAuthMethod) Authenticate(ctx context.Context, headers, formData, queryParams map[string]string) (auth.AuthContext, error) {
 	// Check if INTERNAL_EXTRACTION_ANALYTICS_TOKEN is configured
 	if !t.IsEnabled() {
 		return nil, nil // Let other auth methods try

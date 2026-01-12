@@ -621,7 +621,7 @@ func NewContainer(
 	c.SAMLService, _ = authservice.NewSAMLService(infraConfig)
 
 	// Initialize AuthFactory after all services are created
-	c.AuthFactory = authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, &c.Logger)
+	c.AuthFactory = authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, c.CookieService, &c.Logger)
 
 	// Initialize StateStorageService
 	c.StateStorageService = authservice.NewStateStorageService(c.SessionService)

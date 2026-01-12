@@ -51,9 +51,7 @@ func testTerraformLogin(t *testing.T) {
 	defer st.TearDown()
 
 	// Python: terraform_wellknown = requests.get(self.get_url("/.well-known/terraform.json")).json()
-	// In Go, we use the actual OAuth2 routes that are implemented
-	// Note: Go uses /oauth2/auth and /oauth2/token (different from Python's /terraform/oauth/*)
-	// TODO: Align Go routes with Python (/terraform/oauth/authorization, /terraform/oauth/token)
+	// Go routes now match Python: /terraform/oauth/authorization, /terraform/oauth/token
 
 	// Create fake Terraform login server to handle redirects
 	// Python: Create a test HTTP server on ports 10000-10005
@@ -109,9 +107,9 @@ func testTerraformLogin(t *testing.T) {
 	codeChallenge = strings.TrimRight(codeChallenge, "=")
 
 	// Python: self.selenium_instance.get(self.get_url(f"{terraform_wellknown['login.v1']['authz']}?..."))
-	// Note: Go uses /oauth2/auth instead of Python's /terraform/oauth/authorization
+	// Go now matches Python's /terraform/oauth/authorization route
 	authzURL := fmt.Sprintf(
-		"%s/oauth2/auth?client_id=terraform-cli&code_challenge=%s&code_challenge_method=S256&redirect_uri=%s&response_type=code&state=8cf3ee58-8c5d-5d45-475a-0a56e3d00aac",
+		"%s/terraform/oauth/authorization?client_id=terraform-cli&code_challenge=%s&code_challenge_method=S256&redirect_uri=%s&response_type=code&state=8cf3ee58-8c5d-5d45-475a-0a56e3d00aac",
 		st.GetURL(""),
 		codeChallenge,
 		url.QueryEscape(redirectURL),

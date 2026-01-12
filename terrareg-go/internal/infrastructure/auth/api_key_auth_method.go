@@ -70,8 +70,8 @@ func (a *ApiKeyAuthMethod) IsEnabled() bool {
 }
 
 // Authenticate validates the API key and returns an ApiKeyAuthContext with authentication state
-// NOTE: This method does NOT modify the AuthMethod itself
-func (a *ApiKeyAuthMethod) Authenticate(ctx context.Context, apiKey string) (auth.AuthMethod, error) {
+// This implements the TokenAuthMethod interface, which should return AuthContext
+func (a *ApiKeyAuthMethod) Authenticate(ctx context.Context, apiKey string) (auth.AuthContext, error) {
 	if apiKey == "" {
 		// No API key provided, return nil to let other auth methods try
 		return nil, nil

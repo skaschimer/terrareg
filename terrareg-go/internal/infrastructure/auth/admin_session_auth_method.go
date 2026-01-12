@@ -37,29 +37,17 @@ func (a *AdminSessionAuthMethod) IsEnabled() bool {
 }
 
 // Authenticate authenticates a request and returns an AdminSessionAuthContext
-func (a *AdminSessionAuthMethod) Authenticate(ctx context.Context, headers, formData, queryParams map[string]string) (auth.AuthMethod, error) {
-	// Look for session cookie
-	// For production, use a library for parsing this
-	sessionID, exists := queryParams["session_id"]
+// This implements the SessionAuthMethod interface, which receives sessionData from the auth factory
+func (a *AdminSessionAuthMethod) Authenticate(ctx context.Context, sessionData map[string]interface{}) (auth.AuthContext, error) {
+	// Get session ID from sessionData map (populated by auth factory from cookies/headers)
+	sessionIDInterface, exists := sessionData["session_id"]
 	if !exists {
-		// Check headers for session ID
-		if sessionID, exists = headers["X-Session-ID"]; !exists {
-			// Check cookie header for session ID
-			if cookieHeader, exists := headers["Cookie"]; exists {
-				cookies := strings.Split(cookieHeader, ";")
-				for _, cookie := range cookies {
-					cookie = strings.TrimSpace(cookie)
-					if strings.HasPrefix(cookie, "session_id=") {
-						sessionID = strings.TrimPrefix(cookie, "session_id=")
-						break
-					}
-				}
-			}
-		}
+		return nil, nil // No session ID, let other auth methods try
 	}
 
-	if sessionID == "" || strings.TrimSpace(sessionID) == "" {
-		return nil, nil // Let other auth methods try
+	sessionID, ok := sessionIDInterface.(string)
+	if !ok || sessionID == "" || strings.TrimSpace(sessionID) == "" {
+		return nil, nil // Invalid session ID, let other auth methods try
 	}
 
 	// Find session in database
@@ -84,11 +72,10 @@ func (a *AdminSessionAuthMethod) Authenticate(ctx context.Context, headers, form
 	userID := 0 // TODO: Convert userInfo.UserID from string to int when user ID system is defined
 	authContext := auth.NewAdminSessionAuthContext(ctx, userID, userInfo.Username, userInfo.Email, sessionID)
 
-	// TODO: Load user groups when repository methods are available
-	// For now, set admin status if user is "admin"
-	if userInfo.UserID == "admin" {
-		authContext.SetAdmin(true)
-	}
+	// Admin sessions are always admin (matching Python's BaseAdminAuthMethod)
+	// In Python, AdminSessionAuthMethod inherits from both BaseAdminAuthMethod AND BaseSessionAuthMethod
+	// BaseAdminAuthMethod always returns is_admin=True
+	authContext.SetAdmin(true)
 
 	// Get user permissions
 	permissions, err := a.getUserPermissions(ctx, userInfo.UserID)

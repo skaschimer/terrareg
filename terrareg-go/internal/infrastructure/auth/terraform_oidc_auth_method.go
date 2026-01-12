@@ -23,7 +23,8 @@ func NewTerraformOidcAuthMethod(config *config.InfrastructureConfig, terraformId
 }
 
 // Authenticate validates Terraform OIDC token and returns a TerraformOidcAuthContext
-func (t *TerraformOidcAuthMethod) Authenticate(ctx context.Context, authorizationHeader string, requestData []byte) (auth.AuthMethod, error) {
+// This implements the BearerTokenAuthMethod interface, which should return AuthContext
+func (t *TerraformOidcAuthMethod) Authenticate(ctx context.Context, authorizationHeader string, requestData []byte) (auth.AuthContext, error) {
 	// Check if Terraform OIDC is enabled
 	if !t.IsEnabled() {
 		return nil, nil // Let other auth methods try

@@ -31,7 +31,8 @@ func (t *TerraformAnalyticsAuthKeyAuthMethod) IsEnabled() bool {
 }
 
 // Authenticate authenticates a request and returns a TerraformAnalyticsAuthKeyAuthContext
-func (t *TerraformAnalyticsAuthKeyAuthMethod) Authenticate(ctx context.Context, headers, formData, queryParams map[string]string) (auth.AuthMethod, error) {
+// This implements the HeaderAuthMethod interface, which should return AuthContext
+func (t *TerraformAnalyticsAuthKeyAuthMethod) Authenticate(ctx context.Context, headers, formData, queryParams map[string]string) (auth.AuthContext, error) {
 	// Look for auth key in Authorization header
 	authHeader, exists := headers["Authorization"]
 	if !exists {
