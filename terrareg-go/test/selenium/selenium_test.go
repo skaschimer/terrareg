@@ -146,11 +146,18 @@ func (st *SeleniumTest) runChromedp(actions ...chromedp.Action) error {
 	return chromedp.Run(st.AllocCtx, actions...)
 }
 
-// NavigateTo navigates the browser to a specific URL.
+// NavigateTo navigates the browser to a specific path.
 func (st *SeleniumTest) NavigateTo(path string) {
 	url := st.GetURL(path)
 	err := st.runChromedp(chromedp.Navigate(url))
 	require.NoError(st.t, err, "Failed to navigate to %s", url)
+}
+
+// NavigateToURL navigates the browser to a full URL (not a path).
+// Use this when you have a complete URL that should not have the base URL prepended.
+func (st *SeleniumTest) NavigateToURL(fullURL string) {
+	err := st.runChromedp(chromedp.Navigate(fullURL))
+	require.NoError(st.t, err, "Failed to navigate to %s", fullURL)
 }
 
 // WaitForElement waits for an element to be present and optionally visible.

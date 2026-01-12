@@ -502,7 +502,7 @@ func CreateTestWebhookHandler(t *testing.T, db *sqldb.Database, uploadAPIKeys []
 // This is used by selenium tests to get namespace information for setting up permissions
 func GetNamespace(t *testing.T, db *sqldb.Database, name string) sqldb.NamespaceDB {
 	var namespace sqldb.NamespaceDB
-	err := db.DB.Where("name = ?", name).First(&namespace).Error
+	err := db.DB.Where("namespace = ?", name).First(&namespace).Error
 	require.NoError(t, err, "Namespace should exist: %s", name)
 	return namespace
 }

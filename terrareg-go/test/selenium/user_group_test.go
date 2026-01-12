@@ -223,6 +223,9 @@ func testDeleteNamespacePermission(t *testing.T) {
 	// In Go, we click the delete button in the permission row
 	findElementByTextAndClick(st, "#user-group-table", "Delete")
 
+	// Wait for page to update after delete
+	time.Sleep(500 * time.Millisecond)
+
 	// Python: permissions = UserGroupNamespacePermission.get_permissions_by_user_group(user_group)
 	// Python: assert len(permissions) == 0
 	// In Go, we verify the UI no longer shows the permission
