@@ -19,10 +19,12 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
+	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	domainConfigService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 )
 
 // testDbMutex protects database file access across parallel tests
@@ -72,10 +74,15 @@ type TestServer struct {
 	originalWd      string  // Original working directory to restore on shutdown
 }
 
+// TestServerOption is a function that configures the test server after container creation.
+// This pattern allows tests to customize the server (e.g., mock repositories) without
+// modifying the core server setup logic.
+type TestServerOption func(*TestServer)
+
 // NewTestServer creates and starts a new test Terrareg server.
 // This is the Go equivalent of Python's setup_class method.
 // Python reference: /app/test/selenium/__init__.py - SeleniumTest.setup_class()
-func NewTestServer(t *testing.T, configOverrides map[string]string) *TestServer {
+func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...TestServerOption) *TestServer {
 	ts := &TestServer{
 		t:               t,
 		configOverrides: configOverrides,
@@ -90,6 +97,12 @@ func NewTestServer(t *testing.T, configOverrides map[string]string) *TestServer 
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
 
 	ts.setup()
+
+	// Apply test server options (e.g., mock repositories)
+	for _, opt := range opts {
+		opt(ts)
+	}
+
 	return ts
 }
 
@@ -355,6 +368,35 @@ func (ts *TestServer) GetPort() int {
 // GetContainer returns the DI container (useful for setting up test data).
 func (ts *TestServer) GetContainer() *container.Container {
 	return ts.container
+}
+
+// WithMockAnalytics replaces the AnalyticsRepo with a mock that returns the specified download count.
+// This matches Python's behavior of mocking only get_total_downloads while keeping other queries real.
+// Python reference: /app/test/selenium/test_homepage.py - mock.patch('get_total_downloads', return_value=2005)
+func WithMockAnalytics(totalDownloads int) TestServerOption {
+	return func(ts *TestServer) {
+		// Create mock repository, wrapping the real one for non-mocked methods
+		realRepo := ts.container.AnalyticsRepo
+		ts.container.AnalyticsRepo = NewMockAnalyticsRepository(totalDownloads, realRepo)
+
+		// Recreate GlobalStatsQuery with the mocked repo
+		ts.container.GlobalStatsQuery = analyticsQuery.NewGlobalStatsQuery(
+			ts.container.NamespaceRepo,
+			ts.container.ModuleProviderRepo,
+			ts.container.AnalyticsRepo, // Now uses the mock
+		)
+
+		// Recreate AnalyticsHandler with the mocked query
+		ts.container.AnalyticsHandler = terrareg.NewAnalyticsHandler(
+			ts.container.GlobalStatsQuery,
+			ts.container.GlobalUsageStatsQuery,
+			ts.container.GetDownloadSummaryQuery,
+			ts.container.RecordModuleDownloadCmd,
+			ts.container.GetMostRecentlyPublishedQuery,
+			ts.container.GetMostDownloadedThisWeekQuery,
+			ts.container.GetTokenVersionsQuery,
+		)
+	}
 }
 
 // GetDB returns the database connection (useful for setting up test data).

@@ -10,6 +10,17 @@ import (
 	integrationTestUtils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
+const (
+	// DefaultTotalDownloads matches the Python mock value
+	// Python reference: /app/test/selenium/test_homepage.py - mock.patch('get_total_downloads', return_value=2005)
+	DefaultTotalDownloads = 2005
+)
+
+// HomepageTotalDownloads returns the expected download count for homepage tests
+func HomepageTotalDownloads() int {
+	return DefaultTotalDownloads
+}
+
 // UpdateModuleProviderVerified updates a module provider's verified status.
 // This is equivalent to Python's provider.update_attributes(verified=True).
 // Python reference: /app/test/selenium/test_homepage.py - provider.update_attributes(verified=True)
