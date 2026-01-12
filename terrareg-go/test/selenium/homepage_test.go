@@ -54,6 +54,11 @@ func testHomepageTitle(t *testing.T) {
 	st := newHomepageSeleniumTest(t)
 	defer st.TearDown()
 
+	// Create a namespace so the initial setup page doesn't redirect
+	// Python tests likely have test data already created, so we do the same
+	db := st.server.GetDB()
+	_ = integrationTestUtils.CreateNamespace(t, db, "test-namespace")
+
 	st.NavigateTo("/")
 
 	// Ensure title is injected correctly

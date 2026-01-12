@@ -93,15 +93,15 @@ func (st *SeleniumTest) setupBrowser() {
 	// This is the standard chromedp pattern - the allocator is inherited from the parent
 	ctx, cancel := chromedp.NewContext(allocatorCtx, chromedp.WithLogf(log.Printf))
 	st.AllocCtx = ctx
-	st.ctxCancel = cancel
+	chromedpCancel := cancel  // Save the chromedp cancel function
 
 	// Set a 20-second timeout for all chromedp operations
-	ctx, cancel = context.WithTimeout(ctx, 20*time.Second)
-	st.ctxCancel = func() {
-		cancel() // Cancel the timeout context
-		st.ctxCancel() // Cancel the chromedp context
-	}
+	ctx, timeoutCancel := context.WithTimeout(ctx, 20*time.Second)
 	st.AllocCtx = ctx
+	st.ctxCancel = func() {
+		timeoutCancel()  // Cancel the timeout context
+		chromedpCancel()  // Cancel the chromedp context
+	}
 
 	// Allocate the browser by running an initial task
 	// The executor will be embedded in the context after this call
@@ -263,19 +263,12 @@ func (st *SeleniumTest) AssertTextContent(selector, expectedText string) {
 	assert.Contains(st.t, text, expectedText, "Element text does not contain expected value")
 }
 
+
 // AssertElementVisible asserts that an element is visible.
+// It waits up to the default timeout for the element to become visible.
+// This uses the existing WaitForElement with ensureDisplayed=true.
 func (st *SeleniumTest) AssertElementVisible(selector string) {
-	var visible bool
-	err := st.runChromedp(chromedp.Evaluate(fmt.Sprintf(`
-		(function() {
-			var el = document.querySelector(%q);
-			if (!el) return false;
-			var rect = el.getBoundingClientRect();
-			return rect.width > 0 && rect.height > 0;
-		})()
-	`, selector), &visible))
-	require.NoError(st.t, err, "Element not found: %s", selector)
-	assert.True(st.t, visible, "Element exists but is not visible: %s", selector)
+	st.WaitForElement(selector)  // ensureDisplayed=true by default
 }
 
 // AssertElementNotVisible asserts that an element either doesn't exist or is not visible.

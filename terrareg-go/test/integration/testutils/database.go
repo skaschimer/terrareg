@@ -106,10 +106,9 @@ func CleanupTestDatabase(t *testing.T, db *sqldb.Database) {
 
 // CreateNamespace creates a test namespace in the database
 func CreateNamespace(t *testing.T, db *sqldb.Database, name string) sqldb.NamespaceDB {
-	displayName := name + " Display"
 	namespace := sqldb.NamespaceDB{
 		Namespace:     name,
-		DisplayName:   &displayName,
+		DisplayName:   nil,  // No display name by default - use namespace name (matching Python)
 		NamespaceType: sqldb.NamespaceTypeNone,
 	}
 

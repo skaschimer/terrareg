@@ -35,7 +35,7 @@ func getDefaultTestConfig() map[string]string {
 	return map[string]string{
 		"LISTEN_PORT":                         "5000", // Valid port (will be overridden to random port by test server)
 		"PUBLIC_URL":                          "http://127.0.0.1:5000",
-		"DATABASE_URL":                        "sqlite:///temp-selenium.db", // File-based DB like Python tests
+		"DATABASE_URL":                        "sqlite://./temp-selenium.db", // File-based DB in current directory (./ makes it relative)
 		"SECRET_KEY":                          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		"ADMIN_AUTHENTICATION_TOKEN":          "test-admin-token",
 		"ALLOW_MODULE_HOSTING":                "true",

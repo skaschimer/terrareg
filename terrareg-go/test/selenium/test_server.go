@@ -25,6 +25,11 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
 )
 
+// testDbMutex protects database file access across parallel tests
+// Python tests run sequentially, but Go runs tests in parallel by default
+// This mutex ensures only one test uses the database at a time
+var testDbMutex sync.Mutex
+
 // generateTestSigningKey generates a test RSA signing key and saves it to a file.
 // This is required for Terraform OIDC tests.
 func generateTestSigningKey(t *testing.T) string {
@@ -209,6 +214,29 @@ func (ts *TestServer) setup() {
 
 // bootstrap bootstraps the application following the pattern in cmd/server/main.go
 func (ts *TestServer) bootstrap() {
+	// Lock mutex to prevent parallel tests from interfering with database
+	// Python tests run sequentially, so this emulates that behavior
+	testDbMutex.Lock()
+
+	// Clean up old database file if it exists (matching Python test behavior)
+	// Python tests reuse the same database file, so each test needs to handle cleanup
+	dbPath := "temp-selenium.db"
+
+	// Remove all database-related files atomically
+	for _, ext := range []string{"", "-wal", "-shm"} {
+		path := dbPath + ext
+		os.Remove(path) // Ignore errors if file doesn't exist
+	}
+
+	// Register cleanup function to delete database after test completes
+	ts.t.Cleanup(func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-wal")
+		os.Remove(dbPath + "-shm")
+		// Unlock mutex for next test
+		testDbMutex.Unlock()
+	})
+
 	// Load configuration using the new configuration service
 	versionReader := version.NewVersionReader()
 	configService := domainConfigService.NewConfigurationService(
@@ -219,22 +247,15 @@ func (ts *TestServer) bootstrap() {
 	domainConfig, infraConfig, err := configService.LoadConfiguration()
 	require.NoError(ts.t, err, "Failed to load configuration")
 
-	ts.t.Logf("Configuration loaded - port: %d, public_url: %s", infraConfig.ListenPort, infraConfig.PublicURL)
-
 	// Initialize database
-	ts.t.Log("Connecting to database")
 	ts.db, err = sqldb.NewDatabase(infraConfig.DatabaseURL, infraConfig.Debug)
 	require.NoError(ts.t, err, "Failed to connect to database")
 
-	ts.t.Log("Database connected successfully")
-
 	// Run auto-migration for all models (from cmd/server/main.go)
-	ts.t.Log("Running database auto-migration")
 	err = ts.autoMigrate()
 	require.NoError(ts.t, err, "Failed to auto-migrate database")
 
 	// Initialize dependency injection container with new configuration architecture
-	ts.t.Log("Initializing application container")
 	ts.container, err = container.NewContainer(
 		domainConfig,
 		infraConfig,

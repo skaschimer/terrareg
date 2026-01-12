@@ -46,9 +46,10 @@ func (q *NamespaceDetailsQuery) Execute(ctx context.Context, namespaceName strin
 		return nil, nil
 	}
 
+	displayName := namespace.DisplayName()
 	details := &NamespaceDetails{
 		Name:           namespace.Name(),
-		DisplayName:    namespace.DisplayName(),
+		DisplayName:    displayName,
 		IsAutoVerified: q.namespaceService.IsAutoVerified(namespace),
 		Trusted:        q.namespaceService.IsTrusted(namespace),
 	}
