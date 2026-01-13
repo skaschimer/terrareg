@@ -25,8 +25,10 @@ func TestModuleSearch_BasicSearch(t *testing.T) {
 	// Setup repositories
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	// Create test namespaces
 	namespace1 := testutils.CreateNamespace(t, db, "search-ns1")
@@ -103,8 +105,10 @@ func TestModuleSearch_NamespaceFilter(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	// Create test namespaces
 	namespace1 := testutils.CreateNamespace(t, db, "filter-ns1")
@@ -167,8 +171,10 @@ func TestModuleSearch_ProviderFilter(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "provider-filter-ns")
 
@@ -229,8 +235,10 @@ func TestModuleSearch_VerifiedFilter(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "verified-ns")
 
@@ -293,8 +301,10 @@ func TestModuleSearch_OffsetAndLimit(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "pagination-ns")
 
@@ -368,8 +378,10 @@ func TestModuleSearch_ExcludeModulesWithoutLatestVersion(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "latest-version-ns")
 
@@ -408,8 +420,10 @@ func TestModuleSearch_CaseInsensitiveSearch(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "case-ns")
 
@@ -451,8 +465,10 @@ func TestModuleSearch_CombinedFilters(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace1 := testutils.CreateNamespace(t, db, "combined-ns1")
 	namespace2 := testutils.CreateNamespace(t, db, "combined-ns2")
@@ -521,8 +537,10 @@ func TestModuleSearch_TrustedNamespaceFilter(t *testing.T) {
 		SecretKeySet:             true,
 	}
 
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace1 := testutils.CreateNamespace(t, db, "trusted-ns")
 	namespace2 := testutils.CreateNamespace(t, db, "untrusted-ns")
@@ -576,8 +594,10 @@ func TestModuleSearch_MultiTermSearch(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "multiterm-ns")
 
@@ -589,14 +609,14 @@ func TestModuleSearch_MultiTermSearch(t *testing.T) {
 	description1 := "VPC module for AWS infrastructure"
 	published := true
 	version1 := sqldb.ModuleVersionDB{
-		ModuleProviderID:      provider1.ID,
-		Version:               "1.0.0",
-		Beta:                  false,
-		Internal:              false,
-		Published:             &published,
-		PublishedAt:           nil,
-		Owner:                 &owner1,
-		Description:           &description1,
+		ModuleProviderID: provider1.ID,
+		Version:          "1.0.0",
+		Beta:             false,
+		Internal:         false,
+		Published:        &published,
+		PublishedAt:      nil,
+		Owner:            &owner1,
+		Description:      &description1,
 	}
 	require.NoError(t, db.DB.Create(&version1).Error)
 	// Set latest_version_id for provider1
@@ -703,8 +723,10 @@ func TestModuleSearch_LimitEnforcement(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "limit-ns")
 
@@ -764,8 +786,10 @@ func TestModuleSearch_PythonTestData(t *testing.T) {
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	// Setup Python test data
 	testutils.SetupComprehensiveModuleSearchTestData(t, db)
@@ -1013,8 +1037,10 @@ func TestModuleSearch_NoDuplicateResultsForMultiplePublishedVersions(t *testing.
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
-	searchQuery := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
+	require.NoError(t, err)
 
 	namespace := testutils.CreateNamespace(t, db, "multiversion-ns")
 

@@ -18,7 +18,8 @@ func TestSubmodule_Save(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data: namespace, module provider, module version
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-save")
@@ -53,7 +54,8 @@ func TestSubmodule_SaveWithDetails(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-details")
@@ -64,7 +66,7 @@ func TestSubmodule_SaveWithDetails(t *testing.T) {
 	details := sqldb.ModuleDetailsDB{
 		ReadmeContent: []byte("# Test README"),
 	}
-	err := db.DB.Create(&details).Error
+	err = db.DB.Create(&details).Error
 	require.NoError(t, err)
 
 	// Create a submodule
@@ -96,7 +98,8 @@ func TestSubmodule_FindByParentModuleVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-find")
@@ -112,7 +115,7 @@ func TestSubmodule_FindByParentModuleVersion(t *testing.T) {
 		Path: "submodule1",
 		Name: &submoduleName1,
 	}
-	_, err := repo.Save(ctx, version1.ID, submodule1)
+	_, err = repo.Save(ctx, version1.ID, submodule1)
 	require.NoError(t, err)
 
 	submoduleType2 := "module"
@@ -162,7 +165,8 @@ func TestSubmodule_FindByPath(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-findpath")
@@ -177,7 +181,7 @@ func TestSubmodule_FindByPath(t *testing.T) {
 		Path: "path/to/submodule1",
 		Name: &submoduleName1,
 	}
-	_, err := repo.Save(ctx, version.ID, submodule1)
+	_, err = repo.Save(ctx, version.ID, submodule1)
 	require.NoError(t, err)
 
 	submoduleType2 := "module"
@@ -211,7 +215,8 @@ func TestSubmodule_FindByPath_NotFound(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-notfound")
@@ -231,7 +236,8 @@ func TestSubmodule_DeleteByParentModuleVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-delete")
@@ -273,7 +279,8 @@ func TestSubmodule_NilSubmodule(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-nil")
@@ -281,7 +288,7 @@ func TestSubmodule_NilSubmodule(t *testing.T) {
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
 	// Try to save nil submodule
-	_, err := repo.Save(ctx, version.ID, nil)
+	_, err = repo.Save(ctx, version.ID, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "submodule cannot be nil")
 
@@ -297,7 +304,8 @@ func TestSubmodule_OptionalFields(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-optional")
@@ -330,7 +338,8 @@ func TestSubmodule_EmptyPath(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-empty")
@@ -364,7 +373,8 @@ func TestSubmodule_MultipleVersions(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-multiversion")
@@ -411,7 +421,8 @@ func TestSubmodule_WithModuleDetails(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewSubmoduleRepository(db.DB)
+	repo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-submodule-preload")
@@ -422,7 +433,7 @@ func TestSubmodule_WithModuleDetails(t *testing.T) {
 	details := sqldb.ModuleDetailsDB{
 		ReadmeContent: []byte("# README for submodule"),
 	}
-	err := db.DB.Create(&details).Error
+	err = db.DB.Create(&details).Error
 	require.NoError(t, err)
 
 	// Create submodule with details

@@ -20,7 +20,8 @@ func TestModuleProviderRedirectsIntegrationSimple(t *testing.T) {
 
 	// Setup repositories with correct import paths
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	redirectRepo := moduleRepo.NewModuleProviderRedirectRepository(db.DB)
 
 	ctx := context.Background()

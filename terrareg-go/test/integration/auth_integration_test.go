@@ -25,8 +25,10 @@ func TestAuthenticationIntegration(t *testing.T) {
 	}()
 
 	// Setup repositories with correct import paths
-	sessionRepo := authRepo.NewSessionRepository(db.DB)
-	userGroupRepo := authRepo.NewUserGroupRepository(db.DB)
+	sessionRepo, err := authRepo.NewSessionRepository(db.DB)
+	require.NoError(t, err)
+	userGroupRepo, err := authRepo.NewUserGroupRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
 
 	// Create Terraform IDP repositories
@@ -46,11 +48,11 @@ func TestAuthenticationIntegration(t *testing.T) {
 	// Create basic infrastructure config with valid SECRET_KEY
 	// (CookieService requires SECRET_KEY to be at least 32 bytes when hex-decoded)
 	infraConfig := &config.InfrastructureConfig{
-		ListenPort:    3000,
-		PublicURL:     "http://localhost:3000",
-		DomainName:    "localhost",
-		Debug:         true,
-		SecretKey:     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		ListenPort: 3000,
+		PublicURL:  "http://localhost:3000",
+		DomainName: "localhost",
+		Debug:      true,
+		SecretKey:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 	}
 
 	// Create auth service with minimal dependencies

@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
@@ -27,8 +28,10 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/terraform-aws-modules/submodule", "Submodule description", "", nil)
 
 	// Create handler with repositories
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
 
@@ -56,8 +59,10 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 
 // TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters tests missing required path parameters
 func TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
 
@@ -109,8 +114,10 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/test-submodule", "Test submodule", "", nil)
 
 	// Create handler with repositories
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getSubmoduleReadmeHTMLQuery := moduleQuery.NewGetSubmoduleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(nil, getSubmoduleReadmeHTMLQuery)
 
@@ -146,8 +153,10 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 	// Don't create a submodule - testing the case where it doesn't exist
 
 	// Create handler with repositories
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getSubmoduleReadmeHTMLQuery := moduleQuery.NewGetSubmoduleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(nil, getSubmoduleReadmeHTMLQuery)
 
@@ -173,8 +182,10 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 
 // TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters tests missing required path parameters
 func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getSubmoduleReadmeHTMLQuery := moduleQuery.NewGetSubmoduleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(nil, getSubmoduleReadmeHTMLQuery)
 

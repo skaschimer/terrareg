@@ -24,7 +24,8 @@ func TestLoginHandler_HandleLogin_Success_ValidCredentials(t *testing.T) {
 	// Create handler with real dependencies
 	cookieSessionService, cont := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with valid credentials
 	loginReq := auth.LoginRequest{
@@ -85,7 +86,8 @@ func TestLoginHandler_HandleLogin_Failure_InvalidUsername(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with empty username
 	loginReq := auth.LoginRequest{
@@ -120,7 +122,8 @@ func TestLoginHandler_HandleLogin_Failure_InvalidPassword(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with empty password
 	loginReq := auth.LoginRequest{
@@ -155,7 +158,8 @@ func TestLoginHandler_HandleLogin_Failure_EmptyUsername(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with no username field
 	loginReq := map[string]string{
@@ -183,7 +187,8 @@ func TestLoginHandler_HandleLogin_Failure_EmptyPassword(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with no password field
 	loginReq := map[string]string{
@@ -211,7 +216,8 @@ func TestLoginHandler_HandleLogin_CreatesSessionInDatabase(t *testing.T) {
 	// Create handler
 	cookieSessionService, cont := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request
 	loginReq := auth.LoginRequest{
@@ -258,7 +264,8 @@ func TestLoginHandler_HandleLogin_SetsEncryptedCookie(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request
 	loginReq := auth.LoginRequest{
@@ -303,7 +310,8 @@ func TestLoginHandler_HandleLogout_Success_WithSession(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request
 	req := httptest.NewRequest("POST", "/v1/terrareg/auth/admin/logout", nil)
@@ -317,7 +325,7 @@ func TestLoginHandler_HandleLogout_Success_WithSession(t *testing.T) {
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
 	var response auth.LoginResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.True(t, response.Success)
 
@@ -343,7 +351,8 @@ func TestLoginHandler_HandleLogout_Success_ClearsCookie(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request
 	req := httptest.NewRequest("POST", "/v1/terrareg/auth/admin/logout", nil)
@@ -376,7 +385,8 @@ func TestLoginHandler_HandleLogout_Success_WithoutSession(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request without any session cookie
 	req := httptest.NewRequest("POST", "/v1/terrareg/auth/admin/logout", nil)
@@ -389,7 +399,7 @@ func TestLoginHandler_HandleLogout_Success_WithoutSession(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response auth.LoginResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.True(t, response.Success)
 }
@@ -402,7 +412,8 @@ func TestLoginHandler_HandleLogin_InvalidRequestMethod(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with GET method instead of POST
 	req := httptest.NewRequest("GET", "/v1/terrareg/auth/admin/login", nil)
@@ -423,7 +434,8 @@ func TestLoginHandler_HandleLogin_InvalidRequestBody(t *testing.T) {
 	// Create handler
 	cookieSessionService, _ := testutils.CreateTestCookieSessionService(t, db)
 	createSessionCmd := authCmd.NewCreateSessionCommand(cookieSessionService)
-	handler := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(createSessionCmd, cookieSessionService, testutils.TestLogger)
+	require.NoError(t, err)
 
 	// Create request with invalid JSON
 	req := httptest.NewRequest("POST", "/v1/terrareg/auth/admin/login", bytes.NewBuffer([]byte("invalid json")))
@@ -437,7 +449,7 @@ func TestLoginHandler_HandleLogin_InvalidRequestBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	var response auth.LoginResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.False(t, response.Success)
 	assert.Equal(t, "Invalid request body", response.Message)

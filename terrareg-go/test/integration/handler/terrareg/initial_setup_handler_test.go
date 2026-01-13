@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
-	urlService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/setup"
+	urlService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
@@ -21,8 +22,10 @@ func TestInitialSetupHandler_HandleInitialSetup_NoNamespaces(t *testing.T) {
 
 	// Create handler with empty database
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -53,8 +56,10 @@ func TestInitialSetupHandler_HandleInitialSetup_NamespaceOnly(t *testing.T) {
 	testutils.CreateNamespace(t, db, "test-namespace")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -86,8 +91,10 @@ func TestInitialSetupHandler_HandleInitialSetup_WithModule(t *testing.T) {
 	testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -123,8 +130,10 @@ func TestInitialSetupHandler_HandleInitialSetup_WithVersion(t *testing.T) {
 	testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -157,8 +166,10 @@ func TestInitialSetupHandler_HandleInitialSetup_PublishedVersion(t *testing.T) {
 	testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -193,8 +204,10 @@ func TestInitialSetupHandler_HandleInitialSetup_WithGit(t *testing.T) {
 	testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -222,8 +235,10 @@ func TestInitialSetupHandler_HandleInitialSetup_MethodNotAllowed(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)
@@ -250,8 +265,10 @@ func TestInitialSetupHandler_HandleInitialSetup_CompleteSetup(t *testing.T) {
 	testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	domainConfig := testutils.CreateTestDomainConfig(t)
 	infraConfig := testutils.CreateTestInfraConfig(t)
 	urlSvc := urlService.NewURLService(infraConfig)

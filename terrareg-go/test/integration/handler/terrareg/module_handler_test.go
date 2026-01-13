@@ -36,9 +36,11 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		listModulesQuery,
@@ -59,7 +61,7 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Contains(t, response, "modules")
@@ -88,9 +90,11 @@ func TestModuleHandler_HandleModuleList_Empty(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		listModulesQuery,
@@ -111,7 +115,7 @@ func TestModuleHandler_HandleModuleList_Empty(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	modules := response["modules"].([]interface{})
@@ -134,9 +138,11 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		listModulesQuery,
@@ -161,7 +167,7 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Contains(t, response, "modules")
@@ -182,9 +188,11 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		listModulesQuery,
@@ -209,7 +217,7 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	modules := response["modules"].([]interface{})
@@ -228,9 +236,11 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil, // list not used
@@ -256,7 +266,7 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Contains(t, response, "modules")
@@ -287,9 +297,11 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -316,7 +328,7 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Equal(t, "hashicorp/consul/aws", response["id"])
@@ -333,9 +345,11 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -362,7 +376,7 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Contains(t, response, "error")
@@ -385,9 +399,12 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	searchModulesQuery := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
+	require.NoError(t, err)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -408,7 +425,7 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Contains(t, response, "modules")
@@ -455,9 +472,12 @@ func TestModuleHandler_HandleModuleSearch_WithFilters(t *testing.T) {
 
 			// Create handler
 			namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-			moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-			searchModulesQuery := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
-			analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+			moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+			require.NoError(t, err)
+			searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
+			require.NoError(t, err)
+			analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+			require.NoError(t, err)
 
 			handler := terrareg.NewModuleReadHandlerForTesting(
 				nil,
@@ -478,7 +498,7 @@ func TestModuleHandler_HandleModuleSearch_WithFilters(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Code)
 
 			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
+			err = json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
 
 			assert.Contains(t, response, "modules")
@@ -494,9 +514,12 @@ func TestModuleHandler_HandleModuleSearch_EmptyResults(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	searchModulesQuery := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
+	searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
+	require.NoError(t, err)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -517,7 +540,7 @@ func TestModuleHandler_HandleModuleSearch_EmptyResults(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	modules := response["modules"].([]interface{})
@@ -540,9 +563,11 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -569,7 +594,7 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Equal(t, "versionns/versionmodule/aws", response["id"])
@@ -590,9 +615,11 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
-	analyticsRepository := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
 		nil,
@@ -618,7 +645,7 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	modules := response["modules"].([]interface{})

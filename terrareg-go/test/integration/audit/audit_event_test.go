@@ -69,7 +69,8 @@ func TestAuditEvent_CreateAuditEvent_AllAuditActions(t *testing.T) {
 			newValue := "new"
 
 			// Create audit service
-			auditRepo := auditrepo.NewAuditHistoryRepository(db.DB)
+			auditRepo, err := auditrepo.NewAuditHistoryRepository(db.DB)
+			require.NoError(t, err)
 			auditService := service.NewAuditService(auditRepo)
 
 			// Create audit event
@@ -82,7 +83,7 @@ func TestAuditEvent_CreateAuditEvent_AllAuditActions(t *testing.T) {
 				&newValue,
 			)
 
-			err := auditService.LogEvent(context.Background(), audit)
+			err = auditService.LogEvent(context.Background(), audit)
 			require.NoError(t, err)
 
 			// Verify audit event from database
@@ -139,7 +140,8 @@ func TestAuditEvent_OldValue(t *testing.T) {
 			newValuePtr := &newValue
 
 			// Create audit service
-			auditRepo := auditrepo.NewAuditHistoryRepository(db.DB)
+			auditRepo, err := auditrepo.NewAuditHistoryRepository(db.DB)
+			require.NoError(t, err)
 			auditService := service.NewAuditService(auditRepo)
 
 			// Create audit event
@@ -152,7 +154,7 @@ func TestAuditEvent_OldValue(t *testing.T) {
 				newValuePtr,
 			)
 
-			err := auditService.LogEvent(context.Background(), audit)
+			err = auditService.LogEvent(context.Background(), audit)
 			require.NoError(t, err)
 
 			// Verify audit event from database
@@ -206,7 +208,8 @@ func TestAuditEvent_NewValue(t *testing.T) {
 			}
 
 			// Create audit service
-			auditRepo := auditrepo.NewAuditHistoryRepository(db.DB)
+			auditRepo, err := auditrepo.NewAuditHistoryRepository(db.DB)
+			require.NoError(t, err)
 			auditService := service.NewAuditService(auditRepo)
 
 			// Create audit event
@@ -219,7 +222,7 @@ func TestAuditEvent_NewValue(t *testing.T) {
 				newValuePtr,
 			)
 
-			err := auditService.LogEvent(context.Background(), audit)
+			err = auditService.LogEvent(context.Background(), audit)
 			require.NoError(t, err)
 
 			// Verify audit event from database
@@ -260,7 +263,8 @@ func TestAuditEvent_Username(t *testing.T) {
 			newValue := "new"
 
 			// Create audit service
-			auditRepo := auditrepo.NewAuditHistoryRepository(db.DB)
+			auditRepo, err := auditrepo.NewAuditHistoryRepository(db.DB)
+			require.NoError(t, err)
 			auditService := service.NewAuditService(auditRepo)
 
 			// Create audit event
@@ -273,7 +277,7 @@ func TestAuditEvent_Username(t *testing.T) {
 				&newValue,
 			)
 
-			err := auditService.LogEvent(context.Background(), audit)
+			err = auditService.LogEvent(context.Background(), audit)
 			require.NoError(t, err)
 
 			// Verify audit event from database

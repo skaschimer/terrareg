@@ -206,7 +206,9 @@ func TestModuleExtractor_TerraregMetadata(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -243,7 +245,9 @@ func TestModuleExtractor_InvalidTerraregMetadata(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata - should fail gracefully
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -282,7 +286,9 @@ func TestModuleExtractor_MetadataRequiredAttributes(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata with required attributes
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -451,7 +457,9 @@ module "test" {
 	assert.GreaterOrEqual(t, len(contents), 5) // At least the files listed above
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -508,7 +516,9 @@ func TestModuleExtractor_MetadataVariableTemplate(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -721,7 +731,9 @@ func TestModuleExtractor_MetadataNoFile(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata - should succeed with no metadata found
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -771,7 +783,9 @@ func TestModuleExtractor_MetadataOverrideAutogenerate(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -819,7 +833,9 @@ func TestModuleExtractor_MetadataRepoUrls(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -877,7 +893,9 @@ func TestModuleExtractor_MetadataWithAllOptionalFields(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -930,7 +948,9 @@ func TestModuleExtractor_HiddenTerraregJson(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata - should find .terrareg.json
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -1004,7 +1024,9 @@ modules/testmodule1/file_to_ignore.txt
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process .terraformignore
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	pathspecFilter, err := metadataService.GetPathspecFilter(context.Background(), extractDir)
 	require.NoError(t, err)
 	assert.NotNil(t, pathspecFilter)
@@ -1035,7 +1057,9 @@ func TestModuleExtractor_EmptyTerraregJson(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata - empty JSON should be valid but have no values
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -1078,7 +1102,9 @@ func TestModuleExtractor_BothMetadataFiles(t *testing.T) {
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process metadata - should find terrareg.json (non-hidden takes priority)
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	metadataReq := service.MetadataProcessingRequest{
 		ModuleVersionID:    moduleVersion.ID,
 		MetadataPath:       extractDir,
@@ -1126,7 +1152,9 @@ modules/ignored_dir/
 	require.NoError(t, err, ".terraformignore should exist in subdirectory")
 
 	// Process .terraformignore from the subdirectory
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	modulePath := filepath.Join(extractDir, "subdirectory", "module")
 	pathspecFilter, err := metadataService.GetPathspecFilter(context.Background(), modulePath)
 	require.NoError(t, err)
@@ -1170,7 +1198,9 @@ sub-only.txt
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process root .terraformignore
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	rootPathspecFilter, err := metadataService.GetPathspecFilter(context.Background(), extractDir)
 	require.NoError(t, err)
 	assert.NotNil(t, rootPathspecFilter)
@@ -1222,7 +1252,9 @@ prefix_*.txt
 	extractDir := testutils.ExtractTestArchive(t, archive)
 
 	// Process .terraformignore
-	metadataService := service.NewMetadataProcessingService(transaction.NewSavepointHelper(db.DB))
+	sp, err := transaction.NewSavepointHelper(db.DB)
+	require.NoError(t, err)
+	metadataService := service.NewMetadataProcessingService(sp)
 	pathspecFilter, err := metadataService.GetPathspecFilter(context.Background(), extractDir)
 	require.NoError(t, err)
 	assert.NotNil(t, pathspecFilter)

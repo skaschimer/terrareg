@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	namespaceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
-	namespaceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
@@ -35,7 +35,8 @@ func TestNamespaceHandler_HandleNamespaceList_Success(t *testing.T) {
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	listNamespacesQuery := moduleQuery.NewListNamespacesQuery(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces", nil)
 	w := httptest.NewRecorder()
@@ -46,7 +47,7 @@ func TestNamespaceHandler_HandleNamespaceList_Success(t *testing.T) {
 
 	// For array responses, unmarshal directly
 	var response []interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.Len(t, response, 2)
 }
@@ -59,7 +60,8 @@ func TestNamespaceHandler_HandleNamespaceList_Empty(t *testing.T) {
 	// Create handler with no data
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	listNamespacesQuery := moduleQuery.NewListNamespacesQuery(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces", nil)
 	w := httptest.NewRecorder()
@@ -70,7 +72,7 @@ func TestNamespaceHandler_HandleNamespaceList_Empty(t *testing.T) {
 
 	// For array responses, unmarshal directly
 	var response []interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.Len(t, response, 0)
 }
@@ -87,7 +89,8 @@ func TestNamespaceHandler_HandleNamespaceList_WithPagination(t *testing.T) {
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	listNamespacesQuery := moduleQuery.NewListNamespacesQuery(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	require.NoError(t, err)
 
 	// Request with pagination
 	params := url.Values{}
@@ -121,7 +124,8 @@ func TestNamespaceHandler_HandleNamespaceList_MultipleNamespaces(t *testing.T) {
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	listNamespacesQuery := moduleQuery.NewListNamespacesQuery(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(listNamespacesQuery, nil, nil, nil, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces", nil)
 	w := httptest.NewRecorder()
@@ -132,7 +136,7 @@ func TestNamespaceHandler_HandleNamespaceList_MultipleNamespaces(t *testing.T) {
 
 	// For array responses, unmarshal directly
 	var response []interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.Len(t, response, 5)
 }
@@ -149,7 +153,8 @@ func TestNamespaceHandler_HandleNamespaceDetails_Success(t *testing.T) {
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
 	namespaceDetailsQuery := namespaceQuery.NewNamespaceDetailsQuery(namespaceRepository, namespaceSvc)
-	handler := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces/test-namespace", nil)
 	w := httptest.NewRecorder()
@@ -174,7 +179,8 @@ func TestNamespaceHandler_HandleNamespaceDetails_NotFound(t *testing.T) {
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
 	namespaceDetailsQuery := namespaceQuery.NewNamespaceDetailsQuery(namespaceRepository, namespaceSvc)
-	handler := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces/nonexistent", nil)
 	w := httptest.NewRecorder()
@@ -196,7 +202,8 @@ func TestNamespaceHandler_HandleNamespaceDetails_MissingParameter(t *testing.T) 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
 	namespaceDetailsQuery := namespaceQuery.NewNamespaceDetailsQuery(namespaceRepository, namespaceSvc)
-	handler := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, nil, nil, namespaceDetailsQuery)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces/", nil)
 	w := httptest.NewRecorder()
@@ -219,7 +226,8 @@ func TestNamespaceHandler_HandleNamespaceCreate_Success(t *testing.T) {
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	createNamespaceCmd := namespaceCmd.NewCreateNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, createNamespaceCmd, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, createNamespaceCmd, nil, nil, nil)
+	require.NoError(t, err)
 
 	// Create request body
 	displayName := "New Namespace"
@@ -251,7 +259,8 @@ func TestNamespaceHandler_HandleNamespaceCreate_InvalidJSON(t *testing.T) {
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	createNamespaceCmd := namespaceCmd.NewCreateNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, createNamespaceCmd, nil, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, createNamespaceCmd, nil, nil, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "/v1/terrareg/namespaces", strings.NewReader("invalid json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -275,7 +284,8 @@ func TestNamespaceHandler_HandleNamespaceDelete_Success(t *testing.T) {
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	deleteNamespaceCmd := namespaceCmd.NewDeleteNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, nil, nil, deleteNamespaceCmd, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, nil, deleteNamespaceCmd, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("DELETE", "/v1/terrareg/namespaces/delete-me", nil)
 	w := httptest.NewRecorder()
@@ -301,7 +311,8 @@ func TestNamespaceHandler_HandleNamespaceDelete_NotFound(t *testing.T) {
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	deleteNamespaceCmd := namespaceCmd.NewDeleteNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, nil, nil, deleteNamespaceCmd, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, nil, deleteNamespaceCmd, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("DELETE", "/v1/terrareg/namespaces/nonexistent", nil)
 	w := httptest.NewRecorder()
@@ -327,7 +338,8 @@ func TestNamespaceHandler_HandleNamespaceUpdate_Success(t *testing.T) {
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	updateNamespaceCmd := namespaceCmd.NewUpdateNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	require.NoError(t, err)
 
 	// Create request body
 	displayName := "Updated Display Name"
@@ -359,7 +371,8 @@ func TestNamespaceHandler_HandleNamespaceUpdate_MissingParameter(t *testing.T) {
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	updateNamespaceCmd := namespaceCmd.NewUpdateNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	require.NoError(t, err)
 
 	displayName := "Test"
 	requestBody := dto.NamespaceUpdateRequest{
@@ -387,7 +400,8 @@ func TestNamespaceHandler_HandleNamespaceUpdate_InvalidJSON(t *testing.T) {
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	updateNamespaceCmd := namespaceCmd.NewUpdateNamespaceCommand(namespaceRepository)
-	handler := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	handler, err := terrareg.NewNamespaceHandler(nil, nil, updateNamespaceCmd, nil, nil)
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "/v1/terrareg/namespaces/test", strings.NewReader("invalid json"))
 	req.Header.Set("Content-Type", "application/json")

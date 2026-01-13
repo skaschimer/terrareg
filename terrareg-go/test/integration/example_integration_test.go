@@ -21,11 +21,15 @@ func TestExampleIntegration(t *testing.T) {
 
 	// Setup repositories with correct import paths
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
-	moduleVersionRepo := moduleRepo.NewModuleVersionRepository(db.DB)
-	exampleRepo := moduleRepo.NewExampleFileRepository(db.DB)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
+	moduleVersionRepo, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
+	exampleRepo, err := moduleRepo.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 	moduleVersionFileRepo := moduleRepo.NewModuleVersionFileRepository(db.DB)
-	submoduleRepo := moduleRepo.NewSubmoduleRepository(db.DB)
+	submoduleRepo, err := moduleRepo.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -84,9 +88,12 @@ func TestSubmoduleIntegrationSimple(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
-	moduleVersionRepo := moduleRepo.NewModuleVersionRepository(db.DB)
-	submoduleRepo := moduleRepo.NewSubmoduleRepository(db.DB)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
+	moduleVersionRepo, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
+	submoduleRepo, err := moduleRepo.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 

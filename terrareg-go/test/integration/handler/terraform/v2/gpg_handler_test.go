@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	gpgkeyQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/gpgkey"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/service"
 	gpgkeyRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/gpgkey"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	v2 "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform/v2"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -32,7 +32,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_Success(t *testing.
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "another-source", namespace.ID, "WXYZ6789")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -60,7 +61,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_Success(t *testing.
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure
@@ -80,7 +81,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_MultipleNamespaces(
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source2", namespace2.ID, "KEY2222")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -106,7 +108,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_MultipleNamespaces(
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure
@@ -173,7 +175,8 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_Success(t *testing.T)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -204,7 +207,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_Success(t *testing.T)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure
@@ -227,7 +230,8 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_NotFound(t *testing.T
 	_ = testutils.CreateNamespace(t, db, "test-namespace")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -258,7 +262,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_NotFound(t *testing.T
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Contains(t, response["error"], "not found")
 }
@@ -333,7 +337,8 @@ func TestTerraformV2GPGHandler_Integration_URLParsing(t *testing.T) {
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "SPECIAL123")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -360,7 +365,7 @@ func TestTerraformV2GPGHandler_Integration_URLParsing(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure
@@ -382,7 +387,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_WhitespaceNamespace
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source3", namespace3.ID, "KEY3333")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -410,7 +416,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_WhitespaceNamespace
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure - should get all 3 keys
@@ -429,7 +435,8 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_KeyIDWithSpecialChars
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, specialKeyID)
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -460,7 +467,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_KeyIDWithSpecialChars
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure
@@ -477,7 +484,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_EmptyResult(t *test
 	_ = testutils.CreateNamespace(t, db, "empty-namespace")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -503,7 +511,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_EmptyResult(t *test
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify response structure - should be empty array
@@ -521,7 +529,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_JSONContentType(t *
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -552,7 +561,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_JSONContentType(t *
 
 	// Check response is valid JSON
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Contains(t, response, "data")
 }
@@ -567,7 +576,8 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_ASCIIArmorInResponse(
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service
-	gpgKeyRepository := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	gpgKeyService := service.NewGPGKeyService(gpgKeyRepository, namespaceRepository)
 
@@ -598,7 +608,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_ASCIIArmorInResponse(
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Verify ASCII armor is in response

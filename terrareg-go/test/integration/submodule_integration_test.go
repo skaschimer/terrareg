@@ -21,10 +21,14 @@ func TestSubmoduleRepositoryIntegration(t *testing.T) {
 
 	// Setup repositories with correct import paths
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
-	moduleVersionRepo := moduleRepo.NewModuleVersionRepository(db.DB)
-	exampleRepo := moduleRepo.NewExampleFileRepository(db.DB)
-	submoduleRepo := moduleRepo.NewSubmoduleRepository(db.DB)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
+	moduleVersionRepo, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
+	exampleRepo, err := moduleRepo.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
+	submoduleRepo, err := moduleRepo.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
 	moduleVersionFileRepo := moduleRepo.NewModuleVersionFileRepository(db.DB)
 
 	ctx := context.Background()
@@ -115,4 +119,3 @@ func TestSubmoduleRepositoryIntegration(t *testing.T) {
 
 	_ = moduleVersionFileRepo // Avoid unused variable
 }
-

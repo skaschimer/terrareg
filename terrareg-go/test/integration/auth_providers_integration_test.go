@@ -20,8 +20,10 @@ func TestAuthenticationProvidersIntegration(t *testing.T) {
 	}()
 
 	// Setup repositories
-	sessionRepo := authRepo.NewSessionRepository(db.DB)
-	userGroupRepo := authRepo.NewUserGroupRepository(db.DB)
+	sessionRepo, err := authRepo.NewSessionRepository(db.DB)
+	require.NoError(t, err)
+	userGroupRepo, err := authRepo.NewUserGroupRepository(db.DB)
+	require.NoError(t, err)
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
 
 	ctx := context.Background()

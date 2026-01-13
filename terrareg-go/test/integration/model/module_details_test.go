@@ -20,7 +20,8 @@ func TestModuleDetails_Create(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create new module details object (without any content initially)
 	details := model.NewModuleDetails(nil)
@@ -66,7 +67,8 @@ func TestModuleDetails_UpdateAttributes(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	testReadmeContent := []byte("test readme content")
 	testTerraformDocs := []byte(`{"test": "output"}`)
@@ -103,7 +105,8 @@ func TestModuleDetails_Delete(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create new module details object
 	details := model.NewModuleDetails([]byte("test readme"))
@@ -133,7 +136,8 @@ func TestModuleDetails_FindByID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create a module details with all fields populated
 	testReadme := []byte("# Test README")
@@ -180,7 +184,8 @@ func TestModuleDetails_FindByNonExistentID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Try to find a non-existent ID
 	found, err := repo.FindByID(ctx, 99999)
@@ -194,7 +199,8 @@ func TestModuleDetails_UpdateWithAllFields(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create initial details
 	details := model.NewModuleDetails([]byte("initial readme"))
@@ -463,7 +469,8 @@ func TestModuleDetails_SaveAndReturnID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Save and get ID in one call
 	details := model.NewModuleDetails([]byte("test readme"))
@@ -484,7 +491,8 @@ func TestModuleDetails_FindByModuleVersionID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	repo := module.NewModuleDetailsRepository(db.DB)
+	repo, err := module.NewModuleDetailsRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create module details
 	details := model.NewModuleDetails([]byte("test readme"))

@@ -30,8 +30,10 @@ func TestExampleHandler_HandleExampleDetails_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "examples/test-example", "Test Example", "example", nil)
 
 	// Create handler with repositories
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
@@ -58,8 +60,10 @@ func TestExampleHandler_HandleExampleDetails_Success(t *testing.T) {
 
 // TestExampleHandler_HandleExampleDetails_MissingParameters tests missing required path parameters
 func TestExampleHandler_HandleExampleDetails_MissingParameters(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
@@ -111,8 +115,10 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	// Don't create an example
 
 	// Create handler
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
@@ -150,8 +156,10 @@ func TestExampleHandler_HandleExampleReadmeHTML_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "examples/test-example", "Test Example", "example", nil)
 
 	// Create handler
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getExampleReadmeHTMLQuery := moduleQuery.NewGetExampleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, getExampleReadmeHTMLQuery, nil, nil)
 
@@ -178,8 +186,10 @@ func TestExampleHandler_HandleExampleReadmeHTML_Success(t *testing.T) {
 
 // TestExampleHandler_HandleExampleReadmeHTML_MissingParameters tests missing required path parameters
 func TestExampleHandler_HandleExampleReadmeHTML_MissingParameters(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getExampleReadmeHTMLQuery := moduleQuery.NewGetExampleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, getExampleReadmeHTMLQuery, nil, nil)
 
@@ -232,8 +242,10 @@ func TestExampleHandler_HandleExampleFileList_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "examples/test-example", "Test Example", "example", nil)
 
 	// Create handler
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getExampleFileListQuery := moduleQuery.NewGetExampleFileListQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, nil, getExampleFileListQuery, nil)
 
@@ -257,15 +269,17 @@ func TestExampleHandler_HandleExampleFileList_Success(t *testing.T) {
 
 	// Parse JSON array response
 	var response []interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.IsType(t, []interface{}{}, response, "Response should be an array of files")
 }
 
 // TestExampleHandler_HandleExampleFileList_MissingParameters tests missing required path parameters
 func TestExampleHandler_HandleExampleFileList_MissingParameters(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getExampleFileListQuery := moduleQuery.NewGetExampleFileListQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, nil, getExampleFileListQuery, nil)
 
@@ -318,8 +332,10 @@ func TestExampleHandler_HandleExampleFile_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "examples/test-example", "Test Example", "example", nil)
 
 	// Create handler
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(db.DB)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
 	getExampleFileQuery := moduleQuery.NewGetExampleFileQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, nil, nil, getExampleFileQuery)
 
@@ -345,8 +361,10 @@ func TestExampleHandler_HandleExampleFile_Success(t *testing.T) {
 
 // TestExampleHandler_HandleExampleFile_MissingFileParam tests missing file parameter
 func TestExampleHandler_HandleExampleFile_MissingFileParam(t *testing.T) {
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
-	moduleVersionRepository := moduleRepo.NewModuleVersionRepository(nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	require.NoError(t, err)
 	getExampleFileQuery := moduleQuery.NewGetExampleFileQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewExampleHandler(nil, nil, nil, getExampleFileQuery)
 

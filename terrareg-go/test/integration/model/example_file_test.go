@@ -18,8 +18,10 @@ func TestExampleFile_Save(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data: namespace, module provider, module version
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-save")
@@ -62,8 +64,10 @@ func TestExampleFile_SaveBatch(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-batch")
@@ -123,8 +127,10 @@ func TestExampleFile_FindBySubmoduleID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-find")
@@ -190,8 +196,10 @@ func TestExampleFile_DeleteBySubmoduleID(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-delete")
@@ -239,8 +247,10 @@ func TestExampleFile_DeleteByModuleVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-deletever")
@@ -276,7 +286,7 @@ func TestExampleFile_DeleteByModuleVersion(t *testing.T) {
 	}
 
 	// Delete files for version 1
-	err := exampleFileRepo.DeleteByModuleVersion(ctx, version1.ID)
+	err = exampleFileRepo.DeleteByModuleVersion(ctx, version1.ID)
 	require.NoError(t, err)
 
 	// Verify version 1 files were deleted
@@ -313,10 +323,11 @@ func TestExampleFile_NilFile(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Try to save nil example file
-	_, err := exampleFileRepo.Save(ctx, nil)
+	_, err = exampleFileRepo.Save(ctx, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "example file cannot be nil")
 }
@@ -327,7 +338,8 @@ func TestExampleFile_EmptyBatch(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Save empty batch - should succeed without error
 	saved, err := exampleFileRepo.SaveBatch(ctx, []*sqldb.ExampleFileDB{})
@@ -341,8 +353,10 @@ func TestExampleFile_WithReadme(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-readme")
@@ -398,8 +412,10 @@ func TestExampleFile_MultipleExamples(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-multiple")
@@ -458,8 +474,10 @@ func TestExampleFile_EmptyContent(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	ctx := context.Background()
-	submoduleRepo := module.NewSubmoduleRepository(db.DB)
-	exampleFileRepo := module.NewExampleFileRepository(db.DB)
+	submoduleRepo, err := module.NewSubmoduleRepository(db.DB)
+	require.NoError(t, err)
+	exampleFileRepo, err := module.NewExampleFileRepository(db.DB)
+	require.NoError(t, err)
 
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-examplefile-empty")

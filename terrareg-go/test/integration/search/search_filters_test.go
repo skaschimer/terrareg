@@ -25,7 +25,8 @@ func TestSearchFilters_NoResults(t *testing.T) {
 	// Setup repositories
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Execute search with non-existent query
@@ -57,7 +58,8 @@ func TestSearchFilters_ContributedModuleOneVersion(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: namespace, module provider with published version
@@ -94,7 +96,8 @@ func TestSearchFilters_ContributedModuleMultiVersion(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with multiple versions (should still count as 1 module)
@@ -133,7 +136,8 @@ func TestSearchFilters_ContributedMultipleModules(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: multiple modules matching "contributedmodule"
@@ -179,7 +183,8 @@ func TestSearchFilters_UnpublishedModule(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with UNPUBLISHED version
@@ -218,7 +223,8 @@ func TestSearchFilters_TrustedModuleOneVersion(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data
@@ -255,7 +261,8 @@ func TestSearchFilters_TrustedModuleMultiVersion(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with multiple versions
@@ -294,7 +301,8 @@ func TestSearchFilters_TrustedMultipleModules(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: multiple modules
@@ -339,7 +347,8 @@ func TestSearchFilters_VerifiedModuleOneVersion(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with VERIFIED module provider
@@ -347,7 +356,7 @@ func TestSearchFilters_VerifiedModuleOneVersion(t *testing.T) {
 	verified := true
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "verifiedmodule-oneversion", "aws")
 	// Set verified status
-	err := db.DB.Model(&sqldb.ModuleProviderDB{}).Where("id = ?", provider.ID).Update("verified", &verified).Error
+	err = db.DB.Model(&sqldb.ModuleProviderDB{}).Where("id = ?", provider.ID).Update("verified", &verified).Error
 	require.NoError(t, err)
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -380,7 +389,8 @@ func TestSearchFilters_MixedResults(t *testing.T) {
 	}
 
 	namespaceRepo := module.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	moduleProviderRepo, err := module.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data for mixed results
@@ -406,7 +416,7 @@ func TestSearchFilters_MixedResults(t *testing.T) {
 	provider6 := testutils.CreateModuleProvider(t, db, namespaceVerified.ID, "modulesearch-six", "aws")
 	provider7 := testutils.CreateModuleProvider(t, db, namespaceVerified.ID, "modulesearch-seven", "aws")
 	provider8 := testutils.CreateModuleProvider(t, db, namespaceVerified.ID, "modulesearch-eight", "gcp")
-	err := db.DB.Model(&sqldb.ModuleProviderDB{}).Where("id = ?", provider6.ID).Update("verified", &verified).Error
+	err = db.DB.Model(&sqldb.ModuleProviderDB{}).Where("id = ?", provider6.ID).Update("verified", &verified).Error
 	require.NoError(t, err)
 	err = db.DB.Model(&sqldb.ModuleProviderDB{}).Where("id = ?", provider7.ID).Update("verified", &verified).Error
 	require.NoError(t, err)

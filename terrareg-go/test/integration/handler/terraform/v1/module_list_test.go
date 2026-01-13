@@ -26,7 +26,8 @@ func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 
 	// Create handler with required dependencies
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
 	handler := v1.NewModuleListHandler(listModulesQuery)
 
@@ -59,7 +60,8 @@ func TestModuleListHandler_HandleListModules_Empty(t *testing.T) {
 
 	// Create handler without test data
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
 	handler := v1.NewModuleListHandler(listModulesQuery)
 
@@ -99,7 +101,8 @@ func TestModuleListHandler_HandleListModules_MultipleModules(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
 	handler := v1.NewModuleListHandler(listModulesQuery)
 
@@ -130,7 +133,8 @@ func TestModuleListHandler_HandleListModules_WithUnpublished(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
 	handler := v1.NewModuleListHandler(listModulesQuery)
 
@@ -171,7 +175,8 @@ func TestModuleListHandler_HandleListModules_Verified(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
 	handler := v1.NewModuleListHandler(listModulesQuery)
 

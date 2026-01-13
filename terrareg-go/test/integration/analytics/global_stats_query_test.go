@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	analyticsPersistence "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -25,9 +25,11 @@ func TestGlobalStatsQuery_EmptyDatabase(t *testing.T) {
 
 	// Create query with no data
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -61,9 +63,11 @@ func TestGlobalStatsQuery_SingleModule(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -95,9 +99,11 @@ func TestGlobalStatsQuery_MultipleVersionsPerModule(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -142,9 +148,11 @@ func TestGlobalStatsQuery_DownloadAggregation(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -191,9 +199,11 @@ func TestGlobalStatsQuery_MultipleNamespaces(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -237,9 +247,11 @@ func TestGlobalStatsQuery_LargeScale(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query and measure time
@@ -282,9 +294,11 @@ func TestGlobalStatsQuery_OnlyPublishedVersions(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query
@@ -323,9 +337,11 @@ func TestGlobalStatsQuery_BetaAndInternalVersions(t *testing.T) {
 
 	// Create query
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepo := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
+	require.NoError(t, err)
 	query := analyticsQuery.NewGlobalStatsQuery(namespaceRepo, moduleProviderRepo, analyticsRepo)
 
 	// Execute query

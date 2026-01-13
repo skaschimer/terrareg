@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	auditService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/service"
@@ -24,7 +25,8 @@ func TestAuditHandler_HandleAuditHistoryGet_Success(t *testing.T) {
 	testutils.CreateMultipleAuditLogs(t, db, 5, "test-user", "CREATE", "namespace")
 
 	// Create handler
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -68,7 +70,8 @@ func TestAuditHandler_HandleAuditHistoryGet_Empty(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create handler with no data
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -101,7 +104,8 @@ func TestAuditHandler_HandleAuditHistoryGet_Pagination(t *testing.T) {
 	// Create 25 audit log entries
 	testutils.CreateMultipleAuditLogs(t, db, 25, "test-user", "CREATE", "namespace")
 
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -153,7 +157,8 @@ func TestAuditHandler_HandleAuditHistoryGet_Search(t *testing.T) {
 	testutils.CreateAuditLog(t, db, "bob", "CREATE", "namespace", 2)
 	testutils.CreateAuditLog(t, db, "charlie", "CREATE", "namespace", 3)
 
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -191,7 +196,8 @@ func TestAuditHandler_HandleAuditHistoryGet_Sorting(t *testing.T) {
 	testutils.CreateAuditLog(t, db, "user2", "UPDATE", "namespace", 2)
 	testutils.CreateAuditLog(t, db, "user3", "DELETE", "namespace", 3)
 
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -227,7 +233,8 @@ func TestAuditHandler_HandleAuditHistoryGet_DefaultParameters(t *testing.T) {
 	// Create some audit logs
 	testutils.CreateMultipleAuditLogs(t, db, 5, "test-user", "CREATE", "namespace")
 
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)
@@ -257,7 +264,8 @@ func TestAuditHandler_HandleAuditHistoryGet_DataFormat(t *testing.T) {
 	// Create an audit log
 	testutils.CreateAuditLog(t, db, "test-user", "CREATE", "namespace", 123)
 
-	auditRepository := auditRepo.NewAuditHistoryRepository(db.DB)
+	auditRepository, err := auditRepo.NewAuditHistoryRepository(db.DB)
+	require.NoError(t, err)
 	service := auditService.NewAuditService(auditRepository)
 	getAuditHistoryQuery := auditQuery.NewGetAuditHistoryQuery(service)
 	handler := terrareg.NewAuditHandler(getAuditHistoryQuery)

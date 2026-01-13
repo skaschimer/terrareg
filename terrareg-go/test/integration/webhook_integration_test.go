@@ -42,7 +42,8 @@ func TestGitHubWebhookIntegration(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -80,8 +81,8 @@ func TestGitHubWebhookIntegration(t *testing.T) {
 				"html_url": "https://github.com/testorg/test-module/releases/tag/v1.0.0",
 			},
 			"repository": map[string]interface{}{
-				"id":       118,
-				"name":     "test-module",
+				"id":        118,
+				"name":      "test-module",
 				"full_name": "testorg/test-module",
 			},
 			"sender": map[string]interface{}{
@@ -299,7 +300,8 @@ func TestBitbucketWebhookIntegration(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -348,9 +350,9 @@ func TestBitbucketWebhookIntegration(t *testing.T) {
 			"changes": []map[string]interface{}{
 				{
 					"ref": map[string]interface{}{
-						"id":         "refs/tags/v5.1.2",
-						"displayId":  "v5.1.2",
-						"type":       "TAG",
+						"id":        "refs/tags/v5.1.2",
+						"displayId": "v5.1.2",
+						"type":      "TAG",
 					},
 					"refId":    "refs/tags/v5.1.2",
 					"fromHash": "0000000000000000000000000000000000000000",
