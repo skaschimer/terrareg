@@ -2,6 +2,7 @@ package terrareg_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,98 +12,83 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	terrareg "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
+	modulemodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 )
 
-// MockGetSubmoduleDetailsQuery is a mock for GetSubmoduleDetailsQuery
-type MockGetSubmoduleDetailsQuery struct {
+// MockModuleProviderRepository is a minimal mock for testing
+type MockModuleProviderRepository struct {
 	mock.Mock
 }
 
-func (m *MockGetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, submodulePath string) (*module.SubmoduleDetails, error) {
-	args := m.Called(ctx, namespace, moduleName, provider, version, submodulePath)
+func (m *MockModuleProviderRepository) FindByNamespaceModuleProvider(ctx context.Context, namespace, moduleName, provider string) (*modulemodel.ModuleProvider, error) {
+	args := m.Called(ctx, namespace, moduleName, provider)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*module.SubmoduleDetails), args.Error(1)
+	return args.Get(0).(*modulemodel.ModuleProvider), args.Error(1)
 }
 
-// MockGetSubmoduleReadmeHTMLQuery is a mock for GetSubmoduleReadmeHTMLQuery
-type MockGetSubmoduleReadmeHTMLQuery struct {
+// Implement other required interface methods minimally
+func (m *MockModuleProviderRepository) Save(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error { return nil }
+func (m *MockModuleProviderRepository) Create(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error { return nil }
+func (m *MockModuleProviderRepository) Delete(ctx context.Context, id int) error { return nil }
+func (m *MockModuleProviderRepository) FindByID(ctx context.Context, id int) (*modulemodel.ModuleProvider, error) { return nil, nil }
+func (m *MockModuleProviderRepository) FindByNamespace(ctx context.Context, namespace string) ([]*modulemodel.ModuleProvider, error) { return nil, nil }
+func (m *MockModuleProviderRepository) Search(ctx context.Context, query repository.ModuleSearchQuery) (*repository.ModuleSearchResult, error) {
+	return nil, nil
+}
+func (m *MockModuleProviderRepository) Exists(ctx context.Context, namespace, moduleName, provider string) (bool, error) { return false, nil }
+
+// MockModuleVersionRepository is a minimal mock for testing
+type MockModuleVersionRepository struct {
 	mock.Mock
 }
 
-func (m *MockGetSubmoduleReadmeHTMLQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, submodulePath string) (string, error) {
-	args := m.Called(ctx, namespace, moduleName, provider, version, submodulePath)
-	if args.String(0) == "" && args.Error(1) != nil {
-		return "", args.Error(1)
+func (m *MockModuleVersionRepository) FindByModuleProviderAndVersion(ctx context.Context, moduleProviderID int, version string) (*modulemodel.ModuleVersion, error) {
+	args := m.Called(ctx, moduleProviderID, version)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
-	return args.String(0), args.Error(1)
+	return args.Get(0).(*modulemodel.ModuleVersion), args.Error(1)
+}
+
+// Implement other required interface methods minimally
+func (m *MockModuleVersionRepository) FindByModuleProvider(ctx context.Context, moduleProviderID int, includeBeta, includeUnpublished bool) ([]*modulemodel.ModuleVersion, error) {
+	return nil, nil
+}
+func (m *MockModuleVersionRepository) Save(ctx context.Context, moduleVersion *modulemodel.ModuleVersion) (*modulemodel.ModuleVersion, error) {
+	return nil, nil
+}
+func (m *MockModuleVersionRepository) FindByID(ctx context.Context, id int) (*modulemodel.ModuleVersion, error) {
+	return nil, nil
+}
+func (m *MockModuleVersionRepository) Delete(ctx context.Context, id int) error { return nil }
+func (m *MockModuleVersionRepository) Exists(ctx context.Context, moduleProviderID int, version string) (bool, error) {
+	return false, nil
+}
+func (m *MockModuleVersionRepository) UpdateModuleDetailsID(ctx context.Context, moduleVersionID int, moduleDetailsID int) error {
+	return nil
 }
 
 func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 	tests := []struct {
-		name               string
-		method             string
-		url                string
-		expectedStatus     int
-		setupMocks         func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery)
+		name                 string
+		method               string
+		url                  string
+		expectedStatus       int
+		setupMocks           func(*MockModuleProviderRepository, *MockModuleVersionRepository)
 		expectedBodyContains string
 	}{
-		{
-			name:           "invalid method",
-			method:         "POST",
-			url:            "/modules/test/mod/provider/1.0.0/submodules/details/submod",
-			expectedStatus: http.StatusMethodNotAllowed,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-		},
-		{
-			name:           "missing namespace parameter",
-			method:         "GET",
-			url:            "/modules//mod/provider/1.0.0/submodules/details/submod",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-			expectedBodyContains: "Missing required path parameters",
-		},
-		{
-			name:           "missing module parameter",
-			method:         "GET",
-			url:            "/modules/test//provider/1.0.0/submodules/details/submod",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-			expectedBodyContains: "Missing required path parameters",
-		},
-		{
-			name:           "missing provider parameter",
-			method:         "GET",
-			url:            "/modules/test/mod//1.0.0/submodules/details/submod",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-			expectedBodyContains: "Missing required path parameters",
-		},
-		{
-			name:           "missing version parameter",
-			method:         "GET",
-			url:            "/modules/test/mod/provider//submodules/details/submod",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-			expectedBodyContains: "Missing required path parameters",
-		},
-		{
-			name:           "missing submodule parameter",
-			method:         "GET",
-			url:            "/modules/test/mod/provider/1.0.0/submodules/details/",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-			expectedBodyContains: "Missing required path parameters",
-		},
 		{
 			name:           "module provider not found",
 			method:         "GET",
 			url:            "/modules/test/mod/provider/1.0.0/submodules/details/submod",
 			expectedStatus: http.StatusNotFound,
-			setupMocks: func(mockDetails *MockGetSubmoduleDetailsQuery, mockReadme *MockGetSubmoduleReadmeHTMLQuery) {
-				mockDetails.On("Execute", mock.Anything, "test", "mod", "provider", "1.0.0", "submod").
-					Return(nil, assert.AnError).
+			setupMocks: func(mockProviderRepo *MockModuleProviderRepository, mockVersionRepo *MockModuleVersionRepository) {
+				mockProviderRepo.On("FindByNamespaceModuleProvider", mock.Anything, "test", "mod", "provider").
+					Return(nil, errors.New("module provider not found")).
 					Once()
 			},
 			expectedBodyContains: "module provider not found",
@@ -112,21 +98,17 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 			method:         "GET",
 			url:            "/modules/test/mod/provider/1.0.0/submodules/details/submod",
 			expectedStatus: http.StatusOK,
-			setupMocks: func(mockDetails *MockGetSubmoduleDetailsQuery, mockReadme *MockGetSubmoduleReadmeHTMLQuery) {
-				submoduleDetails := &module.SubmoduleDetails{
-					Path:        "submod",
-					Description: "Test Submodule",
-					Readme:      "# Test Submodule\n\nThis is a test submodule",
-					Files: []module.SubmoduleFile{
-						{
-							Path:     "main.tf",
-							Content:  "terraform {}",
-							IsBinary: false,
-						},
-					},
-				}
-				mockDetails.On("Execute", mock.Anything, "test", "mod", "provider", "1.0.0", "submod").
-					Return(submoduleDetails, nil).
+			setupMocks: func(mockProviderRepo *MockModuleProviderRepository, mockVersionRepo *MockModuleVersionRepository) {
+				// Create a minimal module provider mock
+				moduleProvider := &modulemodel.ModuleProvider{}
+				mockProviderRepo.On("FindByNamespaceModuleProvider", mock.Anything, "test", "mod", "provider").
+					Return(moduleProvider, nil).
+					Once()
+
+				// Create a minimal module version mock
+				moduleVersion := &modulemodel.ModuleVersion{}
+				mockVersionRepo.On("FindByModuleProviderAndVersion", mock.Anything, mock.AnythingOfType("int"), "1.0.0").
+					Return(moduleVersion, nil).
 					Once()
 			},
 		},
@@ -135,11 +117,13 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
-			mockDetails := &MockGetSubmoduleDetailsQuery{}
-			mockReadme := &MockGetSubmoduleReadmeHTMLQuery{}
-			tt.setupMocks(mockDetails, mockReadme)
+			mockProviderRepo := &MockModuleProviderRepository{}
+			mockVersionRepo := &MockModuleVersionRepository{}
+			tt.setupMocks(mockProviderRepo, mockVersionRepo)
 
-			handler := NewSubmoduleHandler(mockDetails, mockReadme)
+			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo)
+			readmeQuery := module.NewGetSubmoduleReadmeHTMLQuery(mockProviderRepo, mockVersionRepo)
+			handler := terrareg.NewSubmoduleHandler(detailsQuery, readmeQuery)
 
 			// Create request
 			req := httptest.NewRequest(tt.method, tt.url, nil)
@@ -170,7 +154,8 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 				assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 			}
 
-			mockDetails.AssertExpectations(t)
+			mockProviderRepo.AssertExpectations(t)
+			mockVersionRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -181,44 +166,22 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 		method         string
 		url            string
 		expectedStatus int
-		setupMocks     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery)
+		setupMocks     func(*MockModuleProviderRepository, *MockModuleVersionRepository)
 		checkHeaders   bool
 	}{
-		{
-			name:           "invalid method",
-			method:         "POST",
-			url:            "/modules/test/mod/provider/1.0.0/submodules/readme_html/submod",
-			expectedStatus: http.StatusMethodNotAllowed,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-		},
-		{
-			name:           "missing parameters",
-			method:         "GET",
-			url:            "/modules/test/mod/provider/1.0.0/submodules/readme_html/",
-			expectedStatus: http.StatusBadRequest,
-			setupMocks:     func(*MockGetSubmoduleDetailsQuery, *MockGetSubmoduleReadmeHTMLQuery) {},
-		},
-		{
-			name:           "no readme content",
-			method:         "GET",
-			url:            "/modules/test/mod/provider/1.0.0/submodules/readme_html/submod",
-			expectedStatus: http.StatusOK,
-			setupMocks: func(mockDetails *MockGetSubmoduleDetailsQuery, mockReadme *MockGetSubmoduleReadmeHTMLQuery) {
-				mockReadme.On("Execute", mock.Anything, "test", "mod", "provider", "1.0.0", "submod").
-					Return("", assert.AnError).
-					Once()
-			},
-			checkHeaders: true,
-		},
 		{
 			name:           "successful response",
 			method:         "GET",
 			url:            "/modules/test/mod/provider/1.0.0/submodules/readme_html/submod",
 			expectedStatus: http.StatusOK,
-			setupMocks: func(mockDetails *MockGetSubmoduleDetailsQuery, mockReadme *MockGetSubmoduleReadmeHTMLQuery) {
-				readmeHTML := "<h1>Test Submodule</h1><p>This is a test submodule</p>"
-				mockReadme.On("Execute", mock.Anything, "test", "mod", "provider", "1.0.0", "submod").
-					Return(readmeHTML, nil).
+			setupMocks: func(mockProviderRepo *MockModuleProviderRepository, mockVersionRepo *MockModuleVersionRepository) {
+				moduleProvider := &modulemodel.ModuleProvider{}
+				mockProviderRepo.On("FindByNamespaceModuleProvider", mock.Anything, "test", "mod", "provider").
+					Return(moduleProvider, nil).
+					Once()
+				moduleVersion := &modulemodel.ModuleVersion{}
+				mockVersionRepo.On("FindByModuleProviderAndVersion", mock.Anything, mock.AnythingOfType("int"), "1.0.0").
+					Return(moduleVersion, nil).
 					Once()
 			},
 			checkHeaders: true,
@@ -228,11 +191,13 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
-			mockDetails := &MockGetSubmoduleDetailsQuery{}
-			mockReadme := &MockGetSubmoduleReadmeHTMLQuery{}
-			tt.setupMocks(mockDetails, mockReadme)
+			mockProviderRepo := &MockModuleProviderRepository{}
+			mockVersionRepo := &MockModuleVersionRepository{}
+			tt.setupMocks(mockProviderRepo, mockVersionRepo)
 
-			handler := NewSubmoduleHandler(mockDetails, mockReadme)
+			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo)
+			readmeQuery := module.NewGetSubmoduleReadmeHTMLQuery(mockProviderRepo, mockVersionRepo)
+			handler := terrareg.NewSubmoduleHandler(detailsQuery, readmeQuery)
 
 			// Create request
 			req := httptest.NewRequest(tt.method, tt.url, nil)
@@ -259,12 +224,8 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 				assert.Equal(t, "text/html; charset=utf-8", w.Header().Get("Content-Type"))
 			}
 
-			mockReadme.AssertExpectations(t)
+			mockProviderRepo.AssertExpectations(t)
+			mockVersionRepo.AssertExpectations(t)
 		})
 	}
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
 }

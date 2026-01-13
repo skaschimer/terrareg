@@ -26,7 +26,11 @@ func NewModuleVersionRepository(db *gorm.DB) (*ModuleVersionRepositoryImpl, erro
 		return nil, fmt.Errorf("db cannot be nil")
 	}
 
-	baseRepo := baserepo.NewBaseRepository(db)
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
+	}
+
 	submoduleLoader, err := NewSubmoduleLoader(db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create submodule loader: %w", err)

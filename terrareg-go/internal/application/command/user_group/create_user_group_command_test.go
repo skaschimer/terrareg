@@ -57,7 +57,8 @@ func TestCreateUserGroupCommand_Success(t *testing.T) {
 			mockRepo.On("Save", ctx, mock.AnythingOfType("*auth.UserGroup")).Return(1, nil).Once()
 
 			// Create command
-			command := NewCreateUserGroupCommand(mockRepo)
+			command, err := NewCreateUserGroupCommand(mockRepo)
+			require.NoError(t, err)
 
 			// Execute
 			siteAdmin := tt.siteAdmin
@@ -114,7 +115,8 @@ func TestCreateUserGroupCommand_InvalidName(t *testing.T) {
 			mockRepo := new(mocks.MockUserGroupRepository)
 
 			// Create command
-			command := NewCreateUserGroupCommand(mockRepo)
+			command, err := NewCreateUserGroupCommand(mockRepo)
+			require.NoError(t, err)
 
 			// Execute
 			siteAdmin := tt.siteAdmin
@@ -141,7 +143,8 @@ func TestCreateUserGroupCommand_SiteAdminNil(t *testing.T) {
 	mockRepo := new(mocks.MockUserGroupRepository)
 
 	// Create command
-	command := NewCreateUserGroupCommand(mockRepo)
+	command, err := NewCreateUserGroupCommand(mockRepo)
+	require.NoError(t, err)
 
 	// Execute with nil site_admin
 	req := CreateUserGroupRequest{
@@ -172,7 +175,8 @@ func TestCreateUserGroupCommand_AlreadyExists(t *testing.T) {
 	mockRepo.On("FindByName", ctx, groupName).Return(existingGroup, nil).Once()
 
 	// Create command
-	command := NewCreateUserGroupCommand(mockRepo)
+	command, err := NewCreateUserGroupCommand(mockRepo)
+	require.NoError(t, err)
 
 	// Execute
 	siteAdmin := true
@@ -202,7 +206,8 @@ func TestCreateUserGroupCommand_FindByNameError(t *testing.T) {
 	mockRepo.On("FindByName", ctx, groupName).Return((*auth.UserGroup)(nil), errors.New("database error")).Once()
 
 	// Create command
-	command := NewCreateUserGroupCommand(mockRepo)
+	command, err := NewCreateUserGroupCommand(mockRepo)
+	require.NoError(t, err)
 
 	// Execute
 	siteAdmin := true
@@ -233,7 +238,8 @@ func TestCreateUserGroupCommand_SaveError(t *testing.T) {
 	mockRepo.On("Save", ctx, mock.AnythingOfType("*auth.UserGroup")).Return(0, errors.New("database error")).Once()
 
 	// Create command
-	command := NewCreateUserGroupCommand(mockRepo)
+	command, err := NewCreateUserGroupCommand(mockRepo)
+	require.NoError(t, err)
 
 	// Execute
 	siteAdmin := true

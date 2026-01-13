@@ -47,8 +47,13 @@ func NewModuleProviderRepository(db *gorm.DB, namespaceRepo repository.Namespace
 		return nil, fmt.Errorf("failed to create submodule loader: %w", err)
 	}
 
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
+	}
+
 	return &ModuleProviderRepositoryImpl{
-		BaseRepository:  baserepo.NewBaseRepository(db),
+		BaseRepository:  baseRepo,
 		namespaceRepo:   namespaceRepo,
 		domainConfig:    domainConfig,
 		submoduleLoader: submoduleLoader,

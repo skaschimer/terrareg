@@ -18,10 +18,15 @@ type ModuleDetailsRepositoryImpl struct {
 }
 
 // NewModuleDetailsRepository creates a new ModuleDetails repository implementation
-func NewModuleDetailsRepository(db *gorm.DB) repository.ModuleDetailsRepository {
-	return &ModuleDetailsRepositoryImpl{
-		BaseRepository: baserepo.NewBaseRepository(db),
+// Returns an error if db is nil
+func NewModuleDetailsRepository(db *gorm.DB) (repository.ModuleDetailsRepository, error) {
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
 	}
+	return &ModuleDetailsRepositoryImpl{
+		BaseRepository: baseRepo,
+	}, nil
 }
 
 // Save saves a new module details entity to the database

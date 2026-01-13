@@ -385,12 +385,28 @@ func NewContainer(
 	}
 	c.GPGKeyRepo = gpgKeyRepo
 
+	// Additional repositories with nil checks (updated)
+	moduleDetailsRepo, err := modulePersistence.NewModuleDetailsRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create module details repository: %w", err)
+	}
+	c.ModuleDetailsRepo = moduleDetailsRepo
+
+	submoduleRepo, err := modulePersistence.NewSubmoduleRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create submodule repository: %w", err)
+	}
+	c.SubmoduleRepo = submoduleRepo
+
+	exampleFileRepo, err := modulePersistence.NewExampleFileRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create example file repository: %w", err)
+	}
+	c.ExampleFileRepo = exampleFileRepo
+
 	// Repositories without nil checks (not yet updated)
 	c.ModuleVersionFileRepo = modulePersistence.NewModuleVersionFileRepository(db.DB)
 	c.ModuleProviderRedirectRepo = modulePersistence.NewModuleProviderRedirectRepository(db.DB)
-	c.ModuleDetailsRepo = modulePersistence.NewModuleDetailsRepository(db.DB)
-	c.SubmoduleRepo = modulePersistence.NewSubmoduleRepository(db.DB)
-	c.ExampleFileRepo = modulePersistence.NewExampleFileRepository(db.DB)
 	c.ProviderRepo = sqldbprovider.NewProviderRepository(db.DB)
 	c.ProviderCategoryRepo = sqldbprovider.NewProviderCategoryRepository(db)
 	c.ProviderLogoRepo = providerLogoRepo.NewProviderLogoRepository()
@@ -483,7 +499,10 @@ func NewContainer(
 	)
 
 	// Initialize foundation transaction services
-	savepointHelper := transaction.NewSavepointHelper(db.DB)
+	savepointHelper, err := transaction.NewSavepointHelper(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create savepoint helper: %w", err)
+	}
 	c.SavepointHelper = savepointHelper
 
 	// Initialize module creation wrapper for atomic module creation
@@ -546,7 +565,11 @@ func NewContainer(
 
 	// Initialize existing domain services
 	c.NamespaceService = moduleService.NewNamespaceService(domainConfig) // Uses DomainConfig for business logic
-	c.AnalyticsRepo = analyticsPersistence.NewAnalyticsRepository(db.DB, c.NamespaceRepo, c.NamespaceService)
+	analyticsRepo, err := analyticsPersistence.NewAnalyticsRepository(db.DB, c.NamespaceRepo, c.NamespaceService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create analytics repository: %w", err)
+	}
+	c.AnalyticsRepo = analyticsRepo
 
 	// Initialize security and module file services (legacy - can be gradually phased out)
 	c.SecurityService = moduleService.NewSecurityService()
@@ -688,7 +711,11 @@ func NewContainer(
 	c.UpdateNamespaceCmd = namespace.NewUpdateNamespaceCommand(c.NamespaceRepo)
 	c.DeleteNamespaceCmd = namespace.NewDeleteNamespaceCommand(c.NamespaceRepo)
 	c.CreateModuleProviderCmd = moduleCmd.NewCreateModuleProviderCommand(c.NamespaceRepo, c.ModuleProviderRepo, moduleAuditService)
-	c.PublishModuleVersionCmd = moduleCmd.NewPublishModuleVersionCommand(c.ModuleProviderRepo, moduleAuditService)
+	publishModuleVersionCmd, err := moduleCmd.NewPublishModuleVersionCommand(c.ModuleProviderRepo, moduleAuditService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create publish module version command: %w", err)
+	}
+	c.PublishModuleVersionCmd = publishModuleVersionCmd
 	c.UpdateModuleProviderSettingsCmd = moduleCmd.NewUpdateModuleProviderSettingsCommand(c.ModuleProviderRepo)
 	c.DeleteModuleProviderCmd = moduleCmd.NewDeleteModuleProviderCommand(c.ModuleProviderRepo, moduleAuditService)
 	c.UploadModuleVersionCmd = moduleCmd.NewUploadModuleVersionCommand(c.ModuleProviderRepo, c.ModuleParser, c.ModuleStorageService, infraConfig, domainConfig) // Uses InfrastructureConfig for file operations, DomainConfig for auto-publish logic
@@ -696,7 +723,11 @@ func NewContainer(
 	c.RecordModuleDownloadCmd = analyticsCmd.NewRecordModuleDownloadCommand(c.ModuleProviderRepo, c.AnalyticsRepo)
 	c.GetModuleVersionFileCmd = moduleCmd.NewGetModuleVersionFileQuery(c.ModuleFileService)
 	c.DeleteModuleVersionCmd = moduleCmd.NewDeleteModuleVersionCommand(c.ModuleProviderRepo, c.ModuleVersionRepo, moduleAuditService)
-	c.GenerateModuleSourceCmd = moduleCmd.NewGenerateModuleSourceCommand(c.ModuleProviderRepo, c.ModuleFileService, c.DomainStorageService)
+	generateModuleSourceCmd, err := moduleCmd.NewGenerateModuleSourceCommand(c.ModuleProviderRepo, c.ModuleFileService, c.DomainStorageService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create generate module source command: %w", err)
+	}
+	c.GenerateModuleSourceCmd = generateModuleSourceCmd
 	c.GetVariableTemplateQuery = moduleCmd.NewGetVariableTemplateQuery(c.ModuleProviderRepo, c.ModuleFileService)
 
 	// Initialize admin login command
@@ -723,10 +754,18 @@ func NewContainer(
 	c.ListNamespacesQuery = module.NewListNamespacesQuery(c.NamespaceRepo)
 	c.NamespaceDetailsQuery = namespaceQuery.NewNamespaceDetailsQuery(c.NamespaceRepo, c.NamespaceService)
 	c.ListModulesQuery = module.NewListModulesQuery(c.ModuleProviderRepo)
-	c.SearchModulesQuery = module.NewSearchModulesQuery(c.ModuleProviderRepo)
+	searchModulesQuery, err := module.NewSearchModulesQuery(c.ModuleProviderRepo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search modules query: %w", err)
+	}
+	c.SearchModulesQuery = searchModulesQuery
 	c.GetModuleProviderQuery = module.NewGetModuleProviderQuery(c.ModuleProviderRepo)
 	c.ListModuleProvidersQuery = moduleQuery.NewListModuleProvidersQuery(c.ModuleProviderRepo)
-	c.GetModuleVersionQuery = moduleQuery.NewGetModuleVersionQuery(c.ModuleProviderRepo)
+	getModuleVersionQuery, err := moduleQuery.NewGetModuleVersionQuery(c.ModuleProviderRepo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create get module version query: %w", err)
+	}
+	c.GetModuleVersionQuery = getModuleVersionQuery
 	c.ListModuleVersionsQuery = moduleQuery.NewListModuleVersionsQuery(c.ModuleProviderRepo) // New query
 	c.GetModuleDownloadQuery = moduleQuery.NewGetModuleDownloadQuery(c.ModuleProviderRepo)
 	c.GetModuleProviderSettingsQuery = moduleQuery.NewGetModuleProviderSettingsQuery(c.ModuleProviderRepo)
@@ -763,7 +802,11 @@ func NewContainer(
 
 	// User group commands and queries
 	c.ListUserGroupsQuery = userGroupQuery.NewListUserGroupsQuery(c.UserGroupRepo, c.NamespaceRepo)
-	c.CreateUserGroupCmd = userGroupCmd.NewCreateUserGroupCommand(c.UserGroupRepo)
+	createUserGroupCmd, err := userGroupCmd.NewCreateUserGroupCommand(c.UserGroupRepo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create create user group command: %w", err)
+	}
+	c.CreateUserGroupCmd = createUserGroupCmd
 	c.DeleteUserGroupCmd = userGroupCmd.NewDeleteUserGroupCommand(c.UserGroupRepo)
 	c.CreateUserGroupNamespacePermissionCmd = userGroupCmd.NewCreateUserGroupNamespacePermissionCommand(c.UserGroupRepo, c.NamespaceRepo)
 	c.DeleteUserGroupNamespacePermissionCmd = userGroupCmd.NewDeleteUserGroupNamespacePermissionCommand(c.UserGroupRepo, c.NamespaceRepo)
@@ -801,8 +844,12 @@ func NewContainer(
 	c.InitialSetupHandler = terrareg.NewInitialSetupHandler(c.GetInitialSetupQuery)
 
 	// Initialize handlers
-	c.NamespaceHandler = terrareg.NewNamespaceHandler(c.ListNamespacesQuery, c.CreateNamespaceCmd, c.UpdateNamespaceCmd, c.DeleteNamespaceCmd, c.NamespaceDetailsQuery)
-	c.ModuleHandler = terrareg.NewModuleHandler(
+	namespaceHandler, err := terrareg.NewNamespaceHandler(c.ListNamespacesQuery, c.CreateNamespaceCmd, c.UpdateNamespaceCmd, c.DeleteNamespaceCmd, c.NamespaceDetailsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create namespace handler: %w", err)
+	}
+	c.NamespaceHandler = namespaceHandler
+	moduleHandler, err := terrareg.NewModuleHandler(
 		c.ListModulesQuery,
 		c.SearchModulesQuery,
 		c.GetModuleProviderQuery,
@@ -832,6 +879,10 @@ func NewContainer(
 		c.NamespaceService,
 		c.AnalyticsRepo,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create module handler: %w", err)
+	}
+	c.ModuleHandler = moduleHandler
 	c.AnalyticsHandler = terrareg.NewAnalyticsHandler(
 		c.GlobalStatsQuery,
 		c.GlobalUsageStatsQuery,

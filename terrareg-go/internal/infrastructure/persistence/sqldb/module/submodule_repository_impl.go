@@ -17,10 +17,15 @@ type SubmoduleRepositoryImpl struct {
 }
 
 // NewSubmoduleRepository creates a new SubmoduleRepository
-func NewSubmoduleRepository(db *gorm.DB) repository.SubmoduleRepository {
-	return &SubmoduleRepositoryImpl{
-		BaseRepository: baserepo.NewBaseRepository(db),
+// Returns an error if db is nil
+func NewSubmoduleRepository(db *gorm.DB) (repository.SubmoduleRepository, error) {
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
 	}
+	return &SubmoduleRepositoryImpl{
+		BaseRepository: baseRepo,
+	}, nil
 }
 
 // Save saves a submodule to the database

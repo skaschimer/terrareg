@@ -143,7 +143,7 @@ func TestCreateAuthorizationCode(t *testing.T) {
 	assert.NotNil(t, resp)
 	assert.NotEmpty(t, resp.Code)
 	assert.Equal(t, "test-state", resp.State)
-	assert.Regexp(t, `^[A-Za-z0-9+/=-]+$`, resp.Code) // Base64 pattern (including URL-safe)
+	assert.Regexp(t, `^[A-Za-z0-9\-_=]+$`, resp.Code) // Base64URL pattern (with optional padding)
 
 	authCodeRepo.AssertExpectations(t)
 }

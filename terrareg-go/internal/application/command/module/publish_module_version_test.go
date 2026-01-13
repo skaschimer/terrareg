@@ -109,7 +109,8 @@ func TestPublishModuleVersion_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create command with proper mock
-	command := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	command, err := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	require.NoError(t, err)
 
 	// Test data
 	req := module.PublishModuleVersionRequest{
@@ -142,7 +143,7 @@ func TestPublishModuleVersion_Success(t *testing.T) {
 	mockAuditService.AssertExpectations(t)
 }
 
-func TestPublishModuleVersion_VersionAlreadyExists(t *testing.T) {
+func TestPublishModuleVersion_IdempotentRepublish(t *testing.T) {
 	// Setup
 	ctx := context.Background()
 	mockRepo := NewMockModuleProviderRepository()
@@ -155,19 +156,22 @@ func TestPublishModuleVersion_VersionAlreadyExists(t *testing.T) {
 	moduleProvider, err := modulemodel.NewModuleProvider(namespace, "testmod", "aws")
 	require.NoError(t, err)
 
-	// Add existing version
+	// Add existing version and mark as published
 	existingDetails := modulemodel.NewModuleDetails(nil)
-	_, err = moduleProvider.PublishVersion("1.0.0", existingDetails, false)
+	existingVersion, err := moduleProvider.PublishVersion("1.0.0", existingDetails, false)
+	require.NoError(t, err)
+	err = existingVersion.Publish()
 	require.NoError(t, err)
 
 	// Save to mock repository
 	err = mockRepo.Save(ctx, moduleProvider)
 	require.NoError(t, err)
 
-	// Create command with proper mock (no expectations since version exists and errors before audit)
-	command := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	// Create command with proper mock (no expectations - already published versions return early without audit)
+	command, err := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	require.NoError(t, err)
 
-	// Test data - trying to publish same version
+	// Test data - trying to publish same version (idempotent)
 	req := module.PublishModuleVersionRequest{
 		Namespace: "testns",
 		Module:    "testmod",
@@ -179,10 +183,11 @@ func TestPublishModuleVersion_VersionAlreadyExists(t *testing.T) {
 	// Execute
 	result, err := command.Execute(ctx, req)
 
-	// Assert
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "version 1.0.0 already exists")
+	// Assert - operation is idempotent, should succeed without audit logging
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "1.0.0", result.Version().String())
+	assert.True(t, result.IsPublished())
 }
 
 func TestPublishModuleVersion_ModuleProviderNotFound(t *testing.T) {
@@ -192,7 +197,8 @@ func TestPublishModuleVersion_ModuleProviderNotFound(t *testing.T) {
 	mockAuditService := new(mocks.MockModuleAuditService)
 
 	// Create command with proper mock (no expectations since provider not found)
-	command := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	command, err := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	require.NoError(t, err)
 
 	// Test data - non-existent module provider
 	req := module.PublishModuleVersionRequest{
@@ -234,7 +240,8 @@ func TestPublishModuleVersion_WithBetaVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create command with proper mock
-	command := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	command, err := module.NewPublishModuleVersionCommand(mockRepo, mockAuditService)
+	require.NoError(t, err)
 
 	// Test data
 	req := module.PublishModuleVersionRequest{

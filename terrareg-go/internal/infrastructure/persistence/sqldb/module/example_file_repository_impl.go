@@ -17,10 +17,15 @@ type ExampleFileRepositoryImpl struct {
 }
 
 // NewExampleFileRepository creates a new ExampleFileRepository
-func NewExampleFileRepository(db *gorm.DB) repository.ExampleFileRepository {
-	return &ExampleFileRepositoryImpl{
-		BaseRepository: baserepo.NewBaseRepository(db),
+// Returns an error if db is nil
+func NewExampleFileRepository(db *gorm.DB) (repository.ExampleFileRepository, error) {
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
 	}
+	return &ExampleFileRepositoryImpl{
+		BaseRepository: baseRepo,
+	}, nil
 }
 
 // Save saves an example file to the database
