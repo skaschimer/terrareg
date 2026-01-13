@@ -15,12 +15,21 @@ import (
 // LocalStorageService implements StorageService for local filesystem
 // This replicates the Python LocalFileStorage class
 type LocalStorageService struct {
-	basePath    string
+	basePath string
+	// PathBuilder for safe path construction (required)
 	pathBuilder service.PathBuilder
 }
 
 // NewLocalStorageService creates a new local storage service
+// Returns an error if basePath is empty or pathBuilder is nil
 func NewLocalStorageService(basePath string, pathBuilder service.PathBuilder) (*LocalStorageService, error) {
+	if basePath == "" {
+		return nil, fmt.Errorf("basePath cannot be empty")
+	}
+	if pathBuilder == nil {
+		return nil, fmt.Errorf("pathBuilder cannot be nil")
+	}
+
 	// Ensure base path exists
 	if err := os.MkdirAll(basePath, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create base directory: %w", err)

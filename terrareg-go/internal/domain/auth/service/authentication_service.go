@@ -14,16 +14,26 @@ import (
 
 // AuthenticationService orchestrates session and cookie operations for authentication flows
 type AuthenticationService struct {
+	// sessionService manages session persistence (required)
 	sessionService *SessionService
-	cookieService  *CookieService
+	// cookieService handles cookie encryption and validation (required)
+	cookieService *CookieService
 }
 
 // NewAuthenticationService creates a new authentication service
-func NewAuthenticationService(sessionService *SessionService, cookieService *CookieService) *AuthenticationService {
+// Returns an error if any required dependency is nil
+func NewAuthenticationService(sessionService *SessionService, cookieService *CookieService) (*AuthenticationService, error) {
+	if sessionService == nil {
+		return nil, fmt.Errorf("sessionService cannot be nil")
+	}
+	if cookieService == nil {
+		return nil, fmt.Errorf("cookieService cannot be nil")
+	}
+
 	return &AuthenticationService{
 		sessionService: sessionService,
 		cookieService:  cookieService,
-	}
+	}, nil
 }
 
 // SessionData contains session information for HTTP handlers

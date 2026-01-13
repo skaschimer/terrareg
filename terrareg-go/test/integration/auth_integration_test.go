@@ -55,7 +55,9 @@ func TestAuthenticationIntegration(t *testing.T) {
 
 	// Create auth service with minimal dependencies
 	cookieService := authservice.NewCookieService(infraConfig)
-	_ = authservice.NewAuthenticationService(sessionService, cookieService)
+	authService, err := authservice.NewAuthenticationService(sessionService, cookieService)
+	require.NoError(t, err)
+	_ = authService
 
 	t.Run("Create session", func(t *testing.T) {
 		// Create a session directly using the repository

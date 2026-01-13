@@ -563,7 +563,7 @@ func NewContainer(
 	c.TransactionProcessingOrchestrator = processingOrchestrator
 
 	// Update module importer service with the orchestrator
-	c.ModuleImporterService = moduleService.NewModuleImporterService(
+	moduleImporterService, err := moduleService.NewModuleImporterService(
 		processingOrchestrator,
 		moduleCreationWrapper,
 		savepointHelper,
@@ -575,6 +575,10 @@ func NewContainer(
 		infraConfig,
 		logger,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create module importer service: %w", err)
+	}
+	c.ModuleImporterService = moduleImporterService
 
 	// Initialize webhook service (updated to use transaction-aware services)
 	c.WebhookService = moduleService.NewWebhookService(
@@ -595,7 +599,11 @@ func NewContainer(
 	c.CookieService = cookieService
 
 	// Initialize authentication service (orchestrates session and cookie operations)
-	c.AuthenticationService = authservice.NewAuthenticationService(sessionService, cookieService)
+	authenticationService, err := authservice.NewAuthenticationService(sessionService, cookieService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create authentication service: %w", err)
+	}
+	c.AuthenticationService = authenticationService
 
 	// Initialize session cleanup service
 	c.SessionCleanupService = authservice.NewSessionCleanupService(

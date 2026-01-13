@@ -24,24 +24,33 @@ import (
 // ModuleImporterService handles module importing with comprehensive
 // transaction processing and rollback capabilities using all core services
 type ModuleImporterService struct {
-	// Core processing orchestrator
+	// Core processing orchestrator (required)
 	processingOrchestrator *TransactionProcessingOrchestrator
-	moduleCreationWrapper  *ModuleCreationWrapperService
-	savepointHelper        *transaction.SavepointHelper
+	// Wraps module creation with transaction safety (required)
+	moduleCreationWrapper *ModuleCreationWrapperService
+	// Provides transaction savepoint management (required)
+	savepointHelper *transaction.SavepointHelper
 
 	// Legacy git operations (for compatibility during transition)
+	// Repository for module provider operations (required)
 	moduleProviderRepo repository.ModuleProviderRepository
-	gitClient          gitService.GitClient
-	storageService     StorageService
-	moduleParser       ModuleParser
-	domainConfig       *domainConfig.DomainConfig
-	infraConfig        *infraConfig.InfrastructureConfig
+	// Git client for repository operations (required)
+	gitClient gitService.GitClient
+	// Storage service for file operations (required)
+	storageService StorageService
+	// Module parser for analyzing module contents (required)
+	moduleParser ModuleParser
+	// Domain-level configuration (required)
+	domainConfig *domainConfig.DomainConfig
+	// Infrastructure-level configuration (required)
+	infraConfig *infraConfig.InfrastructureConfig
 
-	// Logging
+	// Logging (required)
 	logger zerolog.Logger
 }
 
 // NewModuleImporterService creates a new module importer service with transaction capabilities
+// Returns an error if any required dependency is nil
 func NewModuleImporterService(
 	processingOrchestrator *TransactionProcessingOrchestrator,
 	moduleCreationWrapper *ModuleCreationWrapperService,
@@ -53,7 +62,35 @@ func NewModuleImporterService(
 	domainConfig *domainConfig.DomainConfig,
 	infraConfig *infraConfig.InfrastructureConfig,
 	logger zerolog.Logger,
-) *ModuleImporterService {
+) (*ModuleImporterService, error) {
+	if processingOrchestrator == nil {
+		return nil, fmt.Errorf("processingOrchestrator cannot be nil")
+	}
+	if moduleCreationWrapper == nil {
+		return nil, fmt.Errorf("moduleCreationWrapper cannot be nil")
+	}
+	if savepointHelper == nil {
+		return nil, fmt.Errorf("savepointHelper cannot be nil")
+	}
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
+	if gitClient == nil {
+		return nil, fmt.Errorf("gitClient cannot be nil")
+	}
+	if storageService == nil {
+		return nil, fmt.Errorf("storageService cannot be nil")
+	}
+	if moduleParser == nil {
+		return nil, fmt.Errorf("moduleParser cannot be nil")
+	}
+	if domainConfig == nil {
+		return nil, fmt.Errorf("domainConfig cannot be nil")
+	}
+	if infraConfig == nil {
+		return nil, fmt.Errorf("infraConfig cannot be nil")
+	}
+
 	return &ModuleImporterService{
 		processingOrchestrator: processingOrchestrator,
 		moduleCreationWrapper:  moduleCreationWrapper,
@@ -65,7 +102,7 @@ func NewModuleImporterService(
 		domainConfig:           domainConfig,
 		infraConfig:            infraConfig,
 		logger:                 logger,
-	}
+	}, nil
 }
 
 // DomainImportRequest represents a minimal domain import request
