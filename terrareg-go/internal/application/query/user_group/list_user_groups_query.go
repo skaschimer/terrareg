@@ -69,7 +69,7 @@ func (q *ListUserGroupsQuery) Execute(ctx context.Context) ([]UserGroupResponse,
 		}
 
 		// Convert permissions to response format
-		var namespacePerms []NamespacePermissionResponse
+		namespacePerms := []NamespacePermissionResponse{} // Initialize as empty slice, not nil
 		for _, perm := range permissions {
 			// Get namespace name from namespace ID
 			namespace, err := q.namespaceRepo.FindByID(ctx, perm.NamespaceID)
