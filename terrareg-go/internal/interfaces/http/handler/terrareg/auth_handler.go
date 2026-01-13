@@ -545,17 +545,22 @@ func (h *AuthHandler) HandleUserGroupNamespacePermissionsCreate(w http.ResponseW
 	// Parse request body
 	var req userGroupCmd.CreateNamespacePermissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Error().Err(err).Str("path", r.URL.Path).Msg("Failed to decode create namespace permission request")
 		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"message": "Invalid request body",
 		})
 		return
 	}
 
+	log.Info().Str("permission_type", req.PermissionType).Msg("Decoded permission type")
+
 	// Extract user group name and namespace from URL parameters using chi
 	// URL pattern: /v1/terrareg/user-groups/{group}/permissions/{namespace}
 	userGroupName := chi.URLParam(r, "group")
 	namespaceName := chi.URLParam(r, "namespace")
+	log.Info().Str("user_group", userGroupName).Str("namespace", namespaceName).Msg("URL params")
 	if userGroupName == "" || namespaceName == "" {
+		log.Warn().Msg("Missing user group or namespace in URL params")
 		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"message": "User group name and namespace are required",
 		})
@@ -566,6 +571,7 @@ func (h *AuthHandler) HandleUserGroupNamespacePermissionsCreate(w http.ResponseW
 	response, err := h.createNsPermCmd.Execute(ctx, userGroupName, namespaceName, req)
 	if err != nil {
 		// Handle specific errors with appropriate HTTP status codes
+		log.Error().Err(err).Str("user_group", userGroupName).Str("namespace", namespaceName).Msg("Failed to create namespace permission")
 		switch {
 		case errors.Is(err, userGroupCmd.ErrInvalidPermissionType):
 			RespondJSON(w, http.StatusBadRequest, map[string]interface{}{

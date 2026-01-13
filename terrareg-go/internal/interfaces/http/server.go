@@ -309,7 +309,8 @@ func (s *Server) setupRoutes() {
 			r.With(s.authMiddleware.RequireAdmin).Get("/user-groups/{group}", s.handleUserGroupDetails)
 			r.With(s.authMiddleware.RequireAdmin).Delete("/user-groups/{group}", s.handleUserGroupDelete)
 			r.With(s.authMiddleware.RequireAdmin).Get("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissions)
-			r.With(s.authMiddleware.RequireAdmin).Post("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsUpdate)
+			r.With(s.authMiddleware.RequireAdmin).Post("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsCreate)
+			r.With(s.authMiddleware.RequireAdmin).Delete("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsDelete)
 
 			// Auth
 			r.Route("/auth", func(r chi.Router) {
@@ -836,7 +837,13 @@ func (s *Server) handleUserGroupDelete(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUserGroupNamespacePermissions(w http.ResponseWriter, r *http.Request) {
 	s.authHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
 }
+func (s *Server) handleUserGroupNamespacePermissionsCreate(w http.ResponseWriter, r *http.Request) {
+	s.authHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
+}
 func (s *Server) handleUserGroupNamespacePermissionsUpdate(w http.ResponseWriter, r *http.Request) {
+	s.authHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
+}
+func (s *Server) handleUserGroupNamespacePermissionsDelete(w http.ResponseWriter, r *http.Request) {
 	s.authHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
 }
 func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {

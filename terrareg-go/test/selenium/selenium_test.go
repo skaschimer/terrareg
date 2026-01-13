@@ -440,7 +440,7 @@ func (e *Element) GetAttribute(attr string) string {
 	return value
 }
 
-// SelectOption selects an option in a select dropdown.
+// SelectOption selects an option in a select dropdown by value attribute.
 func (st *SeleniumTest) SelectOption(selector, value string) {
 	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
@@ -452,6 +452,30 @@ func (st *SeleniumTest) SelectOption(selector, value string) {
 					select.dispatchEvent(event);
 				})()
 			`, selector, value), nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err)
+}
+
+// SelectOptionByVisibleText selects an option in a select dropdown by visible text.
+// Matches Python: select.select_by_visible_text(text)
+func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					for (var i = 0; i < select.options.length; i++) {
+						if (select.options[i].text === %q) {
+							select.selectedIndex = i;
+							var event = new Event('change', { bubbles: true });
+							select.dispatchEvent(event);
+							return true;
+						}
+				 }
+				 return false;
+				})()
+			`, selector, text), nil).Do(ctx)
 		}),
 	)
 	require.NoError(st.t, err)

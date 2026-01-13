@@ -175,17 +175,21 @@ func testAddUserGroupPermission(t *testing.T) {
 	// Python: user_group_table = self.wait_for_element(By.ID, 'user-group-table')
 	// Python: user_table_rows = user_group_table.find_elements(By.TAG_NAME, 'tr')
 	// Find the row with the user group name
+	_ = st.WaitForElement("#user-group-table")
 
 	// Python: namespace_select = Select(...)
 	// Python: namespace_select.select_by_visible_text('second-namespace')
-	st.SelectOption("#createUserGroupPermission-Namespace-AddPermissionUserGroup", "second-namespace")
+	st.SelectOptionByVisibleText("#createUserGroupPermission-Namespace-AddPermissionUserGroup", "second-namespace")
 
 	// Python: permission_select = Select(...)
 	// Python: permission_select.select_by_visible_text('Modify')
-	st.SelectOption("#createUserGroupPermission-Permission-AddPermissionUserGroup", "Modify")
+	st.SelectOptionByVisibleText("#createUserGroupPermission-Permission-AddPermissionUserGroup", "Modify")
 
 	// Python: self._find_element_by_text(create_user_permission_row, 'Create').click()
-	findElementByTextAndClick(st, "#user-group-table", "Create")
+	// The Python test finds the row AFTER the user group row and clicks Create within that row
+	// In Go, we target the create button within the permission creation row by using the form context
+	// The "Create" button is in the same td as other elements, we need to find it within the row
+	clickCreateButtonInPermissionRow(st)
 
 	// Python: permissions = UserGroupNamespacePermission.get_permissions_by_user_group(user_group)
 	// Python: assert len(permissions) == 1
@@ -194,7 +198,50 @@ func testAddUserGroupPermission(t *testing.T) {
 	// Verify permission is shown in table
 	userGroupTable := st.WaitForElement("#user-group-table")
 	tableText := userGroupTable.Text()
-	assert.Contains(t, tableText, "second-namespace MODIFY")
+	// Table has tabs between columns: "second-namespace\tMODIFY\tDelete"
+	assert.Contains(t, tableText, "second-namespace")
+	assert.Contains(t, tableText, "MODIFY")
+}
+
+// clickCreateButtonInPermissionRow clicks the Create button within the permission creation row.
+// This finds the Create button that is in the same row as the namespace select.
+func clickCreateButtonInPermissionRow(st *SeleniumTest) {
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					// Find the namespace select
+					var namespaceSelect = document.getElementById('createUserGroupPermission-Namespace-AddPermissionUserGroup');
+					if (!namespaceSelect) {
+						console.error('Namespace select not found');
+						return false;
+					}
+
+					// Get the parent row (td -> tr)
+					var td = namespaceSelect.parentElement;
+					var row = td.parentElement;
+
+					// Log the row content for debugging
+					console.log('Row found:', row.textContent);
+
+					// Find the Create button within this row
+					var buttons = row.querySelectorAll('button');
+					console.log('Buttons found in row:', buttons.length);
+					for (var i = 0; i < buttons.length; i++) {
+						console.log('Button text:', buttons[i].textContent);
+						if (buttons[i].textContent === 'Create') {
+							console.log('Clicking Create button');
+							buttons[i].click();
+							return true;
+						}
+					}
+					console.error('Create button not found in row');
+					return false;
+				})()
+			`, nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err, "Failed to find and click Create button in permission row")
 }
 
 // testDeleteNamespacePermission tests deleting namespace permission.
@@ -261,7 +308,7 @@ func testDeleteUserGroup(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Python: Find delete user group button and click
-	findElementByTextAndClick(st, "#user-group-table", "Delete user group")
+	clickDeleteUserGroupButton(st)
 
 	// Wait for the delete operation to complete (AJAX call + table refresh)
 	// Python: assert len(UserGroup.get_all_user_groups()) == 0
@@ -272,6 +319,28 @@ func testDeleteUserGroup(t *testing.T) {
 	userGroupTable := st.WaitForElement("#user-group-table")
 	tableText := userGroupTable.Text()
 	assert.NotContains(t, tableText, "UnittestGroupToDelete (Site admin: No)")
+}
+
+// clickDeleteUserGroupButton clicks the "Delete user group" button for the test user group.
+func clickDeleteUserGroupButton(st *SeleniumTest) {
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					// Find all buttons with text "Delete user group"
+					var buttons = document.querySelectorAll('button');
+					for (var i = 0; i < buttons.length; i++) {
+						if (buttons[i].textContent === 'Delete user group') {
+							buttons[i].click();
+							return true;
+						}
+					}
+					return false;
+				})()
+			`, nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err, "Failed to find and click Delete user group button")
 }
 
 // fillOutUserGroupFieldByLabel finds input field by label within a form and fills out input.
