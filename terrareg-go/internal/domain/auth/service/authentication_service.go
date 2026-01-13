@@ -61,62 +61,42 @@ type AuthenticationContext struct {
 	Permissions     map[string]string
 }
 
-// CreateAuthenticatedSession creates a new session and sets the authentication cookie
-func (as *AuthenticationService) CreateAuthenticatedSession(
+// CreateSessionFromAuthContext creates a new session and sets the authentication cookie
+// using an AuthContext for type-safe access to authentication properties
+func (as *AuthenticationService) CreateSessionFromAuthContext(
 	ctx context.Context,
 	w http.ResponseWriter,
-	authMethod string,
-	providerData map[string]interface{},
+	authCtx auth.AuthContext,
 	ttl *time.Duration,
 ) error {
-	// Convert provider data to JSON bytes
+	// Convert AuthContext to providerData for persistence
+	providerData := authCtx.GetProviderData()
+
+	// Marshal to JSON for database storage
 	providerDataBytes, err := json.Marshal(providerData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal provider data: %w", err)
 	}
 
 	// Create session in database
-	session, err := as.sessionService.CreateSession(ctx, authMethod, providerDataBytes, ttl)
+	session, err := as.sessionService.CreateSession(ctx, string(authCtx.GetProviderType()), providerDataBytes, ttl)
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// Create session data for cookie
+	// Create session data for cookie - use AuthContext methods instead of type assertions
 	sessionData := &SessionData{
 		SessionID:   session.ID,
-		AuthMethod:  authMethod,
-		IsAdmin:     false, // Default to false, can be updated based on auth method
-		SiteAdmin:   false,
-		UserGroups:  []string{},
+		AuthMethod:  string(authCtx.GetProviderType()),
+		IsAdmin:     authCtx.IsAdmin(),
+		SiteAdmin:   false, // TODO: Add IsSiteAdmin() to AuthContext interface if needed
+		UserGroups:  authCtx.GetUserGroupNames(),
 		Expiry:      &session.Expiry,
-		Permissions: make(map[string]string),
+		Permissions: authCtx.GetAllNamespacePermissions(),
 	}
 
-	// Update session data based on auth method
-	switch authMethod {
-	case "ADMIN_API_KEY":
-		sessionData.Username = "admin"
-		sessionData.IsAdmin = true
-		// Extract permissions from provider data if present
-		if permissions, ok := providerData["permissions"].(map[string]string); ok {
-			sessionData.Permissions = permissions
-		}
-	case "OIDC", "SAML", "OAUTH", "GITHUB":
-		// Extract username from provider data
-		// For GitHub, we use "github_username", for others we use "username"
-		username, hasUsername := providerData["username"].(string)
-		if !hasUsername {
-			username, hasUsername = providerData["github_username"].(string)
-		}
-		if hasUsername {
-			sessionData.Username = username
-		}
-		if isAdmin, ok := providerData["is_admin"].(bool); ok {
-			sessionData.IsAdmin = isAdmin
-		}
-		if permissions, ok := providerData["permissions"].(map[string]string); ok {
-			sessionData.Permissions = permissions
-		}
+	if username := authCtx.GetUsername(); username != "" {
+		sessionData.Username = username
 	}
 
 	// Encrypt session data and set cookie
@@ -125,11 +105,17 @@ func (as *AuthenticationService) CreateAuthenticatedSession(
 		return fmt.Errorf("failed to encrypt session data: %w", err)
 	}
 
+	// Calculate maxAge for cookie
+	maxAge := 24 * 60 * 60 // Default 24 hours
+	if ttl != nil {
+		maxAge = int(ttl.Seconds())
+	}
+
 	// Set session cookie
 	as.cookieService.SetCookie(w, as.cookieService.GetSessionCookieName(), encryptedSession, &CookieOptions{
 		Path:     "/",
-		MaxAge:   int(ttl.Seconds()), // Convert to seconds
-		Secure:   true,               // Always use secure cookies for authenticated sessions
+		MaxAge:   maxAge,
+		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

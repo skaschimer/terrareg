@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	provider_source_model "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
@@ -100,13 +101,13 @@ func (m *MockProviderSourceInstance) GetUserOrganizations(ctx context.Context, a
 
 // MockAuthenticationService for testing
 type MockAuthenticationService struct {
-	createSessionFunc func(ctx context.Context, w http.ResponseWriter, authMethod string, providerData map[string]interface{}, ttl *time.Duration) error
+	createSessionFunc func(ctx context.Context, w http.ResponseWriter, authCtx auth.AuthContext, ttl *time.Duration) error
 	validateFunc      func(ctx context.Context, r *http.Request) (*authservice.AuthenticationContext, error)
 }
 
-func (m *MockAuthenticationService) CreateAuthenticatedSession(ctx context.Context, w http.ResponseWriter, authMethod string, providerData map[string]interface{}, ttl *time.Duration) error {
+func (m *MockAuthenticationService) CreateSessionFromAuthContext(ctx context.Context, w http.ResponseWriter, authCtx auth.AuthContext, ttl *time.Duration) error {
 	if m.createSessionFunc != nil {
-		return m.createSessionFunc(ctx, w, authMethod, providerData, ttl)
+		return m.createSessionFunc(ctx, w, authCtx, ttl)
 	}
 	return nil
 }
@@ -270,33 +271,33 @@ func TestProviderSourceHandler_HandleCallback_Success(t *testing.T) {
 	}
 
 	authService := &MockAuthenticationService{
-		createSessionFunc: func(ctx context.Context, w http.ResponseWriter, authMethod string, providerData map[string]interface{}, ttl *time.Duration) error {
+		createSessionFunc: func(ctx context.Context, w http.ResponseWriter, authCtx auth.AuthContext, ttl *time.Duration) error {
 			sessionCreated = true
 
-			// Verify provider data
-			if providerData["provider_source"] != "test-github" {
-				t.Errorf("provider_data[provider_source] = %v, want test-github", providerData["provider_source"])
+			// Verify AuthContext properties
+			if authCtx.GetUsername() != expectedUsername {
+				t.Errorf("GetUsername() = %v, want %s", authCtx.GetUsername(), expectedUsername)
 			}
 
-			if providerData["github_username"] != expectedUsername {
-				t.Errorf("provider_data[github_username] = %v, want %s", providerData["github_username"], expectedUsername)
+			if authCtx.GetProviderType() != auth.AuthMethodGitHub {
+				t.Errorf("GetProviderType() = %v, want %s", authCtx.GetProviderType(), auth.AuthMethodGitHub)
 			}
 
-			orgs, ok := providerData["organisations"].(map[string]string)
-			if !ok {
-				t.Error("provider_data[organisations] is not a map[string]string")
-				return nil
+			// Verify permissions (username and orgs should have FULL access)
+			permissions := authCtx.GetAllNamespacePermissions()
+			if len(permissions) != len(expectedOrgs)+1 { // +1 for username
+				t.Errorf("GetAllNamespacePermissions() returned %d permissions, want %d", len(permissions), len(expectedOrgs)+1)
 			}
 
-			// Check username is in organizations
-			if orgs[expectedUsername] != "GITHUB_USER" {
-				t.Errorf("organisations[%s] = %v, want GITHUB_USER", expectedUsername, orgs[expectedUsername])
+			// Check username has FULL permission
+			if permissions[expectedUsername] != "FULL" {
+				t.Errorf("permissions[%s] = %v, want FULL", expectedUsername, permissions[expectedUsername])
 			}
 
-			// Check organizations are included
+			// Check organizations have FULL permission
 			for _, org := range expectedOrgs {
-				if orgs[org] != "GITHUB_ORGANISATION" {
-					t.Errorf("organisations[%s] = %v, want GITHUB_ORGANISATION", org, orgs[org])
+				if permissions[org] != "FULL" {
+					t.Errorf("permissions[%s] = %v, want FULL", org, permissions[org])
 				}
 			}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/auth"
 	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
@@ -303,28 +304,20 @@ func (h *AuthHandler) HandleSAMLACS(w http.ResponseWriter, r *http.Request) {
 		Str("ip_address", getClientIP(r)).
 		Msg("Processing SAML authentication")
 
-	// TODO: This would ideally use a SAML callback command, but for now we'll
-	// call the SAML service directly since the command layer might not be implemented
-	// In a full DDD implementation, this would be:
-	// response, err := h.samlCallbackCmd.Execute(ctx, &authCmd.SamlCallbackRequest{
-	//     SAMLResponse: samlResponse,
-	//     RelayState:   relayState,
-	// })
+	// TODO: This would ideally use a SAML callback command to properly validate
+	// the SAML response and extract user attributes.
+	// For now, create a minimal SamlAuthContext with placeholder data.
+	// Production implementation should:
+	// 1. Validate SAML response signature
+	// 2. Decrypt encrypted assertions
+	// 3. Extract user attributes (nameID, email, username, groups, etc.)
 
-	// For now, we need to create a session directly
-	// This is a temporary implementation that should be replaced with proper command/query pattern
-
-	// Create basic session data for now - in production, this should use the SAML service
-	// to validate the response and extract user information
-	sessionData := map[string]interface{}{
-		"auth_method":   "saml",
-		"authenticated": true,
-		"relay_state":   relayState,
-		"saml_response": samlResponse,
-	}
+	// Create minimal SamlAuthContext - proper SAML parsing is TODO
+	samlAuthCtx := auth.NewSamlAuthContext(ctx, relayState, make(map[string][]string))
+	samlAuthCtx.ExtractUserDetails() // Extract what we can from attributes
 
 	// Create session using the authentication service
-	err := h.authService.CreateAuthenticatedSession(ctx, w, "saml", sessionData, nil)
+	err := h.authService.CreateSessionFromAuthContext(ctx, w, samlAuthCtx, nil)
 	if err != nil {
 		log.Error().
 			Err(err).

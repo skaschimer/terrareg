@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
@@ -23,7 +24,7 @@ type ProviderSourceFactoryInterface interface {
 // AuthenticationServiceInterface defines the interface for authentication service
 // This allows for mocking in tests
 type AuthenticationServiceInterface interface {
-	CreateAuthenticatedSession(ctx context.Context, w http.ResponseWriter, authMethod string, providerData map[string]interface{}, ttl *time.Duration) error
+	CreateSessionFromAuthContext(ctx context.Context, w http.ResponseWriter, authCtx auth.AuthContext, ttl *time.Duration) error
 	ValidateRequest(ctx context.Context, r *http.Request) (*authservice.AuthenticationContext, error)
 }
 
@@ -126,27 +127,19 @@ func (h *ProviderSourceHandler) HandleCallback(w http.ResponseWriter, r *http.Re
 	organizations := providerSource.GetUserOrganizations(ctx, accessToken)
 
 	// Build organizations map with namespace types
-	orgsMap := make(map[string]string)
+	organizationsMap := make(map[string]sqldb.NamespaceType)
 	for _, org := range organizations {
-		orgsMap[org] = string(sqldb.NamespaceTypeGithubOrg)
+		organizationsMap[org] = sqldb.NamespaceTypeGithubOrg
 	}
 	// Add user's own username as GITHUB_USER namespace
-	orgsMap[username] = string(sqldb.NamespaceTypeGithubUser)
+	organizationsMap[username] = sqldb.NamespaceTypeGithubUser
 
-	// Build provider data for session
-	// This matches the Python implementation structure
-	providerData := map[string]interface{}{
-		"provider_source": providerSourceName,
-		"github_username": username,
-		"organisations":   orgsMap,
-		"provider_source_auth": map[string]interface{}{
-			"github_access_token": accessToken,
-		},
-	}
+	// Create GitHubAuthContext from authentication data
+	githubAuthCtx := auth.NewGitHubAuthContext(ctx, providerSourceName, username, organizationsMap)
 
 	// Create session with 24 hour TTL (matching Python default)
 	ttl := 24 * time.Hour
-	err = h.authService.CreateAuthenticatedSession(ctx, w, "GITHUB", providerData, &ttl)
+	err = h.authService.CreateSessionFromAuthContext(ctx, w, githubAuthCtx, &ttl)
 	if err != nil {
 		log.Error().Err(err).Str("provider_source", providerSourceName).Str("username", username).Msg("Failed to create session")
 		h.writeError(w, http.StatusInternalServerError, "Failed to create session")
