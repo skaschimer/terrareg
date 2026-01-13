@@ -10,6 +10,7 @@ import (
 
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
+	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	testutils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
@@ -24,10 +25,11 @@ func TestGetGlobalModuleUsage_WithNoAnalytics(t *testing.T) {
 
 	// Create repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
 	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	// Create query
@@ -72,10 +74,11 @@ func TestGetGlobalModuleUsage_ExcludingNoEnvironment(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
 	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -177,10 +180,11 @@ func TestGetGlobalModuleUsage_IncludingEmptyAuthToken(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
 	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -243,10 +247,11 @@ func TestRecordModuleDownload_BasicUse(t *testing.T) {
 
 	// Create repositories and command
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
 	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	cmd := analyticsCmd.NewRecordModuleDownloadCommand(moduleProviderRepo, analyticsRepo)
@@ -291,10 +296,11 @@ func TestRecordModuleDownload_InvalidModuleVersion(t *testing.T) {
 
 	// Create repositories and command
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
 	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	cmd := analyticsCmd.NewRecordModuleDownloadCommand(moduleProviderRepo, analyticsRepo)
@@ -335,7 +341,9 @@ func TestGetDownloadStats(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -394,7 +402,9 @@ func TestGetDownloadsByVersionID(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -453,7 +463,9 @@ func TestGetMostDownloadedThisWeek(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -506,7 +518,9 @@ func TestGetMostDownloadedThisWeek_NoAnalytics(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	// Get most downloaded this week - should return nil when no analytics
@@ -528,7 +542,9 @@ func TestGetModuleProviderID(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	// Get module provider ID
@@ -546,7 +562,9 @@ func TestGetModuleProviderID_NotFound(t *testing.T) {
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepo, err := analytics.NewAnalyticsRepository(db.DB, namespaceRepo, namespaceSvc)
 	require.NoError(t, err)
 
 	// Try to get module provider ID for non-existent provider

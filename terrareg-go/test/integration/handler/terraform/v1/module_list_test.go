@@ -8,9 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
-	v1 "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform/v1"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -24,12 +21,8 @@ func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
-	// Create handler with required dependencies
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	handler := v1.NewModuleListHandler(listModulesQuery)
+	// Create handler using testutils generator
+	handler := testutils.CreateModuleListHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -59,11 +52,7 @@ func TestModuleListHandler_HandleListModules_Empty(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create handler without test data
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	handler := v1.NewModuleListHandler(listModulesQuery)
+	handler := testutils.CreateModuleListHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -100,11 +89,7 @@ func TestModuleListHandler_HandleListModules_MultipleModules(t *testing.T) {
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider3.ID, "1.5.0")
 
 	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	handler := v1.NewModuleListHandler(listModulesQuery)
+	handler := testutils.CreateModuleListHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -132,11 +117,7 @@ func TestModuleListHandler_HandleListModules_WithUnpublished(t *testing.T) {
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0") // Not published
 
 	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	handler := v1.NewModuleListHandler(listModulesQuery)
+	handler := testutils.CreateModuleListHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -174,11 +155,7 @@ func TestModuleListHandler_HandleListModules_Verified(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	handler := v1.NewModuleListHandler(listModulesQuery)
+	handler := testutils.CreateModuleListHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)

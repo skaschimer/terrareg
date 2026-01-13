@@ -29,12 +29,22 @@ func NewGitImportService(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	storageService moduleService.StorageService,
 	infraConfig *infraConfig.InfrastructureConfig,
-) *GitImportService {
+) (*GitImportService, error) {
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
+	if storageService == nil {
+		return nil, fmt.Errorf("storageService cannot be nil")
+	}
+	if infraConfig == nil {
+		return nil, fmt.Errorf("infraConfig cannot be nil")
+	}
+
 	return &GitImportService{
 		moduleProviderRepo: moduleProviderRepo,
 		storageService:     storageService,
 		infraConfig:        infraConfig,
-	}
+	}, nil
 }
 
 // ImportModuleVersionResult represents the result of a Git import

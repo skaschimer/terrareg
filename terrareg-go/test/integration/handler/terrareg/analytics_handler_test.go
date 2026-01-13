@@ -7,13 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
-	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
-	analyticsRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -31,15 +25,8 @@ func TestAnalyticsHandler_HandleGlobalStatsSummary_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 5, timestamp)
 
-	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalStatsQuery := analyticsQuery.NewGlobalStatsQuery(namespaceRepository, moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(globalStatsQuery, nil, nil, nil, nil, nil, nil)
+	// Create handler using testutils
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/stats_summary", nil)
@@ -67,14 +54,7 @@ func TestAnalyticsHandler_HandleGlobalStatsSummary_Empty(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create handler with no data
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalStatsQuery := analyticsQuery.NewGlobalStatsQuery(namespaceRepository, moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(globalStatsQuery, nil, nil, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/stats_summary", nil)
@@ -97,14 +77,7 @@ func TestAnalyticsHandler_HandleGlobalStatsSummary_Structure(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalStatsQuery := analyticsQuery.NewGlobalStatsQuery(namespaceRepository, moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(globalStatsQuery, nil, nil, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/stats_summary", nil)
 	w := httptest.NewRecorder()
@@ -141,13 +114,8 @@ func TestAnalyticsHandler_HandleMostRecentlyPublished_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 10, timestamp)
 
-	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostRecentlyPublishedQuery := analyticsQuery.NewGetMostRecentlyPublishedQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, getMostRecentlyPublishedQuery, nil, nil)
+	// Create handler using testutils
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	// Create request
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_recently_published_module_version", nil)
@@ -178,12 +146,7 @@ func TestAnalyticsHandler_HandleMostRecentlyPublished_NotFound(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create handler with no data
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostRecentlyPublishedQuery := analyticsQuery.NewGetMostRecentlyPublishedQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, getMostRecentlyPublishedQuery, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_recently_published_module_version", nil)
 	w := httptest.NewRecorder()
@@ -216,12 +179,7 @@ func TestAnalyticsHandler_HandleMostRecentlyPublished_Multiple(t *testing.T) {
 	testutils.CreateAnalyticsData(t, db, moduleVersion1.ID, 5, timestamp)
 	testutils.CreateAnalyticsData(t, db, moduleVersion2.ID, 3, timestamp)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostRecentlyPublishedQuery := analyticsQuery.NewGetMostRecentlyPublishedQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, getMostRecentlyPublishedQuery, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_recently_published_module_version", nil)
 	w := httptest.NewRecorder()
@@ -249,13 +207,8 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 15, timestamp)
 
-	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostDownloadedThisWeekQuery := analyticsQuery.NewGetMostDownloadedThisWeekQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, getMostDownloadedThisWeekQuery, nil)
+	// Create handler using testutils
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_downloaded_module_provider_this_week", nil)
 	w := httptest.NewRecorder()
@@ -279,12 +232,7 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_NotFound(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostDownloadedThisWeekQuery := analyticsQuery.NewGetMostDownloadedThisWeekQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, getMostDownloadedThisWeekQuery, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_downloaded_module_provider_this_week", nil)
 	w := httptest.NewRecorder()
@@ -318,12 +266,7 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_Multiple(t *testing.T) {
 		testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion2.ID, timestamp, "1.5.0", "token", "auth", "prod", "test-namespace", "module2", "aws")
 	}
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getMostDownloadedThisWeekQuery := analyticsQuery.NewGetMostDownloadedThisWeekQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, getMostDownloadedThisWeekQuery, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/most_downloaded_module_provider_this_week", nil)
 	w := httptest.NewRecorder()
@@ -349,12 +292,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 25, timestamp)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getDownloadSummaryQuery := analyticsQuery.NewGetDownloadSummaryQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, getDownloadSummaryQuery, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/modules/test-namespace/test-module/aws/downloads/summary", nil)
 	w := httptest.NewRecorder()
@@ -386,12 +324,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_NotFound(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getDownloadSummaryQuery := analyticsQuery.NewGetDownloadSummaryQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, getDownloadSummaryQuery, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/modules/nonexistent/module/aws/downloads/summary", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -423,12 +356,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_PathParams(t *testing.T) 
 	timestamp := time.Now()
 	testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion.ID, timestamp, "1.4.0", "token-123", "auth-456", "dev", "my-namespace", "my-module", "gcp")
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getDownloadSummaryQuery := analyticsQuery.NewGetDownloadSummaryQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, getDownloadSummaryQuery, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/modules/my-namespace/my-module/gcp/downloads/summary", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -461,12 +389,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Format(t *testing.T) {
 		testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion.ID, timestamp, "1.5.0", "token", "auth", "prod", "format-ns", "format-module", "azurerm")
 	}
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getDownloadSummaryQuery := analyticsQuery.NewGetDownloadSummaryQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, getDownloadSummaryQuery, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/modules/format-ns/format-module/azurerm/downloads/summary", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -505,12 +428,7 @@ func TestAnalyticsHandler_HandleTokenVersions_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion.ID, timestamp, "1.5.0", "my-token", "auth-token", "production", "test-namespace", "test-module", "aws")
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getTokenVersionsQuery := analyticsQuery.NewGetTokenVersionsQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, nil, getTokenVersionsQuery)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/test-namespace/test-module/aws/token_versions", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -539,12 +457,7 @@ func TestAnalyticsHandler_HandleTokenVersions_NotFound(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getTokenVersionsQuery := analyticsQuery.NewGetTokenVersionsQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, nil, getTokenVersionsQuery)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/nonexistent/module/aws/token_versions", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -566,12 +479,7 @@ func TestAnalyticsHandler_HandleTokenVersions_MissingParams(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getTokenVersionsQuery := analyticsQuery.NewGetTokenVersionsQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, nil, getTokenVersionsQuery)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics///token_versions", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -604,12 +512,7 @@ func TestAnalyticsHandler_HandleTokenVersions_Format(t *testing.T) {
 	time.Sleep(time.Millisecond) // Ensure different timestamps
 	testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion.ID, timestamp.Add(time.Minute), "1.7.0", "token-2", "auth-2", "dev", "format-ns", "format-module", "aws")
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	getTokenVersionsQuery := analyticsQuery.NewGetTokenVersionsQuery(analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, nil, nil, nil, nil, nil, getTokenVersionsQuery)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/format-ns/format-module/aws/token_versions", nil)
 	req = testutils.AddChiContext(t, req, map[string]string{
@@ -651,14 +554,7 @@ func TestAnalyticsHandler_HandleGlobalUsageStats_Success(t *testing.T) {
 	timestamp := time.Now()
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 7, timestamp)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalUsageStatsQuery := analyticsQuery.NewGlobalUsageStatsQuery(moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, globalUsageStatsQuery, nil, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/usage_stats", nil)
 	w := httptest.NewRecorder()
@@ -681,14 +577,7 @@ func TestAnalyticsHandler_HandleGlobalUsageStats_Empty(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalUsageStatsQuery := analyticsQuery.NewGlobalUsageStatsQuery(moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, globalUsageStatsQuery, nil, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/usage_stats", nil)
 	w := httptest.NewRecorder()
@@ -723,14 +612,7 @@ func TestAnalyticsHandler_HandleGlobalUsageStats_Structure(t *testing.T) {
 		testutils.CreateAnalyticsDataWithDetails(t, db, moduleVersion2.ID, timestamp, "1.5.0", "token", "auth", "prod", "struct-ns", "struct-module2", "gcp")
 	}
 
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
-	require.NoError(t, err)
-	namespaceSvc := namespaceService.NewNamespaceService(testutils.CreateTestDomainConfig(t))
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-	globalUsageStatsQuery := analyticsQuery.NewGlobalUsageStatsQuery(moduleProviderRepository, analyticsRepository)
-	handler := terrareg.NewAnalyticsHandler(nil, globalUsageStatsQuery, nil, nil, nil, nil, nil)
+	handler := testutils.CreateAnalyticsHandler(t, db)
 
 	req := httptest.NewRequest("GET", "/v1/terrareg/analytics/global/usage_stats", nil)
 	w := httptest.NewRecorder()

@@ -28,7 +28,9 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/terraform-aws-modules/submodule", "Submodule description", "", nil)
 
 	// Create handler with repositories
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
@@ -59,9 +61,14 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 
 // TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters tests missing required path parameters
 func TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters(t *testing.T) {
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
 	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
@@ -114,7 +121,9 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_Success(t *testing.T) {
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/test-submodule", "Test submodule", "", nil)
 
 	// Create handler with repositories
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
@@ -153,7 +162,9 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 	// Don't create a submodule - testing the case where it doesn't exist
 
 	// Create handler with repositories
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, nil, nil)
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
@@ -182,9 +193,14 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 
 // TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters tests missing required path parameters
 func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters(t *testing.T) {
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(nil, nil, nil)
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
-	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(nil)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
 	getSubmoduleReadmeHTMLQuery := moduleQuery.NewGetSubmoduleReadmeHTMLQuery(moduleProviderRepository, moduleVersionRepository)
 	handler := terrareg.NewSubmoduleHandler(nil, getSubmoduleReadmeHTMLQuery)

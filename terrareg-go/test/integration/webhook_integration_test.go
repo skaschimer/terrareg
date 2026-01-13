@@ -42,7 +42,8 @@ func TestGitHubWebhookIntegration(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -300,7 +301,8 @@ func TestBitbucketWebhookIntegration(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 
 	ctx := context.Background()

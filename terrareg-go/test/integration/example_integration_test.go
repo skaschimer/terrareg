@@ -21,7 +21,8 @@ func TestExampleIntegration(t *testing.T) {
 
 	// Setup repositories with correct import paths
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 	moduleVersionRepo, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
@@ -88,7 +89,8 @@ func TestSubmoduleIntegrationSimple(t *testing.T) {
 
 	// Setup repositories
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepo, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
 	require.NoError(t, err)
 	moduleVersionRepo, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)

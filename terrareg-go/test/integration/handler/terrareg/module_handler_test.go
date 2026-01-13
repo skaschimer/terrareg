@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	analyticsRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
@@ -36,10 +37,12 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -90,10 +93,12 @@ func TestModuleHandler_HandleModuleList_Empty(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -138,10 +143,12 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -188,10 +195,12 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModulesQuery := moduleQuery.NewListModulesQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -236,10 +245,12 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -297,10 +308,12 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -345,10 +358,12 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -399,11 +414,13 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
 	require.NoError(t, err)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -472,11 +489,13 @@ func TestModuleHandler_HandleModuleSearch_WithFilters(t *testing.T) {
 
 			// Create handler
 			namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-			moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+			domainConfig := testutils.CreateTestDomainConfig(t)
+			moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 			require.NoError(t, err)
 			searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
 			require.NoError(t, err)
-			analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+			namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+			analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 			require.NoError(t, err)
 
 			handler := terrareg.NewModuleReadHandlerForTesting(
@@ -514,11 +533,13 @@ func TestModuleHandler_HandleModuleSearch_EmptyResults(t *testing.T) {
 
 	// Create handler (no test data)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	searchModulesQuery, err := moduleQuery.NewSearchModulesQuery(moduleProviderRepository)
 	require.NoError(t, err)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -563,10 +584,12 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
@@ -615,10 +638,12 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, nil)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
 	require.NoError(t, err)
 	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, nil)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
 	require.NoError(t, err)
 
 	handler := terrareg.NewModuleReadHandlerForTesting(
