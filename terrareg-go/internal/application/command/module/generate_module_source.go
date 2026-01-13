@@ -14,22 +14,36 @@ import (
 
 // GenerateModuleSourceCommand handles generating source archives for module versions
 type GenerateModuleSourceCommand struct {
+	// moduleProviderRepo handles module provider persistence (required)
 	moduleProviderRepo moduleRepo.ModuleProviderRepository
-	moduleFileService  *moduleService.ModuleFileService
-	storageService     storageService.StorageService
+	// moduleFileService handles module file operations (required)
+	moduleFileService *moduleService.ModuleFileService
+	// storageService handles storage operations (required)
+	storageService storageService.StorageService
 }
 
 // NewGenerateModuleSourceCommand creates a new generate module source command
+// Returns an error if any required dependency is nil
 func NewGenerateModuleSourceCommand(
 	moduleProviderRepo moduleRepo.ModuleProviderRepository,
 	moduleFileService *moduleService.ModuleFileService,
 	storageService storageService.StorageService,
-) *GenerateModuleSourceCommand {
+) (*GenerateModuleSourceCommand, error) {
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
+	if moduleFileService == nil {
+		return nil, fmt.Errorf("moduleFileService cannot be nil")
+	}
+	if storageService == nil {
+		return nil, fmt.Errorf("storageService cannot be nil")
+	}
+
 	return &GenerateModuleSourceCommand{
 		moduleProviderRepo: moduleProviderRepo,
 		moduleFileService:  moduleFileService,
 		storageService:     storageService,
-	}
+	}, nil
 }
 
 // GenerateModuleSourceRequest represents a request to generate module source

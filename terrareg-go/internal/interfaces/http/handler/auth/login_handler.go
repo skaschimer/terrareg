@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog"
@@ -12,22 +13,33 @@ import (
 
 // LoginHandler handles authentication requests
 type LoginHandler struct {
-	createSessionCmd     *auth.CreateSessionCommand
+	// createSessionCmd handles session creation (required)
+	createSessionCmd *auth.CreateSessionCommand
+	// cookieSessionService handles cookie operations (required)
 	cookieSessionService *service.CookieSessionService
-	logger               zerolog.Logger
+	// logger for logging (required)
+	logger zerolog.Logger
 }
 
 // NewLoginHandler creates a new LoginHandler
+// Returns an error if any required dependency is nil
 func NewLoginHandler(
 	createSessionCmd *auth.CreateSessionCommand,
 	cookieSessionService *service.CookieSessionService,
 	logger zerolog.Logger,
-) *LoginHandler {
+) (*LoginHandler, error) {
+	if createSessionCmd == nil {
+		return nil, fmt.Errorf("createSessionCmd cannot be nil")
+	}
+	if cookieSessionService == nil {
+		return nil, fmt.Errorf("cookieSessionService cannot be nil")
+	}
+
 	return &LoginHandler{
 		createSessionCmd:     createSessionCmd,
 		cookieSessionService: cookieSessionService,
 		logger:               logger,
-	}
+	}, nil
 }
 
 // LoginRequest represents a login request

@@ -16,22 +16,36 @@ type SessionManager interface {
 
 // CSRFService handles CSRF token operations
 type CSRFService struct {
+	// tokenGenerator generates CSRF tokens (required)
 	tokenGenerator csrf.TokenGenerator
+	// tokenValidator validates CSRF tokens (required)
 	tokenValidator csrf.TokenValidator
+	// sessionManager manages user sessions (required)
 	sessionManager SessionManager
 }
 
 // NewCSRFService creates a new CSRF service
+// Returns an error if any required dependency is nil
 func NewCSRFService(
 	tokenGenerator csrf.TokenGenerator,
 	tokenValidator csrf.TokenValidator,
 	sessionManager SessionManager,
-) *CSRFService {
+) (*CSRFService, error) {
+	if tokenGenerator == nil {
+		return nil, fmt.Errorf("tokenGenerator cannot be nil")
+	}
+	if tokenValidator == nil {
+		return nil, fmt.Errorf("tokenValidator cannot be nil")
+	}
+	if sessionManager == nil {
+		return nil, fmt.Errorf("sessionManager cannot be nil")
+	}
+
 	return &CSRFService{
 		tokenGenerator: tokenGenerator,
 		tokenValidator: tokenValidator,
 		sessionManager: sessionManager,
-	}
+	}, nil
 }
 
 // GetOrCreateSessionToken gets existing CSRF token from session or creates new session

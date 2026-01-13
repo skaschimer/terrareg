@@ -17,12 +17,17 @@ const SessionIDLength = 32
 
 // SessionRepositoryImpl implements the session repository using GORM
 type SessionRepositoryImpl struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
 // NewSessionRepository creates a new session repository
-func NewSessionRepository(db *gorm.DB) *SessionRepositoryImpl {
-	return &SessionRepositoryImpl{db: db}
+// Returns an error if db is nil
+func NewSessionRepository(db *gorm.DB) (*SessionRepositoryImpl, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	return &SessionRepositoryImpl{db: db}, nil
 }
 
 // Create creates a new session

@@ -12,14 +12,19 @@ import (
 
 // GetModuleVersionQuery handles retrieving a specific module version
 type GetModuleVersionQuery struct {
+	// moduleProviderRepo handles module provider persistence (required)
 	moduleProviderRepo repository.ModuleProviderRepository
 }
 
 // NewGetModuleVersionQuery creates a new get module version query
-func NewGetModuleVersionQuery(moduleProviderRepo repository.ModuleProviderRepository) *GetModuleVersionQuery {
+// Returns an error if moduleProviderRepo is nil
+func NewGetModuleVersionQuery(moduleProviderRepo repository.ModuleProviderRepository) (*GetModuleVersionQuery, error) {
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
 	return &GetModuleVersionQuery{
 		moduleProviderRepo: moduleProviderRepo,
-	}
+	}, nil
 }
 
 // Execute executes the query

@@ -13,14 +13,19 @@ import (
 
 // auditHistoryRepositoryImpl implements the audit history repository interface
 type auditHistoryRepositoryImpl struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
 // NewAuditHistoryRepository creates a new audit history repository
-func NewAuditHistoryRepository(db *gorm.DB) repository.AuditHistoryRepository {
+// Returns an error if db is nil
+func NewAuditHistoryRepository(db *gorm.DB) (repository.AuditHistoryRepository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
 	return &auditHistoryRepositoryImpl{
 		db: db,
-	}
+	}, nil
 }
 
 // Create persists a new audit history entry

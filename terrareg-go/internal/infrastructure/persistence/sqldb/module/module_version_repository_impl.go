@@ -15,15 +15,27 @@ import (
 // ModuleVersionRepositoryImpl implements the module version repository using GORM
 type ModuleVersionRepositoryImpl struct {
 	*baserepo.BaseRepository
+	// submoduleLoader handles loading submodules and examples (required)
 	submoduleLoader *SubmoduleLoader
 }
 
 // NewModuleVersionRepository creates a new module version repository
-func NewModuleVersionRepository(db *gorm.DB) *ModuleVersionRepositoryImpl {
-	return &ModuleVersionRepositoryImpl{
-		BaseRepository:  baserepo.NewBaseRepository(db),
-		submoduleLoader: NewSubmoduleLoader(db),
+// Returns an error if db is nil
+func NewModuleVersionRepository(db *gorm.DB) (*ModuleVersionRepositoryImpl, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
 	}
+
+	baseRepo := baserepo.NewBaseRepository(db)
+	submoduleLoader, err := NewSubmoduleLoader(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create submodule loader: %w", err)
+	}
+
+	return &ModuleVersionRepositoryImpl{
+		BaseRepository:  baseRepo,
+		submoduleLoader: submoduleLoader,
+	}, nil
 }
 
 // FindByModuleProvider retrieves module versions for a specific module provider

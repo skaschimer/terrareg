@@ -12,14 +12,19 @@ import (
 // CreateUserGroupCommand handles creating a new user group
 // Matches Python: UserGroup.create(name, site_admin)
 type CreateUserGroupCommand struct {
+	// userGroupRepo handles user group persistence (required)
 	userGroupRepo repository.UserGroupRepository
 }
 
 // NewCreateUserGroupCommand creates a new create user group command
-func NewCreateUserGroupCommand(userGroupRepo repository.UserGroupRepository) *CreateUserGroupCommand {
+// Returns an error if userGroupRepo is nil
+func NewCreateUserGroupCommand(userGroupRepo repository.UserGroupRepository) (*CreateUserGroupCommand, error) {
+	if userGroupRepo == nil {
+		return nil, fmt.Errorf("userGroupRepo cannot be nil")
+	}
 	return &CreateUserGroupCommand{
 		userGroupRepo: userGroupRepo,
-	}
+	}, nil
 }
 
 // CreateUserGroupRequest represents the request to create a user group

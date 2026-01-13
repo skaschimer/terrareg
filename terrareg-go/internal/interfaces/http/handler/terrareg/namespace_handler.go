@@ -16,22 +16,45 @@ import (
 
 // NamespaceHandler handles namespace-related requests
 type NamespaceHandler struct {
-	listNamespacesQuery   *module.ListNamespacesQuery
-	createNamespaceCmd    *namespace.CreateNamespaceCommand
-	updateNamespaceCmd    *namespace.UpdateNamespaceCommand
-	deleteNamespaceCmd    *namespace.DeleteNamespaceCommand
+	// listNamespacesQuery lists all namespaces (required)
+	listNamespacesQuery *module.ListNamespacesQuery
+	// createNamespaceCmd creates new namespaces (required)
+	createNamespaceCmd *namespace.CreateNamespaceCommand
+	// updateNamespaceCmd updates existing namespaces (required)
+	updateNamespaceCmd *namespace.UpdateNamespaceCommand
+	// deleteNamespaceCmd deletes namespaces (required)
+	deleteNamespaceCmd *namespace.DeleteNamespaceCommand
+	// namespaceDetailsQuery gets namespace details (required)
 	namespaceDetailsQuery *namespaceQuery.NamespaceDetailsQuery
-	presenter             *presenter.NamespacePresenter
+	// presenter formats namespace responses (required)
+	presenter *presenter.NamespacePresenter
 }
 
 // NewNamespaceHandler creates a new namespace handler
+// Returns an error if any required dependency is nil
 func NewNamespaceHandler(
 	listNamespacesQuery *module.ListNamespacesQuery,
 	createNamespaceCmd *namespace.CreateNamespaceCommand,
 	updateNamespaceCmd *namespace.UpdateNamespaceCommand,
 	deleteNamespaceCmd *namespace.DeleteNamespaceCommand,
 	namespaceDetailsQuery *namespaceQuery.NamespaceDetailsQuery,
-) *NamespaceHandler {
+) (*NamespaceHandler, error) {
+	if listNamespacesQuery == nil {
+		return nil, fmt.Errorf("listNamespacesQuery cannot be nil")
+	}
+	if createNamespaceCmd == nil {
+		return nil, fmt.Errorf("createNamespaceCmd cannot be nil")
+	}
+	if updateNamespaceCmd == nil {
+		return nil, fmt.Errorf("updateNamespaceCmd cannot be nil")
+	}
+	if deleteNamespaceCmd == nil {
+		return nil, fmt.Errorf("deleteNamespaceCmd cannot be nil")
+	}
+	if namespaceDetailsQuery == nil {
+		return nil, fmt.Errorf("namespaceDetailsQuery cannot be nil")
+	}
+
 	return &NamespaceHandler{
 		listNamespacesQuery:   listNamespacesQuery,
 		createNamespaceCmd:    createNamespaceCmd,
@@ -39,7 +62,7 @@ func NewNamespaceHandler(
 		deleteNamespaceCmd:    deleteNamespaceCmd,
 		namespaceDetailsQuery: namespaceDetailsQuery,
 		presenter:             presenter.NewNamespacePresenter(),
-	}
+	}, nil
 }
 
 // HandleNamespaceList handles GET /v1/terrareg/namespaces

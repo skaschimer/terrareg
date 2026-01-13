@@ -15,14 +15,19 @@ import (
 // gpgKeyRepositoryImpl implements the GPGKeyRepository interface using GORM
 // Uses main sqldb.GPGKeyDB for DDD consistency
 type gpgKeyRepositoryImpl struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
 // NewGPGKeyRepository creates a new GPG key repository
-func NewGPGKeyRepository(db *gorm.DB) repository.GPGKeyRepository {
+// Returns an error if db is nil
+func NewGPGKeyRepository(db *gorm.DB) (repository.GPGKeyRepository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
 	return &gpgKeyRepositoryImpl{
 		db: db,
-	}
+	}, nil
 }
 
 // FindByID finds a GPG key by its ID

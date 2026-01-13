@@ -12,12 +12,17 @@ import (
 
 // SubmoduleLoader provides shared functionality for loading submodules and examples
 type SubmoduleLoader struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
 // NewSubmoduleLoader creates a new submodule loader
-func NewSubmoduleLoader(db *gorm.DB) *SubmoduleLoader {
-	return &SubmoduleLoader{db: db}
+// Returns an error if db is nil
+func NewSubmoduleLoader(db *gorm.DB) (*SubmoduleLoader, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	return &SubmoduleLoader{db: db}, nil
 }
 
 // LoadSubmodulesAndExamples loads submodules and examples from the database

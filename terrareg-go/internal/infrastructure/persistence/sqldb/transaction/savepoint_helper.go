@@ -18,6 +18,7 @@ const (
 
 // SavepointHelper provides savepoint functionality for nested transactions
 type SavepointHelper struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
@@ -48,10 +49,14 @@ func sanitizeSavepointName(name string) string {
 }
 
 // NewSavepointHelper creates a new savepoint helper
-func NewSavepointHelper(db *gorm.DB) *SavepointHelper {
+// Returns an error if db is nil
+func NewSavepointHelper(db *gorm.DB) (*SavepointHelper, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
 	return &SavepointHelper{
 		db: db,
-	}
+	}, nil
 }
 
 // Savepoint represents a database savepoint

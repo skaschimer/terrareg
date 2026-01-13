@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 // dependencyGraphRepositoryImpl implements the dependency graph repository using SQL database
 type dependencyGraphRepositoryImpl struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
@@ -39,10 +41,14 @@ type TerraformGraphEdge struct {
 }
 
 // NewDependencyGraphRepository creates a new dependency graph repository
-func NewDependencyGraphRepository(db *gorm.DB) repository.DependencyGraphRepository {
+// Returns an error if db is nil
+func NewDependencyGraphRepository(db *gorm.DB) (repository.DependencyGraphRepository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
 	return &dependencyGraphRepositoryImpl{
 		db: db,
-	}
+	}, nil
 }
 
 // GetModuleVersionDependencies retrieves provider dependencies from terraform graph

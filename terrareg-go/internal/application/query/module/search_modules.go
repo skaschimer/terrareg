@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
@@ -9,14 +10,19 @@ import (
 
 // SearchModulesQuery handles searching for module providers
 type SearchModulesQuery struct {
+	// moduleProviderRepo handles module provider persistence (required)
 	moduleProviderRepo repository.ModuleProviderRepository
 }
 
 // NewSearchModulesQuery creates a new search modules query
-func NewSearchModulesQuery(moduleProviderRepo repository.ModuleProviderRepository) *SearchModulesQuery {
+// Returns an error if moduleProviderRepo is nil
+func NewSearchModulesQuery(moduleProviderRepo repository.ModuleProviderRepository) (*SearchModulesQuery, error) {
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
 	return &SearchModulesQuery{
 		moduleProviderRepo: moduleProviderRepo,
-	}
+	}, nil
 }
 
 // SearchParams represents search parameters

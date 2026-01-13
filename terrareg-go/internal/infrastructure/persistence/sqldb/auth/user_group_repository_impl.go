@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
@@ -11,14 +12,19 @@ import (
 
 // UserGroupRepositoryImpl implements the UserGroupRepository interface using SQL database
 type UserGroupRepositoryImpl struct {
+	// db provides database access (required)
 	db *gorm.DB
 }
 
 // NewUserGroupRepository creates a new UserGroupRepository implementation
-func NewUserGroupRepository(db *gorm.DB) repository.UserGroupRepository {
+// Returns an error if db is nil
+func NewUserGroupRepository(db *gorm.DB) (repository.UserGroupRepository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
 	return &UserGroupRepositoryImpl{
 		db: db,
-	}
+	}, nil
 }
 
 // Save saves a user group (creates or updates)

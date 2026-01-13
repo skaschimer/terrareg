@@ -21,19 +21,38 @@ import (
 // ModuleProviderRepositoryImpl implements ModuleProviderRepository using GORM
 type ModuleProviderRepositoryImpl struct {
 	*baserepo.BaseRepository
-	namespaceRepo   repository.NamespaceRepository
-	domainConfig    *configModel.DomainConfig
+	// namespaceRepo handles namespace persistence (required)
+	namespaceRepo repository.NamespaceRepository
+	// domainConfig holds domain-level configuration (required)
+	domainConfig *configModel.DomainConfig
+	// submoduleLoader handles loading submodules (required)
 	submoduleLoader *SubmoduleLoader
 }
 
 // NewModuleProviderRepository creates a new module provider repository
-func NewModuleProviderRepository(db *gorm.DB, namespaceRepo repository.NamespaceRepository, domainConfig *configModel.DomainConfig) repository.ModuleProviderRepository {
+// Returns an error if any required dependency is nil
+func NewModuleProviderRepository(db *gorm.DB, namespaceRepo repository.NamespaceRepository, domainConfig *configModel.DomainConfig) (repository.ModuleProviderRepository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	if namespaceRepo == nil {
+		return nil, fmt.Errorf("namespaceRepo cannot be nil")
+	}
+	if domainConfig == nil {
+		return nil, fmt.Errorf("domainConfig cannot be nil")
+	}
+
+	submoduleLoader, err := NewSubmoduleLoader(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create submodule loader: %w", err)
+	}
+
 	return &ModuleProviderRepositoryImpl{
 		BaseRepository:  baserepo.NewBaseRepository(db),
 		namespaceRepo:   namespaceRepo,
 		domainConfig:    domainConfig,
-		submoduleLoader: NewSubmoduleLoader(db),
-	}
+		submoduleLoader: submoduleLoader,
+	}, nil
 }
 
 // Save persists a module provider (aggregate root)

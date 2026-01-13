@@ -14,19 +14,29 @@ import (
 
 // PublishModuleVersionCommand handles publishing a new module version
 type PublishModuleVersionCommand struct {
+	// moduleProviderRepo handles module provider persistence (required)
 	moduleProviderRepo repository.ModuleProviderRepository
-	auditService       service.ModuleAuditServiceInterface
+	// auditService logs audit events (required)
+	auditService service.ModuleAuditServiceInterface
 }
 
 // NewPublishModuleVersionCommand creates a new publish module version command
+// Returns an error if any required dependency is nil
 func NewPublishModuleVersionCommand(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	auditService service.ModuleAuditServiceInterface,
-) *PublishModuleVersionCommand {
+) (*PublishModuleVersionCommand, error) {
+	if moduleProviderRepo == nil {
+		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
+	}
+	if auditService == nil {
+		return nil, fmt.Errorf("auditService cannot be nil")
+	}
+
 	return &PublishModuleVersionCommand{
 		moduleProviderRepo: moduleProviderRepo,
 		auditService:       auditService,
-	}
+	}, nil
 }
 
 // PublishModuleVersionRequest represents the request to publish a module version

@@ -337,10 +337,55 @@ func NewContainer(
 		DB:            db,
 	}
 
-	// Initialize repositories
-	c.NamespaceRepo = modulePersistence.NewNamespaceRepository(db.DB)
-	c.ModuleProviderRepo = modulePersistence.NewModuleProviderRepository(db.DB, c.NamespaceRepo, domainConfig) // Uses DomainConfig for TrustedNamespaces
-	c.ModuleVersionRepo = modulePersistence.NewModuleVersionRepository(db.DB)
+	// Initialize repositories with error handling
+	// First initialize repositories without dependencies
+	namespaceRepo := modulePersistence.NewNamespaceRepository(db.DB)
+	c.NamespaceRepo = namespaceRepo
+
+	// Repositories that return errors (updated with nil checks)
+	moduleProviderRepo, err := modulePersistence.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create module provider repository: %w", err)
+	}
+	c.ModuleProviderRepo = moduleProviderRepo
+
+	moduleVersionRepo, err := modulePersistence.NewModuleVersionRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create module version repository: %w", err)
+	}
+	c.ModuleVersionRepo = moduleVersionRepo
+
+	sessionRepo, err := authPersistence.NewSessionRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create session repository: %w", err)
+	}
+	c.SessionRepo = sessionRepo
+
+	userGroupRepo, err := authPersistence.NewUserGroupRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user group repository: %w", err)
+	}
+	c.UserGroupRepo = userGroupRepo
+
+	auditHistoryRepo, err := auditPersistence.NewAuditHistoryRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create audit history repository: %w", err)
+	}
+	c.AuditHistoryRepo = auditHistoryRepo
+
+	graphRepo, err := graphPersistence.NewDependencyGraphRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dependency graph repository: %w", err)
+	}
+	c.GraphRepo = graphRepo
+
+	gpgKeyRepo, err := gpgkeyPersistence.NewGPGKeyRepository(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GPG key repository: %w", err)
+	}
+	c.GPGKeyRepo = gpgKeyRepo
+
+	// Repositories without nil checks (not yet updated)
 	c.ModuleVersionFileRepo = modulePersistence.NewModuleVersionFileRepository(db.DB)
 	c.ModuleProviderRedirectRepo = modulePersistence.NewModuleProviderRedirectRepository(db.DB)
 	c.ModuleDetailsRepo = modulePersistence.NewModuleDetailsRepository(db.DB)
@@ -350,14 +395,9 @@ func NewContainer(
 	c.ProviderCategoryRepo = sqldbprovider.NewProviderCategoryRepository(db)
 	c.ProviderLogoRepo = providerLogoRepo.NewProviderLogoRepository()
 	c.ProviderSourceRepo = sqldbProviderSource.NewProviderSourceRepository(db.DB)
-	c.SessionRepo = authPersistence.NewSessionRepository(db.DB)
-	c.UserGroupRepo = authPersistence.NewUserGroupRepository(db.DB)
 	c.TerraformIdpAuthorizationCodeRepo = authPersistence.NewTerraformIdpAuthorizationCodeRepository(db.DB)
 	c.TerraformIdpAccessTokenRepo = authPersistence.NewTerraformIdpAccessTokenRepository(db.DB)
 	c.TerraformIdpSubjectIdentifierRepo = authPersistence.NewTerraformIdpSubjectIdentifierRepository(db.DB)
-	c.AuditHistoryRepo = auditPersistence.NewAuditHistoryRepository(db.DB)
-	c.GraphRepo = graphPersistence.NewDependencyGraphRepository(db.DB)
-	c.GPGKeyRepo = gpgkeyPersistence.NewGPGKeyRepository(db.DB)
 
 	// Initialize Git Provider repository and factory
 	gitProviderRepo := gitPersistence.NewGitProviderRepository(db)

@@ -56,6 +56,7 @@ type ModuleHandler struct {
 }
 
 // NewModuleHandler creates a new module handler
+// Returns an error if any required dependency is nil
 func NewModuleHandler(
 	listModulesQuery *moduleQuery.ListModulesQuery,
 	searchModulesQuery *moduleQuery.SearchModulesQuery,
@@ -85,7 +86,90 @@ func NewModuleHandler(
 	domainConfig *model.DomainConfig,
 	namespaceService *moduleService.NamespaceService,
 	analyticsRepo analyticsCmd.AnalyticsRepository,
-) *ModuleHandler {
+) (*ModuleHandler, error) {
+	// Validate all pointer dependencies
+	if listModulesQuery == nil {
+		return nil, fmt.Errorf("listModulesQuery cannot be nil")
+	}
+	if searchModulesQuery == nil {
+		return nil, fmt.Errorf("searchModulesQuery cannot be nil")
+	}
+	if getModuleProviderQuery == nil {
+		return nil, fmt.Errorf("getModuleProviderQuery cannot be nil")
+	}
+	if listModuleProvidersQuery == nil {
+		return nil, fmt.Errorf("listModuleProvidersQuery cannot be nil")
+	}
+	if getModuleVersionQuery == nil {
+		return nil, fmt.Errorf("getModuleVersionQuery cannot be nil")
+	}
+	if getModuleDownloadQuery == nil {
+		return nil, fmt.Errorf("getModuleDownloadQuery cannot be nil")
+	}
+	if getModuleProviderSettingsQuery == nil {
+		return nil, fmt.Errorf("getModuleProviderSettingsQuery cannot be nil")
+	}
+	if getReadmeHTMLQuery == nil {
+		return nil, fmt.Errorf("getReadmeHTMLQuery cannot be nil")
+	}
+	if getSubmodulesQuery == nil {
+		return nil, fmt.Errorf("getSubmodulesQuery cannot be nil")
+	}
+	if getExamplesQuery == nil {
+		return nil, fmt.Errorf("getExamplesQuery cannot be nil")
+	}
+	if getIntegrationsQuery == nil {
+		return nil, fmt.Errorf("getIntegrationsQuery cannot be nil")
+	}
+	if createModuleProviderCmd == nil {
+		return nil, fmt.Errorf("createModuleProviderCmd cannot be nil")
+	}
+	if publishModuleVersionCmd == nil {
+		return nil, fmt.Errorf("publishModuleVersionCmd cannot be nil")
+	}
+	if updateModuleProviderSettingsCmd == nil {
+		return nil, fmt.Errorf("updateModuleProviderSettingsCmd cannot be nil")
+	}
+	if deleteModuleProviderCmd == nil {
+		return nil, fmt.Errorf("deleteModuleProviderCmd cannot be nil")
+	}
+	if uploadModuleVersionCmd == nil {
+		return nil, fmt.Errorf("uploadModuleVersionCmd cannot be nil")
+	}
+	if importModuleVersionCmd == nil {
+		return nil, fmt.Errorf("importModuleVersionCmd cannot be nil")
+	}
+	if getModuleVersionFileCmd == nil {
+		return nil, fmt.Errorf("getModuleVersionFileCmd cannot be nil")
+	}
+	if deleteModuleVersionCmd == nil {
+		return nil, fmt.Errorf("deleteModuleVersionCmd cannot be nil")
+	}
+	if generateModuleSourceCmd == nil {
+		return nil, fmt.Errorf("generateModuleSourceCmd cannot be nil")
+	}
+	if getVariableTemplateQuery == nil {
+		return nil, fmt.Errorf("getVariableTemplateQuery cannot be nil")
+	}
+	if createModuleProviderRedirectCmd == nil {
+		return nil, fmt.Errorf("createModuleProviderRedirectCmd cannot be nil")
+	}
+	if deleteModuleProviderRedirectCmd == nil {
+		return nil, fmt.Errorf("deleteModuleProviderRedirectCmd cannot be nil")
+	}
+	if getModuleProviderRedirectsQuery == nil {
+		return nil, fmt.Errorf("getModuleProviderRedirectsQuery cannot be nil")
+	}
+	if recordModuleDownloadCmd == nil {
+		return nil, fmt.Errorf("recordModuleDownloadCmd cannot be nil")
+	}
+	if domainConfig == nil {
+		return nil, fmt.Errorf("domainConfig cannot be nil")
+	}
+	if namespaceService == nil {
+		return nil, fmt.Errorf("namespaceService cannot be nil")
+	}
+
 	return &ModuleHandler{
 		listModulesQuery:                listModulesQuery,
 		searchModulesQuery:              searchModulesQuery,
@@ -116,7 +200,7 @@ func NewModuleHandler(
 		versionPresenter:                presenter.NewModuleVersionPresenter(namespaceService, analyticsRepo),
 		domainConfig:                    domainConfig,
 		analyticsRepo:                   analyticsRepo,
-	}
+	}, nil
 }
 
 // NewModuleReadHandlerForTesting creates a ModuleHandler for testing read operations.

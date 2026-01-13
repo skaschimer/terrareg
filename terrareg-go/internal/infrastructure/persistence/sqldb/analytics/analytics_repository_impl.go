@@ -15,18 +15,32 @@ import (
 
 // AnalyticsRepositoryImpl implements the analytics repository
 type AnalyticsRepositoryImpl struct {
-	db               *gorm.DB
-	namespaceRepo    repository.NamespaceRepository
+	// db provides database access (required)
+	db *gorm.DB
+	// namespaceRepo handles namespace persistence (required)
+	namespaceRepo repository.NamespaceRepository
+	// namespaceService handles namespace business logic (required)
 	namespaceService *service.NamespaceService
 }
 
 // NewAnalyticsRepository creates a new analytics repository
-func NewAnalyticsRepository(db *gorm.DB, namespaceRepo repository.NamespaceRepository, namespaceService *service.NamespaceService) *AnalyticsRepositoryImpl {
+// Returns an error if any required dependency is nil
+func NewAnalyticsRepository(db *gorm.DB, namespaceRepo repository.NamespaceRepository, namespaceService *service.NamespaceService) (*AnalyticsRepositoryImpl, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	if namespaceRepo == nil {
+		return nil, fmt.Errorf("namespaceRepo cannot be nil")
+	}
+	if namespaceService == nil {
+		return nil, fmt.Errorf("namespaceService cannot be nil")
+	}
+
 	return &AnalyticsRepositoryImpl{
 		db:               db,
 		namespaceRepo:    namespaceRepo,
 		namespaceService: namespaceService,
-	}
+	}, nil
 }
 
 // RecordDownload records a module download event
