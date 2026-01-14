@@ -205,6 +205,9 @@ func testModuleWithoutVersions(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
 
+	// Set up central test data for module provider tests
+	SetupModuleProviderTestData(st.t, st.server.GetDB())
+
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/noversion/testprovider'))
 	st.NavigateTo("/modules/moduledetails/noversion/testprovider")
 
@@ -279,6 +282,9 @@ func testModuleWithVersions(t *testing.T) {
 		t.Run(tt.attributeToRemove, func(t *testing.T) {
 			st := NewSeleniumTest(t)
 			defer st.TearDown()
+
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
 
 			// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider'))
 			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider")
@@ -458,6 +464,9 @@ func testSubmoduleExampleBasicDetails(t *testing.T) {
 			st := NewSeleniumTest(t)
 			defer st.TearDown()
 
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
+
 			// Python: self.selenium_instance.get(self.get_url(base_url))
 			st.NavigateTo(tt.baseURL)
 
@@ -495,6 +504,9 @@ func testSubmoduleBackToParent(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
 
+	// Set up central test data for module provider tests
+	SetupModuleProviderTestData(st.t, st.server.GetDB())
+
 	// Navigate to a submodule page
 	// Python: self.selenium_instance.find_element(By.ID, 'submodule-back-to-parent').click()
 	// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url('/modules/moduledetails/withsecurityissues/testprovider/1.1.0'))
@@ -517,6 +529,9 @@ func testSubmoduleBackToParent(t *testing.T) {
 func testSourceCodeUrls(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
+
+	// Set up central test data for module provider tests
+	SetupModuleProviderTestData(st.t, st.server.GetDB())
 
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider'))
 	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider")
@@ -1259,6 +1274,9 @@ func testUserPreferences(t *testing.T) {
 			// Python: self.delete_cookies_and_local_storage()
 			st.DeleteCookiesAndLocalStorage()
 
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
+
 			// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
 			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
 
@@ -1285,6 +1303,9 @@ func testUserPreferences(t *testing.T) {
 func testAdditionalTabs(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
+
+	// Set up central test data for module provider tests
+	SetupModuleProviderTestData(st.t, st.server.GetDB())
 
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
 	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
@@ -1339,6 +1360,9 @@ func testAdditionalTabs(t *testing.T) {
 func testSecurityIssuesTab(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
+
+	// Set up central test data for module provider tests
+	SetupModuleProviderTestData(st.t, st.server.GetDB())
 
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/withsecurityissues/testprovider/1.0.0'))
 	st.NavigateTo("/modules/moduledetails/withsecurityissues/testprovider/1.0.0")
@@ -1467,6 +1491,9 @@ func testDisableAnalytics(t *testing.T) {
 			st := NewSeleniumTest(t)
 			defer st.TearDown()
 
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
+
 			// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails/fullypopulated/testprovider/1.5.0"))
 			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
 
@@ -1515,6 +1542,9 @@ func testTerraformCompatibilityResult(t *testing.T) {
 
 			// Python: self.delete_cookies_and_local_storage()
 			st.DeleteCookiesAndLocalStorage()
+
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
 
 			// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails/fullypopulated/testprovider/1.5.0"))
 			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")

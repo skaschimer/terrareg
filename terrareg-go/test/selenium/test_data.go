@@ -137,24 +137,30 @@ func SetupNamespaceTestData(t *testing.T, db *sqldb.Database) {
 }
 
 // SetupModuleProviderTestData creates test data for module provider page tests.
-// This creates a full module with versions, readme, inputs, outputs, etc.
+// This creates all modules, versions, and details needed by module_provider_test.go
 // Python reference: /app/test/selenium/test_module_provider.py - module provider test data
+// Python reference: /app/test/selenium/test_data.py - integration_test_data['moduledetails']
 func SetupModuleProviderTestData(t *testing.T, db *sqldb.Database) {
 	// Create namespace
 	namespace := integrationTestUtils.CreateNamespace(t, db, "moduledetails")
 
-	// Create module provider with different versions
-	moduleProvider := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "fullypopulated", "testprovider")
+	// Create "fullypopulated" module provider with multiple versions
+	fullyPopulatedMp := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "fullypopulated", "testprovider")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.5.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.4.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.2.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0")
 
-	// Create multiple versions
-	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.5.0")
-	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.4.0")
-	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
+	// Create beta and unpublished versions for fullypopulated
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.7.0-beta") // Beta
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.0") // Unpublished
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.1-beta") // Beta
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0-beta") // Unpublished beta
 
-	// Create module details with full content
+	// Create module details with full content for fullypopulated
 	readmeContent := `# Fully Populated Module
 
-This module is fully populated with all details.
+This is a test module version for tests.
 
 ## Features
 
@@ -168,7 +174,25 @@ This module is fully populated with all details.
   version = "1.5.0"
 }
 ` + "```\n"
-	_ = integrationTestUtils.CreateModuleDetails(t, db, readmeContent)
+	moduleDetails := integrationTestUtils.CreateModuleDetails(t, db, readmeContent)
+
+	// Update module versions to reference module details
+	db.DB.Model(&sqldb.ModuleVersionDB{}).
+		Where("module_provider_id = ?", fullyPopulatedMp.ID).
+		Update("module_details_id", moduleDetails.ID)
+
+	// Create "noversion" module provider - has no versions
+	_ = integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "noversion", "testprovider")
+
+	// Create "withsecurityissues" module provider for security tests
+	securityMp := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "withsecurityissues", "testprovider")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, securityMp.ID, "1.1.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, securityMp.ID, "1.0.0")
+
+	securityDetails := integrationTestUtils.CreateModuleDetails(t, db, "# Security Module\n\nThis module has security issues.")
+	db.DB.Model(&sqldb.ModuleVersionDB{}).
+		Where("module_provider_id = ?", securityMp.ID).
+		Update("module_details_id", securityDetails.ID)
 }
 
 // SetupLoginTestData creates minimal test data for login tests.
