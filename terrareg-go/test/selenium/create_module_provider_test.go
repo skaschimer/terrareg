@@ -8,6 +8,9 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	integrationTestUtils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // TestCreateModuleProvider tests the create module provider page.
@@ -47,7 +50,25 @@ func TestCreateModuleProvider(t *testing.T) {
 
 // newCreateModuleProviderTest creates a new SeleniumTest configured for module provider tests.
 func newCreateModuleProviderTest(t *testing.T) *SeleniumTest {
-	return NewSeleniumTestWithConfig(t, ConfigForCreateModuleProviderTests())
+	st := NewSeleniumTestWithConfig(t, ConfigForCreateModuleProviderTests())
+
+	// Setup test data - create namespaces that exist in Python's integration_test_data
+	// Python reference: /app/test/selenium/test_data.py - integration_test_data
+	db := st.server.GetDB()
+	_ = integrationTestUtils.CreateNamespace(t, db, "testmodulecreation")
+	_ = integrationTestUtils.CreateNamespace(t, db, "moduledetails")
+
+	// Create namespace with display name (for test_create_against_namespace_with_display_name)
+	// Python: 'withdisplayname': {'display_name': 'A Display Name'}
+	displayName := "A Display Name"
+	namespaceWithDisplayName := sqldb.NamespaceDB{
+		Namespace:     "withdisplayname",
+		DisplayName:   &displayName,
+		NamespaceType: sqldb.NamespaceTypeNone,
+	}
+	require.NoError(t, db.DB.Create(&namespaceWithDisplayName).Error)
+
+	return st
 }
 
 // testCreateModuleProviderPageDetails tests that the page contains required information.
@@ -69,7 +90,8 @@ func testCreateModuleProviderPageDetails(t *testing.T) {
 	// Verify namespace dropdown has expected default value
 	// Python: assert input.text == 'Custom' (for git provider dropdown)
 	// Python: assert input.get_attribute('value') == 'v{version}' (for git tag format)
-	st.AssertTextContent("#create-module-git-tag-format", "v{version}")
+	// Note: For input fields, we need to check the value attribute, not text content
+	st.AssertAttributeValue("#create-module-git-tag-format", "value", "v{version}")
 }
 
 // testCreateModuleProviderBasic tests creating module provider with basic inputs.
@@ -83,7 +105,7 @@ func testCreateModuleProviderBasic(t *testing.T) {
 	st.NavigateTo("/create-module")
 
 	// Python: Select(self.selenium_instance.find_element(By.ID, 'create-module-namespace')).select_by_visible_text('testmodulecreation')
-	st.SelectOption("#create-module-namespace", "testmodulecreation")
+	st.SelectOptionByVisibleText("#create-module-namespace", "testmodulecreation")
 
 	// Python: self._fill_out_field_by_label('Module Name', 'minimal-module')
 	fillOutModuleFieldByLabel(st, "Module Name", "minimal-module")
@@ -114,7 +136,7 @@ func testCreateModuleProviderWithDisplayName(t *testing.T) {
 	st.NavigateTo("/create-module")
 
 	// Python: Select(self.selenium_instance.find_element(By.ID, 'create-module-namespace')).select_by_visible_text('A Display Name')
-	st.SelectOption("#create-module-namespace", "A Display Name")
+	st.SelectOptionByVisibleText("#create-module-namespace", "A Display Name")
 
 	fillOutModuleFieldByLabel(st, "Module Name", "minimal-module")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
@@ -138,7 +160,7 @@ func testCreateModuleProviderWithGitPath(t *testing.T) {
 
 	st.NavigateTo("/create-module")
 
-	st.SelectOption("#create-module-namespace", "testmodulecreation")
+	st.SelectOptionByVisibleText("#create-module-namespace", "testmodulecreation")
 	fillOutModuleFieldByLabel(st, "Module Name", "with-git-path")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
 
@@ -170,7 +192,7 @@ func testCreateModuleProviderGitTagFormat(t *testing.T, gitTagFormat string, sho
 
 	st.NavigateTo("/create-module")
 
-	st.SelectOption("#create-module-namespace", "testmodulecreation")
+	st.SelectOptionByVisibleText("#create-module-namespace", "testmodulecreation")
 	fillOutModuleFieldByLabel(st, "Module Name", "with-git-path")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
 
@@ -239,7 +261,7 @@ func testCreateModuleProviderDuplicate(t *testing.T) {
 	st.NavigateTo("/create-module")
 
 	// Python: Select(self.selenium_instance.find_element(By.ID, 'create-module-namespace')).select_by_visible_text('moduledetails')
-	st.SelectOption("#create-module-namespace", "moduledetails")
+	st.SelectOptionByVisibleText("#create-module-namespace", "moduledetails")
 
 	fillOutModuleFieldByLabel(st, "Module Name", "fullypopulated")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
@@ -265,7 +287,7 @@ func testCreateModuleProviderInvalidGitTag(t *testing.T) {
 
 	st.NavigateTo("/create-module")
 
-	st.SelectOption("#create-module-namespace", "moduledetails")
+	st.SelectOptionByVisibleText("#create-module-namespace", "moduledetails")
 	fillOutModuleFieldByLabel(st, "Module Name", "fullypopulated")
 	fillOutModuleFieldByLabel(st, "Provider", "invalidgittag")
 
@@ -291,7 +313,7 @@ func testCreateModuleProviderInvalidModuleName(t *testing.T) {
 
 	st.NavigateTo("/create-module")
 
-	st.SelectOption("#create-module-namespace", "moduledetails")
+	st.SelectOptionByVisibleText("#create-module-namespace", "moduledetails")
 	fillOutModuleFieldByLabel(st, "Module Name", "Invalid Module Name")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
 
@@ -314,7 +336,7 @@ func testCreateModuleProviderInvalidProvider(t *testing.T) {
 
 	st.NavigateTo("/create-module")
 
-	st.SelectOption("#create-module-namespace", "moduledetails")
+	st.SelectOptionByVisibleText("#create-module-namespace", "moduledetails")
 	fillOutModuleFieldByLabel(st, "Module Name", "fullypopulated")
 	fillOutModuleFieldByLabel(st, "Provider", "Invalid Provider Name")
 
@@ -363,6 +385,22 @@ func fillOutModuleFieldByLabel(st *SeleniumTest, label, input string) {
 // Python reference: /app/test/selenium/test_create_module_provider.py - _click_create
 func clickCreateModuleButton(st *SeleniumTest) {
 	// Python: self.selenium_instance.find_element(By.XPATH, "//button[text()='Create']").click()
-	createButton := st.WaitForElement("button[type='submit']")
-	createButton.Click()
+	// Note: The button doesn't have type='submit', we need to find by text
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					var buttons = document.getElementsByTagName('button');
+					for (var i = 0; i < buttons.length; i++) {
+						if (buttons[i].textContent === 'Create') {
+							buttons[i].click();
+							return true;
+						}
+					}
+					return false;
+				})()
+			`, nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err, "Failed to find and click Create button")
 }

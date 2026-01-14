@@ -326,6 +326,16 @@ func (st *SeleniumTest) AssertElementNotExists(selector string) {
 	assert.Error(st.t, err, "Element should not exist: %s", selector)
 }
 
+// AssertAttributeValue asserts that an element has the expected attribute value.
+func (st *SeleniumTest) AssertAttributeValue(selector, attribute, expectedValue string) {
+	var value string
+	err := st.runChromedp(
+		chromedp.AttributeValue(selector, attribute, &value, nil),
+	)
+	require.NoError(st.t, err, "Failed to get attribute '%s' for element: %s", attribute, selector)
+	assert.Equal(st.t, expectedValue, value, "Element %s attribute '%s' has unexpected value", selector, attribute)
+}
+
 // ElementOption is a function that modifies element options.
 type ElementOption func(*elementOptions)
 
@@ -460,14 +470,28 @@ func (st *SeleniumTest) SelectOption(selector, value string) {
 // SelectOptionByVisibleText selects an option in a select dropdown by visible text.
 // Matches Python: select.select_by_visible_text(text)
 func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
+	// First wait for the select element to have options populated
 	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					return select && select.options && select.options.length > 0;
+				})()
+			`, selector), nil).Do(ctx)
+		}),
+	)
+	require.NoError(st.t, err, "Select element has no options")
+
+	// Then select the option by visible text
+	err = st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(fmt.Sprintf(`
 				(function() {
 					var select = document.querySelector(%q);
 					for (var i = 0; i < select.options.length; i++) {
 						if (select.options[i].text === %q) {
-							select.selectedIndex = i;
+							select.value = select.options[i].value;
 							var event = new Event('change', { bubbles: true });
 							select.dispatchEvent(event);
 							return true;
@@ -478,7 +502,7 @@ func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
 			`, selector, text), nil).Do(ctx)
 		}),
 	)
-	require.NoError(st.t, err)
+	require.NoError(st.t, err, "Option with text '%s' not found in select", text)
 }
 
 // SelectOptionOnElement selects an option in a select dropdown (on Element).
