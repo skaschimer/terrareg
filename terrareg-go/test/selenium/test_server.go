@@ -387,7 +387,7 @@ func WithMockAnalytics(totalDownloads int) TestServerOption {
 		)
 
 		// Recreate AnalyticsHandler with the mocked query
-		ts.container.AnalyticsHandler = terrareg.NewAnalyticsHandler(
+		newAnalyticsHandler := terrareg.NewAnalyticsHandler(
 			ts.container.GlobalStatsQuery,
 			ts.container.GlobalUsageStatsQuery,
 			ts.container.GetDownloadSummaryQuery,
@@ -396,6 +396,10 @@ func WithMockAnalytics(totalDownloads int) TestServerOption {
 			ts.container.GetMostDownloadedThisWeekQuery,
 			ts.container.GetTokenVersionsQuery,
 		)
+
+		// Update both container and server AnalyticsHandler references
+		ts.container.AnalyticsHandler = newAnalyticsHandler
+		ts.container.Server.AnalyticsHandler = newAnalyticsHandler
 	}
 }
 

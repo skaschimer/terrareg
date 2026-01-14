@@ -48,6 +48,12 @@ func (m *MockAnalyticsRepository) GetDownloadStats(ctx context.Context, namespac
 	}, nil
 }
 
+// GetTotalDownloads returns the mocked total downloads count
+// This matches Python's AnalyticsEngine.get_total_downloads() mock
+func (m *MockAnalyticsRepository) GetTotalDownloads(ctx context.Context) (int, error) {
+	return m.TotalDownloads, nil
+}
+
 // GetDownloadsByVersionID returns mocked download count
 func (m *MockAnalyticsRepository) GetDownloadsByVersionID(ctx context.Context, moduleVersionID int) (int, error) {
 	downloads := m.TotalDownloads / 100

@@ -491,6 +491,7 @@ func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
 					var select = document.querySelector(%q);
 					for (var i = 0; i < select.options.length; i++) {
 						if (select.options[i].text === %q) {
+							select.selectedIndex = i;
 							select.value = select.options[i].value;
 							var event = new Event('change', { bubbles: true });
 							select.dispatchEvent(event);

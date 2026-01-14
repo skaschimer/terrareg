@@ -49,15 +49,11 @@ func (q *GlobalStatsQuery) Execute(ctx context.Context) (*GlobalStats, error) {
 		return nil, err
 	}
 
-	// Count total downloads by summing up all module provider download stats
-	totalDownloads := 0
-
-	for _, mp := range moduleProviders.Modules {
-		downloads, err := q.analyticsRepo.GetDownloadStats(ctx, mp.Namespace().Name(), mp.Module(), mp.Provider())
-		if err == nil {
-			totalDownloads += downloads.TotalDownloads
-		}
-		// If analytics fails for a specific provider, continue without crashing
+	// Get total downloads using the GetTotalDownloads method
+	// This matches Python's AnalyticsEngine.get_total_downloads()
+	totalDownloads, err := q.analyticsRepo.GetTotalDownloads(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// Count module versions by getting versions from each module provider

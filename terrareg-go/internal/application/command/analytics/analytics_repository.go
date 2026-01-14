@@ -19,6 +19,10 @@ type AnalyticsRepository interface {
 	// GetDownloadsByVersionID retrieves download count for a specific module version ID
 	GetDownloadsByVersionID(ctx context.Context, moduleVersionID int) (int, error)
 
+	// GetTotalDownloads retrieves the total count of all analytics records
+	// Matches Python: AnalyticsEngine.get_total_downloads()
+	GetTotalDownloads(ctx context.Context) (int, error)
+
 	// GetMostRecentlyPublished retrieves the most recently published module version
 	GetMostRecentlyPublished(ctx context.Context) (*ModuleVersionInfo, error)
 

@@ -30,33 +30,33 @@ type Server struct {
 	infraConfig                 *config.InfrastructureConfig
 	domainConfig                *model.DomainConfig
 	logger                      zerolog.Logger
-	namespaceHandler            *terrareg.NamespaceHandler
-	moduleHandler               *terrareg.ModuleHandler
-	submoduleHandler            *terrareg.SubmoduleHandler
-	exampleHandler              *terrareg.ExampleHandler
-	analyticsHandler            *terrareg.AnalyticsHandler
-	providerHandler             *terrareg.ProviderHandler
-	authHandler                 *terrareg.AuthHandler
-	auditHandler                *terrareg.AuditHandler
-	initialSetupHandler         *terrareg.InitialSetupHandler
-	authMiddleware              *terrareg_middleware.AuthMiddleware
-	templateRenderer            *template.Renderer
-	sessionMiddleware           *terrareg_middleware.SessionMiddleware
-	terraformV1ModuleHandler    *tfv1ModuleHandler.TerraformV1ModuleHandler // New field
-	terraformV2ProviderHandler  *tfv2ProviderHandler.TerraformV2ProviderHandler
-	terraformV2CategoryHandler  *tfv2ProviderHandler.TerraformV2CategoryHandler
-	terraformV2GPGHandler       *tfv2ProviderHandler.TerraformV2GPGHandler
-	terraformIDPHandler         *terraformHandler.TerraformIDPHandler
-	terraformStaticTokenHandler *terraformHandler.TerraformStaticTokenHandler
-	configHandler               *terrareg.ConfigHandler
-	versionHandler              *terrareg.VersionHandler
-	gitProvidersHandler         *terrareg.GitProvidersHandler
-	providerLogosHandler        *terrareg.ProviderLogosHandler
-	searchFiltersHandler        *terrareg.SearchFiltersHandler
-	moduleWebhookHandler        *webhook.ModuleWebhookHandler
-	graphHandler                *terrareg.GraphHandler
-	rateLimiter                 *http_middleware.RateLimiterMiddleware
-	providerSourceHandler       *terrareg.ProviderSourceHandler
+	NamespaceHandler            *terrareg.NamespaceHandler
+	ModuleHandler               *terrareg.ModuleHandler
+	SubmoduleHandler            *terrareg.SubmoduleHandler
+	ExampleHandler              *terrareg.ExampleHandler
+	AnalyticsHandler            *terrareg.AnalyticsHandler
+	ProviderHandler             *terrareg.ProviderHandler
+	AuthHandler                 *terrareg.AuthHandler
+	AuditHandler                *terrareg.AuditHandler
+	InitialSetupHandler         *terrareg.InitialSetupHandler
+	AuthMiddleware              *terrareg_middleware.AuthMiddleware
+	TemplateRenderer            *template.Renderer
+	SessionMiddleware           *terrareg_middleware.SessionMiddleware
+	TerraformV1ModuleHandler    *tfv1ModuleHandler.TerraformV1ModuleHandler // New field
+	TerraformV2ProviderHandler  *tfv2ProviderHandler.TerraformV2ProviderHandler
+	TerraformV2CategoryHandler  *tfv2ProviderHandler.TerraformV2CategoryHandler
+	TerraformV2GPGHandler       *tfv2ProviderHandler.TerraformV2GPGHandler
+	TerraformIDPHandler         *terraformHandler.TerraformIDPHandler
+	TerraformStaticTokenHandler *terraformHandler.TerraformStaticTokenHandler
+	ConfigHandler               *terrareg.ConfigHandler
+	VersionHandler              *terrareg.VersionHandler
+	GitProvidersHandler         *terrareg.GitProvidersHandler
+	ProviderLogosHandler        *terrareg.ProviderLogosHandler
+	SearchFiltersHandler        *terrareg.SearchFiltersHandler
+	ModuleWebhookHandler        *webhook.ModuleWebhookHandler
+	GraphHandler                *terrareg.GraphHandler
+	RateLimiter                 *http_middleware.RateLimiterMiddleware
+	ProviderSourceHandler       *terrareg.ProviderSourceHandler
 }
 
 // NewServer creates a new HTTP server
@@ -96,32 +96,32 @@ func NewServer(
 		infraConfig:                 infraConfig,
 		domainConfig:                domainConfig,
 		logger:                      logger,
-		namespaceHandler:            namespaceHandler,
-		moduleHandler:               moduleHandler,
-		submoduleHandler:            submoduleHandler,
-		exampleHandler:              exampleHandler,
-		analyticsHandler:            analyticsHandler,
-		providerHandler:             providerHandler,
-		authHandler:                 authHandler,
-		auditHandler:                auditHandler,
-		initialSetupHandler:         initialSetupHandler,
-		authMiddleware:              authMiddleware,
-		templateRenderer:            templateRenderer,
-		sessionMiddleware:           sessionMiddleware,
-		terraformV1ModuleHandler:    terraformV1ModuleHandler, // Assign new handler
-		terraformV2ProviderHandler:  terraformV2ProviderHandler,
-		terraformV2CategoryHandler:  terraformV2CategoryHandler,
-		terraformV2GPGHandler:       terraformV2GPGHandler,
-		terraformIDPHandler:         terraformIDPHandler,
-		terraformStaticTokenHandler: terraformStaticTokenHandler,
-		configHandler:               configHandler,
-		versionHandler:              versionHandler,
-		gitProvidersHandler:         gitProvidersHandler,
-		providerLogosHandler:        providerLogosHandler,
-		searchFiltersHandler:        searchFiltersHandler,
-		moduleWebhookHandler:        moduleWebhookHandler,
-		graphHandler:                graphHandler,
-		providerSourceHandler:       providerSourceHandler,
+		NamespaceHandler:            namespaceHandler,
+		ModuleHandler:               moduleHandler,
+		SubmoduleHandler:            submoduleHandler,
+		ExampleHandler:              exampleHandler,
+		AnalyticsHandler:            analyticsHandler,
+		ProviderHandler:             providerHandler,
+		AuthHandler:                 authHandler,
+		AuditHandler:                auditHandler,
+		InitialSetupHandler:         initialSetupHandler,
+		AuthMiddleware:              authMiddleware,
+		TemplateRenderer:            templateRenderer,
+		SessionMiddleware:           sessionMiddleware,
+		TerraformV1ModuleHandler:    terraformV1ModuleHandler, // Assign new handler
+		TerraformV2ProviderHandler:  terraformV2ProviderHandler,
+		TerraformV2CategoryHandler:  terraformV2CategoryHandler,
+		TerraformV2GPGHandler:       terraformV2GPGHandler,
+		TerraformIDPHandler:         terraformIDPHandler,
+		TerraformStaticTokenHandler: terraformStaticTokenHandler,
+		ConfigHandler:               configHandler,
+		VersionHandler:              versionHandler,
+		GitProvidersHandler:         gitProvidersHandler,
+		ProviderLogosHandler:        providerLogosHandler,
+		SearchFiltersHandler:        searchFiltersHandler,
+		ModuleWebhookHandler:        moduleWebhookHandler,
+		GraphHandler:                graphHandler,
+		ProviderSourceHandler:       providerSourceHandler,
 	}
 
 	s.setupMiddleware()
@@ -143,10 +143,10 @@ func (s *Server) setupMiddleware() {
 	s.router.Use(http_middleware.SecurityHeaders)
 
 	// Initialize rate limiter (10 requests per second, burst of 5)
-	s.rateLimiter = http_middleware.NewRateLimiterMiddleware(10, 5)
+	s.RateLimiter = http_middleware.NewRateLimiterMiddleware(10, 5)
 
 	// Session middleware for session management
-	s.router.Use(s.sessionMiddleware.Session)
+	s.router.Use(s.SessionMiddleware.Session)
 
 	// No global timeout middleware - apply route-specific timeouts only
 
@@ -165,19 +165,19 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/.well-known/terraform.json", s.handleTerraformWellKnown)
 
 	// Terraform OIDC Identity Provider endpoints
-	s.router.Get("/.well-known/openid-configuration", s.terraformIDPHandler.HandleOpenIDConfiguration)
-	s.router.Get("/.well-known/jwks.json", s.terraformIDPHandler.HandleJWKS)
+	s.router.Get("/.well-known/openid-configuration", s.TerraformIDPHandler.HandleOpenIDConfiguration)
+	s.router.Get("/.well-known/jwks.json", s.TerraformIDPHandler.HandleJWKS)
 	// Terraform OAuth endpoints (matching Python's /terraform/oauth/* routes)
 	s.router.Route("/terraform/oauth", func(r chi.Router) {
-		r.Get("/authorization", s.terraformIDPHandler.HandleAuth)
-		r.Post("/token", s.terraformIDPHandler.HandleToken)
-		r.Get("/jwks", s.terraformIDPHandler.HandleJWKS)
-		r.Get("/userinfo", s.terraformIDPHandler.HandleUserInfo)
+		r.Get("/authorization", s.TerraformIDPHandler.HandleAuth)
+		r.Post("/token", s.TerraformIDPHandler.HandleToken)
+		r.Get("/jwks", s.TerraformIDPHandler.HandleJWKS)
+		r.Get("/userinfo", s.TerraformIDPHandler.HandleUserInfo)
 	})
 
 	// Terraform static token validation endpoints
-	s.router.Get("/terraform/validate-token", s.terraformStaticTokenHandler.HandleValidateToken)
-	s.router.Get("/terraform/auth-status", s.terraformStaticTokenHandler.HandleAuthStatus)
+	s.router.Get("/terraform/validate-token", s.TerraformStaticTokenHandler.HandleValidateToken)
+	s.router.Get("/terraform/auth-status", s.TerraformStaticTokenHandler.HandleAuthStatus)
 
 	// Metrics endpoint
 	s.router.Get("/metrics", s.handleMetrics)
@@ -185,16 +185,16 @@ func (s *Server) setupRoutes() {
 	// Terraform Registry API v1
 	s.router.Route("/v1", func(r chi.Router) {
 		// Modules
-		r.Get("/modules", s.terraformV1ModuleHandler.HandleModuleList)          // Use the new handler
-		r.Get("/modules/search", s.terraformV1ModuleHandler.HandleModuleSearch) // Use the new handler
+		r.Get("/modules", s.TerraformV1ModuleHandler.HandleModuleList)          // Use the new handler
+		r.Get("/modules/search", s.TerraformV1ModuleHandler.HandleModuleSearch) // Use the new handler
 		r.Get("/modules/{namespace}", s.handleNamespaceModules)
 		r.Get("/modules/{namespace}/{name}", s.handleModuleDetails)
 		r.Get("/modules/{namespace}/{name}/{provider}/downloads/summary", s.handleModuleDownloadsSummary)                   // Must come before general provider route
-		r.Get("/modules/{namespace}/{name}/{provider}", s.terraformV1ModuleHandler.HandleModuleProviderDetails)             // Use the new handler
-		r.Get("/modules/{namespace}/{name}/{provider}/versions", s.terraformV1ModuleHandler.HandleModuleVersions)           // Use the new handler
-		r.Get("/modules/{namespace}/{name}/{provider}/download", s.terraformV1ModuleHandler.HandleModuleDownload)           // Use the new handler
-		r.Get("/modules/{namespace}/{name}/{provider}/{version}", s.terraformV1ModuleHandler.HandleModuleVersionDetails)    // Use the new handler
-		r.Get("/modules/{namespace}/{name}/{provider}/{version}/download", s.terraformV1ModuleHandler.HandleModuleDownload) // Use the new handler
+		r.Get("/modules/{namespace}/{name}/{provider}", s.TerraformV1ModuleHandler.HandleModuleProviderDetails)             // Use the new handler
+		r.Get("/modules/{namespace}/{name}/{provider}/versions", s.TerraformV1ModuleHandler.HandleModuleVersions)           // Use the new handler
+		r.Get("/modules/{namespace}/{name}/{provider}/download", s.TerraformV1ModuleHandler.HandleModuleDownload)           // Use the new handler
+		r.Get("/modules/{namespace}/{name}/{provider}/{version}", s.TerraformV1ModuleHandler.HandleModuleVersionDetails)    // Use the new handler
+		r.Get("/modules/{namespace}/{name}/{provider}/{version}/download", s.TerraformV1ModuleHandler.HandleModuleDownload) // Use the new handler
 
 		// Providers
 		r.Route("/providers", func(r chi.Router) {
@@ -209,113 +209,113 @@ func (s *Server) setupRoutes() {
 
 		// Terrareg Custom API
 		r.Route("/terrareg", func(r chi.Router) {
-			r.With(s.authMiddleware.OptionalAuth).Get("/config", s.handleConfig)
-			r.With(s.authMiddleware.OptionalAuth).Get("/git_providers", s.handleGitProviders)
-			r.With(s.authMiddleware.OptionalAuth).Get("/health", s.handleHealth)
-			r.With(s.authMiddleware.OptionalAuth).Get("/version", s.handleVersion)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/config", s.handleConfig)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/git_providers", s.handleGitProviders)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/health", s.handleHealth)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/version", s.handleVersion)
 
 			// Analytics
 			r.Route("/analytics", func(r chi.Router) {
-				r.With(s.authMiddleware.OptionalAuth).Get("/global/stats_summary", s.handleGlobalStatsSummary)
-				r.With(s.authMiddleware.OptionalAuth).Get("/global/usage_stats", s.handleGlobalUsageStats)
-				r.With(s.authMiddleware.OptionalAuth).Get("/global/most_recently_published_module_version", s.handleMostRecentlyPublished)
-				r.With(s.authMiddleware.OptionalAuth).Get("/global/most_downloaded_module_provider_this_week", s.handleMostDownloadedThisWeek)
-				r.With(s.authMiddleware.OptionalAuth).Get("/{namespace}/{name}/{provider}/{version}", s.handleModuleVersionAnalytics)
-				r.With(s.authMiddleware.OptionalAuth).Get("/{namespace}/{name}/{provider}/token_versions", s.handleAnalyticsTokenVersions)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/global/stats_summary", s.handleGlobalStatsSummary)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/global/usage_stats", s.handleGlobalUsageStats)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/global/most_recently_published_module_version", s.handleMostRecentlyPublished)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/global/most_downloaded_module_provider_this_week", s.handleMostDownloadedThisWeek)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/{namespace}/{name}/{provider}/{version}", s.handleModuleVersionAnalytics)
+				r.With(s.AuthMiddleware.OptionalAuth).Get("/{namespace}/{name}/{provider}/token_versions", s.handleAnalyticsTokenVersions)
 			})
 
 			// Initial setup
-			r.With(s.authMiddleware.OptionalAuth).Get("/initial_setup", s.handleInitialSetup)
-			r.With(s.authMiddleware.OptionalAuth).Post("/initial_setup", s.handleInitialSetupPost)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/initial_setup", s.handleInitialSetup)
+			r.With(s.AuthMiddleware.OptionalAuth).Post("/initial_setup", s.handleInitialSetupPost)
 
 			// Namespaces
-			r.With(s.authMiddleware.OptionalAuth).Get("/namespaces", s.handleNamespaceList)
-			r.With(s.authMiddleware.RequireAuth).Post("/namespaces", s.handleNamespaceCreate)
-			r.With(s.authMiddleware.OptionalAuth).Get("/namespaces/{namespace}", s.handleNamespaceGet)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Post("/namespaces/{namespace}", s.handleNamespaceUpdate)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/namespaces/{namespace}", s.handleNamespaceDelete)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/namespaces", s.handleNamespaceList)
+			r.With(s.AuthMiddleware.RequireAuth).Post("/namespaces", s.handleNamespaceCreate)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/namespaces/{namespace}", s.handleNamespaceGet)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Post("/namespaces/{namespace}", s.handleNamespaceUpdate)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/namespaces/{namespace}", s.handleNamespaceDelete)
 
 			// Modules
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}", s.handleTerraregNamespaceModules)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}", s.handleTerraregModuleProviders)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/versions", s.handleTerraregModuleProviderVersions)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}", s.handleTerraregModuleProviderDetails)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Post("/modules/{namespace}/{name}/{provider}/create", s.handleModuleProviderCreate)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/delete", s.handleModuleProviderDelete)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/settings", s.handleModuleProviderSettings)
-			r.With(s.authMiddleware.RequireNamespacePermission("MODIFY", "{namespace}")).Post("/modules/{namespace}/{name}/{provider}/settings", s.handleModuleProviderSettingsUpdate)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/integrations", s.handleModuleProviderIntegrations)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/redirects", s.handleModuleProviderRedirects)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Put("/modules/{namespace}/{name}/{provider}/redirects", s.handleModuleProviderRedirectCreate)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/redirects/{redirect_id}", s.handleModuleProviderRedirectDelete)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}", s.handleTerraregNamespaceModules)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}", s.handleTerraregModuleProviders)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/versions", s.handleTerraregModuleProviderVersions)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}", s.handleTerraregModuleProviderDetails)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Post("/modules/{namespace}/{name}/{provider}/create", s.handleModuleProviderCreate)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/delete", s.handleModuleProviderDelete)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/settings", s.handleModuleProviderSettings)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("MODIFY", "{namespace}")).Post("/modules/{namespace}/{name}/{provider}/settings", s.handleModuleProviderSettingsUpdate)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/integrations", s.handleModuleProviderIntegrations)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/redirects", s.handleModuleProviderRedirects)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Put("/modules/{namespace}/{name}/{provider}/redirects", s.handleModuleProviderRedirectCreate)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/redirects/{redirect_id}", s.handleModuleProviderRedirectDelete)
 
 			// Module webhooks (matching Python implementation)
-			r.Post("/modules/{namespace}/{name}/{provider}/hooks/github", s.moduleWebhookHandler.HandleModuleWebhook("github"))
-			r.Post("/modules/{namespace}/{name}/{provider}/hooks/bitbucket", s.moduleWebhookHandler.HandleModuleWebhook("bitbucket"))
-			r.Post("/modules/{namespace}/{name}/{provider}/hooks/gitlab", s.moduleWebhookHandler.HandleModuleWebhook("gitlab"))
+			r.Post("/modules/{namespace}/{name}/{provider}/hooks/github", s.ModuleWebhookHandler.HandleModuleWebhook("github"))
+			r.Post("/modules/{namespace}/{name}/{provider}/hooks/bitbucket", s.ModuleWebhookHandler.HandleModuleWebhook("bitbucket"))
+			r.Post("/modules/{namespace}/{name}/{provider}/hooks/gitlab", s.ModuleWebhookHandler.HandleModuleWebhook("gitlab"))
 
 			// Module versions
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}", s.handleTerraregModuleVersionDetails)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}", s.handleTerraregModuleVersionDetails)
 			r.With(
-				s.authMiddleware.RequireUploadPermission("{namespace}"),
+				s.AuthMiddleware.RequireUploadPermission("{namespace}"),
 				middleware.Timeout(time.Duration(s.infraConfig.ModuleIndexingTimeoutSeconds)*time.Second),
 			).Post("/modules/{namespace}/{name}/{provider}/{version}/upload", s.handleModuleVersionUpload)
 			r.With(
 				middleware.Timeout(time.Duration(s.infraConfig.ModuleIndexingTimeoutSeconds)*time.Second),
-				s.authMiddleware.RequireAuth,
+				s.AuthMiddleware.RequireAuth,
 			).Post("/modules/{namespace}/{name}/{provider}/{version}/import", s.handleModuleVersionCreate)
 			r.With(
-				s.authMiddleware.RequireUploadPermission("{namespace}"),
+				s.AuthMiddleware.RequireUploadPermission("{namespace}"),
 				middleware.Timeout(time.Duration(s.infraConfig.ModuleIndexingTimeoutSeconds)*time.Second),
 			).Post("/modules/{namespace}/{name}/{provider}/import", s.handleModuleVersionImport)
-			r.With(s.authMiddleware.RequireAuth).Post("/modules/{namespace}/{name}/{provider}/{version}/publish", s.handleModuleVersionPublish)
-			r.With(s.authMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/{version}/delete", s.handleModuleVersionDelete)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/readme_html", s.handleModuleVersionReadmeHTML)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/variable_template", s.handleModuleVersionVariableTemplate)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/files/{path}", s.handleModuleVersionFile)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/source.zip", s.handleModuleVersionSourceDownload)
+			r.With(s.AuthMiddleware.RequireAuth).Post("/modules/{namespace}/{name}/{provider}/{version}/publish", s.handleModuleVersionPublish)
+			r.With(s.AuthMiddleware.RequireNamespacePermission("FULL", "{namespace}")).Delete("/modules/{namespace}/{name}/{provider}/{version}/delete", s.handleModuleVersionDelete)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/readme_html", s.handleModuleVersionReadmeHTML)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/variable_template", s.handleModuleVersionVariableTemplate)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/files/{path}", s.handleModuleVersionFile)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/source.zip", s.handleModuleVersionSourceDownload)
 
 			// Submodules
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules", s.handleModuleVersionSubmodules)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/details/{submodule:.*}", s.handleSubmoduleDetails)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/readme_html/{submodule:.*}", s.handleSubmoduleReadmeHTML)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules", s.handleModuleVersionSubmodules)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/details/{submodule:.*}", s.handleSubmoduleDetails)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/readme_html/{submodule:.*}", s.handleSubmoduleReadmeHTML)
 
 			// Examples
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples", s.handleModuleVersionExamples)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/details/{example:.*}", s.handleExampleDetails)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/readme_html/{example:.*}", s.handleExampleReadmeHTML)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/filelist/{example:.*}", s.handleExampleFileList)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/file/{file:.*}", s.handleExampleFile)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples", s.handleModuleVersionExamples)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/details/{example:.*}", s.handleExampleDetails)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/readme_html/{example:.*}", s.handleExampleReadmeHTML)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/filelist/{example:.*}", s.handleExampleFileList)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/file/{file:.*}", s.handleExampleFile)
 
 			// Graph
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/graph/data", s.handleGraphData)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/graph/data", s.handleGraphData)
 
 			// Providers
-			r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}", s.handleTerraregNamespaceProviders)
-			r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/integrations", s.handleProviderIntegrations)
-			r.With(s.authMiddleware.OptionalAuth).Get("/provider_logos", s.handleProviderLogos)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}", s.handleTerraregNamespaceProviders)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/integrations", s.handleProviderIntegrations)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/provider_logos", s.handleProviderLogos)
 
 			// Search filters
-			r.With(s.authMiddleware.OptionalAuth).Get("/search_filters", s.handleModuleSearchFilters)
-			r.With(s.authMiddleware.OptionalAuth).Get("/modules/search/filters", s.handleModuleSearchFilters)
-			r.With(s.authMiddleware.OptionalAuth).Get("/providers/search/filters", s.handleProviderSearchFilters)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/search_filters", s.handleModuleSearchFilters)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/search/filters", s.handleModuleSearchFilters)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/search/filters", s.handleProviderSearchFilters)
 
 			// Audit
-			r.With(s.authMiddleware.RequireAdmin).Get("/audit-history", s.handleAuditHistory)
+			r.With(s.AuthMiddleware.RequireAdmin).Get("/audit-history", s.handleAuditHistory)
 
 			// User groups
-			r.With(s.authMiddleware.RequireAdmin).Get("/user-groups", s.handleUserGroupList)
-			r.With(s.authMiddleware.RequireAdmin).Post("/user-groups", s.handleUserGroupCreate)
-			r.With(s.authMiddleware.RequireAdmin).Get("/user-groups/{group}", s.handleUserGroupDetails)
-			r.With(s.authMiddleware.RequireAdmin).Delete("/user-groups/{group}", s.handleUserGroupDelete)
-			r.With(s.authMiddleware.RequireAdmin).Get("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissions)
-			r.With(s.authMiddleware.RequireAdmin).Post("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsCreate)
-			r.With(s.authMiddleware.RequireAdmin).Delete("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsDelete)
+			r.With(s.AuthMiddleware.RequireAdmin).Get("/user-groups", s.handleUserGroupList)
+			r.With(s.AuthMiddleware.RequireAdmin).Post("/user-groups", s.handleUserGroupCreate)
+			r.With(s.AuthMiddleware.RequireAdmin).Get("/user-groups/{group}", s.handleUserGroupDetails)
+			r.With(s.AuthMiddleware.RequireAdmin).Delete("/user-groups/{group}", s.handleUserGroupDelete)
+			r.With(s.AuthMiddleware.RequireAdmin).Get("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissions)
+			r.With(s.AuthMiddleware.RequireAdmin).Post("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsCreate)
+			r.With(s.AuthMiddleware.RequireAdmin).Delete("/user-groups/{group}/permissions/{namespace}", s.handleUserGroupNamespacePermissionsDelete)
 
 			// Auth
 			r.Route("/auth", func(r chi.Router) {
 				r.Post("/admin/login", s.handleAdminLogin)
-				r.With(s.sessionMiddleware.Session).Get("/admin/is_authenticated", s.handleIsAuthenticated)
+				r.With(s.SessionMiddleware.Session).Get("/admin/is_authenticated", s.handleIsAuthenticated)
 				r.Post("/logout", s.handleLogout)
 			})
 		})
@@ -324,30 +324,30 @@ func (s *Server) setupRoutes() {
 	// Terraform Registry API v2
 	s.router.Route("/v2", func(r chi.Router) {
 		// Provider endpoints
-		r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}", s.terraformV2ProviderHandler.HandleProviderDetails)
-		r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/versions", s.terraformV2ProviderHandler.HandleProviderVersions)
-		r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/{version}", s.terraformV2ProviderHandler.HandleProviderVersion)
-		r.With(s.authMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/{version}/download/{os}/{arch}", s.terraformV2ProviderHandler.HandleProviderDownload)
-		r.With(s.authMiddleware.OptionalAuth).Get("/providers/{provider_id}/downloads/summary", s.terraformV2ProviderHandler.HandleProviderDownloadsSummary)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}", s.TerraformV2ProviderHandler.HandleProviderDetails)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/versions", s.TerraformV2ProviderHandler.HandleProviderVersions)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/{version}", s.TerraformV2ProviderHandler.HandleProviderVersion)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{namespace}/{provider}/{version}/download/{os}/{arch}", s.TerraformV2ProviderHandler.HandleProviderDownload)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/providers/{provider_id}/downloads/summary", s.TerraformV2ProviderHandler.HandleProviderDownloadsSummary)
 
 		// Provider docs (placeholder - can be implemented later)
-		r.With(s.authMiddleware.OptionalAuth).Get("/provider-docs", s.handleV2ProviderDocs)
-		r.With(s.authMiddleware.OptionalAuth).Get("/provider-docs/{doc_id}", s.handleV2ProviderDoc)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/provider-docs", s.handleV2ProviderDocs)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/provider-docs/{doc_id}", s.handleV2ProviderDoc)
 
 		// GPG keys
-		r.With(s.authMiddleware.OptionalAuth).Get("/gpg-keys", s.terraformV2GPGHandler.HandleListGPGKeys)
-		r.With(s.authMiddleware.RequireAdmin).Post("/gpg-keys", s.terraformV2GPGHandler.HandleCreateGPGKey)
-		r.With(s.authMiddleware.OptionalAuth).Get("/gpg-keys/{namespace}/{key_id}", s.terraformV2GPGHandler.HandleGetGPGKey)
-		r.With(s.authMiddleware.RequireAdmin).Delete("/gpg-keys/{namespace}/{key_id}", s.terraformV2GPGHandler.HandleDeleteGPGKey)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/gpg-keys", s.TerraformV2GPGHandler.HandleListGPGKeys)
+		r.With(s.AuthMiddleware.RequireAdmin).Post("/gpg-keys", s.TerraformV2GPGHandler.HandleCreateGPGKey)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/gpg-keys/{namespace}/{key_id}", s.TerraformV2GPGHandler.HandleGetGPGKey)
+		r.With(s.AuthMiddleware.RequireAdmin).Delete("/gpg-keys/{namespace}/{key_id}", s.TerraformV2GPGHandler.HandleDeleteGPGKey)
 
 		// Categories
-		r.With(s.authMiddleware.OptionalAuth).Get("/categories", s.terraformV2CategoryHandler.HandleListCategories)
+		r.With(s.AuthMiddleware.OptionalAuth).Get("/categories", s.TerraformV2CategoryHandler.HandleListCategories)
 	})
 
 	// Authentication endpoints (matching Python URLs)
 	// Apply security headers and rate limiting to auth endpoints
 	authMiddlewareChain := func(next http.Handler) http.Handler {
-		return s.rateLimiter.RateLimitAuth()(http_middleware.AuthSecurityHeaders(next))
+		return s.RateLimiter.RateLimitAuth()(http_middleware.AuthSecurityHeaders(next))
 	}
 
 	s.router.With(authMiddlewareChain).Get("/openid/login", s.handleOIDCLogin)
@@ -358,21 +358,21 @@ func (s *Server) setupRoutes() {
 	s.router.With(authMiddlewareChain).Get("/github/oauth", s.handleGitHubOAuth)
 
 	// Provider source endpoints (GitHub, GitLab, etc.)
-	s.router.With(s.authMiddleware.OptionalAuth).Get("/{provider_source}/login", s.handleProviderSourceLogin)
-	s.router.With(s.authMiddleware.OptionalAuth).Get("/{provider_source}/callback", s.handleProviderSourceCallback)
-	s.router.With(s.authMiddleware.OptionalAuth).Get("/{provider_source}/auth/status", s.handleProviderSourceAuthStatus)
-	s.router.With(s.authMiddleware.RequireAuth).Get("/{provider_source}/organizations", s.handleProviderSourceOrganizations)
-	s.router.With(s.authMiddleware.RequireAuth).Get("/{provider_source}/repositories", s.handleProviderSourceRepositories)
-	s.router.With(s.authMiddleware.RequireAuth).Post("/{provider_source}/refresh-namespace", s.handleProviderSourceRefreshNamespace)
-	s.router.With(s.authMiddleware.RequireAuth).Post("/{provider_source}/repositories/{repo_id}/publish-provider", s.handleProviderSourcePublishProvider)
+	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/login", s.handleProviderSourceLogin)
+	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/callback", s.handleProviderSourceCallback)
+	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/auth/status", s.handleProviderSourceAuthStatus)
+	s.router.With(s.AuthMiddleware.RequireAuth).Get("/{provider_source}/organizations", s.handleProviderSourceOrganizations)
+	s.router.With(s.AuthMiddleware.RequireAuth).Get("/{provider_source}/repositories", s.handleProviderSourceRepositories)
+	s.router.With(s.AuthMiddleware.RequireAuth).Post("/{provider_source}/refresh-namespace", s.handleProviderSourceRefreshNamespace)
+	s.router.With(s.AuthMiddleware.RequireAuth).Post("/{provider_source}/repositories/{repo_id}/publish-provider", s.handleProviderSourcePublishProvider)
 
 	// Webhooks with extended timeout
 	s.router.With(
-		s.authMiddleware.OptionalAuth,
+		s.AuthMiddleware.OptionalAuth,
 		middleware.Timeout(time.Duration(s.infraConfig.ModuleIndexingTimeoutSeconds)*time.Second),
 	).Post("/v1/terrareg/modules/{namespace}/{name}/{provider}/hooks/github", s.handleGitHubWebhook)
 	s.router.With(
-		s.authMiddleware.OptionalAuth,
+		s.AuthMiddleware.OptionalAuth,
 		middleware.Timeout(time.Duration(s.infraConfig.ModuleIndexingTimeoutSeconds)*time.Second),
 	).Post("/v1/terrareg/modules/{namespace}/{name}/{provider}/hooks/bitbucket", s.handleBitBucketWebhook)
 
@@ -385,7 +385,7 @@ func (s *Server) setupRoutes() {
 	})
 
 	// Initial Setup API
-	s.router.With(s.authMiddleware.OptionalAuth).Get("/v1/terrareg/initial_setup", s.handleInitialSetup)
+	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/v1/terrareg/initial_setup", s.handleInitialSetup)
 
 	// Static files
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -568,7 +568,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
-	s.versionHandler.HandleVersion(w, r)
+	s.VersionHandler.HandleVersion(w, r)
 }
 
 // Helper functions
@@ -597,153 +597,153 @@ func respondError(w http.ResponseWriter, err error, status int) {
 // This allows the server to compile and run
 
 func (s *Server) handleNamespaceModules(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleNamespaceModules(w, r)
+	s.ModuleHandler.HandleNamespaceModules(w, r)
 }
 func (s *Server) handleModuleDetails(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleDetails(w, r)
+	s.ModuleHandler.HandleModuleDetails(w, r)
 }
 func (s *Server) handleModuleDownloadsSummary(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleModuleDownloadsSummary(w, r)
+	s.AnalyticsHandler.HandleModuleDownloadsSummary(w, r)
 }
 func (s *Server) handleProviderList(w http.ResponseWriter, r *http.Request) {
-	s.providerHandler.HandleProviderList(w, r)
+	s.ProviderHandler.HandleProviderList(w, r)
 }
 
 func (s *Server) handleProviderSearch(w http.ResponseWriter, r *http.Request) {
-	s.providerHandler.HandleProviderSearch(w, r)
+	s.ProviderHandler.HandleProviderSearch(w, r)
 }
 
 func (s *Server) handleNamespaceProviders(w http.ResponseWriter, r *http.Request) {
-	s.providerHandler.HandleNamespaceProviders(w, r)
+	s.ProviderHandler.HandleNamespaceProviders(w, r)
 }
 
 func (s *Server) handleProviderDetails(w http.ResponseWriter, r *http.Request) {
-	s.providerHandler.HandleProviderDetails(w, r)
+	s.ProviderHandler.HandleProviderDetails(w, r)
 }
 
 func (s *Server) handleProviderVersions(w http.ResponseWriter, r *http.Request) {
-	s.providerHandler.HandleProviderVersions(w, r)
+	s.ProviderHandler.HandleProviderVersions(w, r)
 }
 
 func (s *Server) handleProviderDownload(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the provider handler following DDD principles
-	s.providerHandler.HandleProviderDownload(w, r)
+	s.ProviderHandler.HandleProviderDownload(w, r)
 }
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
-	s.configHandler.HandleConfig(w, r)
+	s.ConfigHandler.HandleConfig(w, r)
 }
 func (s *Server) handleGitProviders(w http.ResponseWriter, r *http.Request) {
-	s.gitProvidersHandler.ServeHTTP(w, r)
+	s.GitProvidersHandler.ServeHTTP(w, r)
 }
 func (s *Server) handleGlobalStatsSummary(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleGlobalStatsSummary(w, r)
+	s.AnalyticsHandler.HandleGlobalStatsSummary(w, r)
 }
 func (s *Server) handleGlobalUsageStats(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleGlobalUsageStats(w, r)
+	s.AnalyticsHandler.HandleGlobalUsageStats(w, r)
 }
 func (s *Server) handleMostRecentlyPublished(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleMostRecentlyPublished(w, r)
+	s.AnalyticsHandler.HandleMostRecentlyPublished(w, r)
 }
 func (s *Server) handleMostDownloadedThisWeek(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleMostDownloadedThisWeek(w, r)
+	s.AnalyticsHandler.HandleMostDownloadedThisWeek(w, r)
 }
 func (s *Server) handleModuleVersionAnalytics(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleModuleDownloadsSummary(w, r)
+	s.AnalyticsHandler.HandleModuleDownloadsSummary(w, r)
 }
 func (s *Server) handleAnalyticsTokenVersions(w http.ResponseWriter, r *http.Request) {
-	s.analyticsHandler.HandleTokenVersions(w, r)
+	s.AnalyticsHandler.HandleTokenVersions(w, r)
 }
 func (s *Server) handleInitialSetup(w http.ResponseWriter, r *http.Request) {
-	s.initialSetupHandler.HandleInitialSetup(w, r)
+	s.InitialSetupHandler.HandleInitialSetup(w, r)
 }
 func (s *Server) handleInitialSetupPost(w http.ResponseWriter, r *http.Request) {
 	// For now, use the same GET handler for POST
-	s.initialSetupHandler.HandleInitialSetup(w, r)
+	s.InitialSetupHandler.HandleInitialSetup(w, r)
 }
 func (s *Server) handleNamespaceList(w http.ResponseWriter, r *http.Request) {
-	s.namespaceHandler.HandleNamespaceList(w, r)
+	s.NamespaceHandler.HandleNamespaceList(w, r)
 }
 func (s *Server) handleNamespaceCreate(w http.ResponseWriter, r *http.Request) {
-	s.namespaceHandler.HandleNamespaceCreate(w, r)
+	s.NamespaceHandler.HandleNamespaceCreate(w, r)
 }
 func (s *Server) handleNamespaceGet(w http.ResponseWriter, r *http.Request) {
-	s.namespaceHandler.HandleNamespaceDetails(w, r)
+	s.NamespaceHandler.HandleNamespaceDetails(w, r)
 }
 func (s *Server) handleNamespaceUpdate(w http.ResponseWriter, r *http.Request) {
-	s.namespaceHandler.HandleNamespaceUpdate(w, r)
+	s.NamespaceHandler.HandleNamespaceUpdate(w, r)
 }
 func (s *Server) handleNamespaceDelete(w http.ResponseWriter, r *http.Request) {
-	s.namespaceHandler.HandleNamespaceDelete(w, r)
+	s.NamespaceHandler.HandleNamespaceDelete(w, r)
 }
 func (s *Server) handleTerraregNamespaceModules(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleNamespaceModules(w, r)
+	s.ModuleHandler.HandleNamespaceModules(w, r)
 }
 func (s *Server) handleTerraregModuleProviders(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderDetails(w, r)
+	s.ModuleHandler.HandleModuleProviderDetails(w, r)
 }
 func (s *Server) handleTerraregModuleProviderDetails(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleTerraregModuleProviderDetails(w, r)
+	s.ModuleHandler.HandleTerraregModuleProviderDetails(w, r)
 }
 func (s *Server) handleTerraregModuleVersionDetails(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleVersionDetails(w, r)
+	s.ModuleHandler.HandleModuleVersionDetails(w, r)
 }
 func (s *Server) handleTerraregModuleProviderVersions(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleTerraregModuleProviderVersions(w, r)
+	s.ModuleHandler.HandleTerraregModuleProviderVersions(w, r)
 }
 func (s *Server) handleModuleProviderCreate(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderCreate(w, r)
+	s.ModuleHandler.HandleModuleProviderCreate(w, r)
 }
 func (s *Server) handleModuleProviderDelete(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderDelete(w, r)
+	s.ModuleHandler.HandleModuleProviderDelete(w, r)
 }
 func (s *Server) handleModuleProviderSettings(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderSettingsGet(w, r)
+	s.ModuleHandler.HandleModuleProviderSettingsGet(w, r)
 }
 func (s *Server) handleModuleProviderSettingsUpdate(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderSettingsUpdate(w, r)
+	s.ModuleHandler.HandleModuleProviderSettingsUpdate(w, r)
 }
 func (s *Server) handleModuleProviderIntegrations(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleGetIntegrations(w, r)
+	s.ModuleHandler.HandleGetIntegrations(w, r)
 }
 func (s *Server) handleModuleProviderRedirects(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderRedirectsGet(w, r)
+	s.ModuleHandler.HandleModuleProviderRedirectsGet(w, r)
 }
 func (s *Server) handleModuleProviderRedirectCreate(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderRedirectCreate(w, r)
+	s.ModuleHandler.HandleModuleProviderRedirectCreate(w, r)
 }
 func (s *Server) handleModuleProviderRedirectDelete(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderRedirectDelete(w, r)
+	s.ModuleHandler.HandleModuleProviderRedirectDelete(w, r)
 }
 func (s *Server) handleModuleVersionUpload(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleVersionUpload(w, r)
+	s.ModuleHandler.HandleModuleVersionUpload(w, r)
 }
 func (s *Server) handleModuleVersionCreate(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the module handler following DDD principles
 	// This is the deprecated endpoint that requires version in URL
-	s.moduleHandler.HandleModuleVersionCreate(w, r)
+	s.ModuleHandler.HandleModuleVersionCreate(w, r)
 }
 func (s *Server) handleModuleVersionImport(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleVersionImport(w, r)
+	s.ModuleHandler.HandleModuleVersionImport(w, r)
 }
 func (s *Server) handleModuleVersionPublish(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleVersionPublish(w, r)
+	s.ModuleHandler.HandleModuleVersionPublish(w, r)
 }
 func (s *Server) handleModuleVersionDelete(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the module handler following DDD principles
 	// This deletes a specific version, not the entire provider
-	s.moduleHandler.HandleModuleVersionDelete(w, r)
+	s.ModuleHandler.HandleModuleVersionDelete(w, r)
 }
 func (s *Server) handleModuleVersionReadmeHTML(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the module handler following DDD principles
-	s.moduleHandler.HandleModuleVersionReadmeHTML(w, r)
+	s.ModuleHandler.HandleModuleVersionReadmeHTML(w, r)
 }
 func (s *Server) handleModuleVersionVariableTemplate(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the module handler following DDD principles
-	s.moduleHandler.HandleModuleVersionVariableTemplate(w, r)
+	s.ModuleHandler.HandleModuleVersionVariableTemplate(w, r)
 }
 func (s *Server) handleModuleVersionFile(w http.ResponseWriter, r *http.Request) {
 	// Delegate to the module handler following DDD principles
-	s.moduleHandler.HandleModuleFile(w, r)
+	s.ModuleHandler.HandleModuleFile(w, r)
 }
 func (s *Server) handleModuleVersionSourceDownload(w http.ResponseWriter, r *http.Request) {
 	// Check if module hosting is disallowed
@@ -766,38 +766,38 @@ func (s *Server) handleModuleVersionSourceDownload(w http.ResponseWriter, r *htt
 	}
 
 	// Delegate to the module handler following DDD principles
-	s.moduleHandler.HandleModuleVersionSourceDownload(w, r)
+	s.ModuleHandler.HandleModuleVersionSourceDownload(w, r)
 }
 func (s *Server) handleModuleVersionSubmodules(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleGetSubmodules(w, r)
+	s.ModuleHandler.HandleGetSubmodules(w, r)
 }
 func (s *Server) handleSubmoduleDetails(w http.ResponseWriter, r *http.Request) {
-	s.submoduleHandler.HandleSubmoduleDetails(w, r)
+	s.SubmoduleHandler.HandleSubmoduleDetails(w, r)
 }
 func (s *Server) handleSubmoduleReadmeHTML(w http.ResponseWriter, r *http.Request) {
-	s.submoduleHandler.HandleSubmoduleReadmeHTML(w, r)
+	s.SubmoduleHandler.HandleSubmoduleReadmeHTML(w, r)
 }
 func (s *Server) handleModuleVersionExamples(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleGetExamples(w, r)
+	s.ModuleHandler.HandleGetExamples(w, r)
 }
 func (s *Server) handleExampleDetails(w http.ResponseWriter, r *http.Request) {
-	s.exampleHandler.HandleExampleDetails(w, r)
+	s.ExampleHandler.HandleExampleDetails(w, r)
 }
 func (s *Server) handleExampleReadmeHTML(w http.ResponseWriter, r *http.Request) {
-	s.exampleHandler.HandleExampleReadmeHTML(w, r)
+	s.ExampleHandler.HandleExampleReadmeHTML(w, r)
 }
 func (s *Server) handleExampleFileList(w http.ResponseWriter, r *http.Request) {
-	s.exampleHandler.HandleExampleFileList(w, r)
+	s.ExampleHandler.HandleExampleFileList(w, r)
 }
 func (s *Server) handleExampleFile(w http.ResponseWriter, r *http.Request) {
-	s.exampleHandler.HandleExampleFile(w, r)
+	s.ExampleHandler.HandleExampleFile(w, r)
 }
 func (s *Server) handleGraphData(w http.ResponseWriter, r *http.Request) {
 	// For now, return a placeholder response
-	s.graphHandler.HandleModuleDependencyGraph(w, r)
+	s.GraphHandler.HandleModuleDependencyGraph(w, r)
 }
 func (s *Server) handleTerraregNamespaceProviders(w http.ResponseWriter, r *http.Request) {
-	s.moduleHandler.HandleModuleProviderDetails(w, r)
+	s.ModuleHandler.HandleModuleProviderDetails(w, r)
 }
 func (s *Server) handleProviderIntegrations(w http.ResponseWriter, r *http.Request) {
 	// Provider integrations not yet implemented
@@ -806,23 +806,23 @@ func (s *Server) handleProviderIntegrations(w http.ResponseWriter, r *http.Reque
 	})
 }
 func (s *Server) handleProviderLogos(w http.ResponseWriter, r *http.Request) {
-	s.providerLogosHandler.HandleGetProviderLogos(w, r)
+	s.ProviderLogosHandler.HandleGetProviderLogos(w, r)
 }
 func (s *Server) handleModuleSearchFilters(w http.ResponseWriter, r *http.Request) {
-	s.searchFiltersHandler.HandleModuleSearchFilters(w, r)
+	s.SearchFiltersHandler.HandleModuleSearchFilters(w, r)
 }
 
 func (s *Server) handleProviderSearchFilters(w http.ResponseWriter, r *http.Request) {
-	s.searchFiltersHandler.HandleProviderSearchFilters(w, r)
+	s.SearchFiltersHandler.HandleProviderSearchFilters(w, r)
 }
 func (s *Server) handleAuditHistory(w http.ResponseWriter, r *http.Request) {
-	s.auditHandler.HandleAuditHistoryGet(w, r)
+	s.AuditHandler.HandleAuditHistoryGet(w, r)
 }
 func (s *Server) handleUserGroupList(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupList(w, r)
+	s.AuthHandler.HandleUserGroupList(w, r)
 }
 func (s *Server) handleUserGroupCreate(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupCreate(w, r)
+	s.AuthHandler.HandleUserGroupCreate(w, r)
 }
 func (s *Server) handleUserGroupDetails(w http.ResponseWriter, r *http.Request) {
 	// User group details not currently exposed via separate endpoint
@@ -832,31 +832,31 @@ func (s *Server) handleUserGroupDetails(w http.ResponseWriter, r *http.Request) 
 	})
 }
 func (s *Server) handleUserGroupDelete(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupDelete(w, r)
+	s.AuthHandler.HandleUserGroupDelete(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissions(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
+	s.AuthHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissionsCreate(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
+	s.AuthHandler.HandleUserGroupNamespacePermissionsCreate(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissionsUpdate(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
+	s.AuthHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
 }
 func (s *Server) handleUserGroupNamespacePermissionsDelete(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
+	s.AuthHandler.HandleUserGroupNamespacePermissionsDelete(w, r)
 }
 func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleAdminLogin(w, r)
+	s.AuthHandler.HandleAdminLogin(w, r)
 }
 func (s *Server) handleIsAuthenticated(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleIsAuthenticated(w, r)
+	s.AuthHandler.HandleIsAuthenticated(w, r)
 }
 func (s *Server) handleV2ProviderDetails(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2ProviderHandler.HandleProviderDetails(w, r)
+	s.TerraformV2ProviderHandler.HandleProviderDetails(w, r)
 }
 func (s *Server) handleV2ProviderDownloadsSummary(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2ProviderHandler.HandleProviderDownloadsSummary(w, r)
+	s.TerraformV2ProviderHandler.HandleProviderDownloadsSummary(w, r)
 }
 func (s *Server) handleV2ProviderDocs(w http.ResponseWriter, r *http.Request) {
 	// Provider docs not yet implemented
@@ -871,43 +871,43 @@ func (s *Server) handleV2ProviderDoc(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func (s *Server) handleV2GPGKeys(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2GPGHandler.HandleListGPGKeys(w, r)
+	s.TerraformV2GPGHandler.HandleListGPGKeys(w, r)
 }
 func (s *Server) handleV2GPGKeyCreate(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2GPGHandler.HandleCreateGPGKey(w, r)
+	s.TerraformV2GPGHandler.HandleCreateGPGKey(w, r)
 }
 func (s *Server) handleV2GPGKey(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2GPGHandler.HandleGetGPGKey(w, r)
+	s.TerraformV2GPGHandler.HandleGetGPGKey(w, r)
 }
 func (s *Server) handleV2Categories(w http.ResponseWriter, r *http.Request) {
-	s.terraformV2CategoryHandler.HandleListCategories(w, r)
+	s.TerraformV2CategoryHandler.HandleListCategories(w, r)
 }
 func (s *Server) handleOIDCLogin(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleOIDCLogin(w, r)
+	s.AuthHandler.HandleOIDCLogin(w, r)
 }
 func (s *Server) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleOIDCCallback(w, r)
+	s.AuthHandler.HandleOIDCCallback(w, r)
 }
 func (s *Server) handleSAMLLogin(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleSAMLLogin(w, r)
+	s.AuthHandler.HandleSAMLLogin(w, r)
 }
 func (s *Server) handleSAMLMetadata(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleSAMLMetadata(w, r)
+	s.AuthHandler.HandleSAMLMetadata(w, r)
 }
 func (s *Server) handleSAMLACS(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleSAMLACS(w, r)
+	s.AuthHandler.HandleSAMLACS(w, r)
 }
 func (s *Server) handleGitHubOAuth(w http.ResponseWriter, r *http.Request) {
-	s.authHandler.HandleGitHubOAuth(w, r)
+	s.AuthHandler.HandleGitHubOAuth(w, r)
 }
 func (s *Server) handleProviderSourceLogin(w http.ResponseWriter, r *http.Request) {
-	s.providerSourceHandler.HandleLogin(w, r)
+	s.ProviderSourceHandler.HandleLogin(w, r)
 }
 func (s *Server) handleProviderSourceCallback(w http.ResponseWriter, r *http.Request) {
-	s.providerSourceHandler.HandleCallback(w, r)
+	s.ProviderSourceHandler.HandleCallback(w, r)
 }
 func (s *Server) handleProviderSourceAuthStatus(w http.ResponseWriter, r *http.Request) {
-	s.providerSourceHandler.HandleAuthStatus(w, r)
+	s.ProviderSourceHandler.HandleAuthStatus(w, r)
 }
 func (s *Server) handleProviderSourceOrganizations(w http.ResponseWriter, r *http.Request) {
 	// Provider source organizations not yet implemented
@@ -934,15 +934,15 @@ func (s *Server) handleProviderSourcePublishProvider(w http.ResponseWriter, r *h
 	})
 }
 func (s *Server) handleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
-	s.moduleWebhookHandler.HandleModuleWebhook("github").ServeHTTP(w, r)
+	s.ModuleWebhookHandler.HandleModuleWebhook("github").ServeHTTP(w, r)
 }
 func (s *Server) handleBitBucketWebhook(w http.ResponseWriter, r *http.Request) {
-	s.moduleWebhookHandler.HandleModuleWebhook("bitbucket").ServeHTTP(w, r)
+	s.ModuleWebhookHandler.HandleModuleWebhook("bitbucket").ServeHTTP(w, r)
 }
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	// Render the index template using the template renderer
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "index.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "index.html", map[string]interface{}{
 		"TEMPLATE_NAME": "index.html",
 	}, r)
 	if err != nil {
@@ -952,7 +952,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "login.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "login.html", map[string]interface{}{
 		"TEMPLATE_NAME": "login.html",
 	}, r)
 	if err != nil {
@@ -981,7 +981,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleInitialSetupPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "initial_setup.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "initial_setup.html", map[string]interface{}{
 		"TEMPLATE_NAME": "initial_setup.html",
 	}, r)
 	if err != nil {
@@ -991,7 +991,7 @@ func (s *Server) handleInitialSetupPage(w http.ResponseWriter, r *http.Request) 
 }
 func (s *Server) handleCreateNamespacePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "create_namespace.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "create_namespace.html", map[string]interface{}{
 		"TEMPLATE_NAME": "create_namespace.html",
 	}, r)
 	if err != nil {
@@ -1001,7 +1001,7 @@ func (s *Server) handleCreateNamespacePage(w http.ResponseWriter, r *http.Reques
 }
 func (s *Server) handleEditNamespacePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
 		"TEMPLATE_NAME": "edit_namespace.html",
 	}, r)
 	if err != nil {
@@ -1011,7 +1011,7 @@ func (s *Server) handleEditNamespacePage(w http.ResponseWriter, r *http.Request)
 }
 func (s *Server) handleCreateModulePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "create_module_provider.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "create_module_provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "create_module_provider.html",
 	}, r)
 	if err != nil {
@@ -1021,7 +1021,7 @@ func (s *Server) handleCreateModulePage(w http.ResponseWriter, r *http.Request) 
 }
 func (s *Server) handleCreateProviderPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "create_provider.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "create_provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "create_provider.html",
 	}, r)
 	if err != nil {
@@ -1031,7 +1031,7 @@ func (s *Server) handleCreateProviderPage(w http.ResponseWriter, r *http.Request
 }
 func (s *Server) handleUserGroupsPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "user_groups.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "user_groups.html", map[string]interface{}{
 		"TEMPLATE_NAME": "user_groups.html",
 	}, r)
 	if err != nil {
@@ -1041,7 +1041,7 @@ func (s *Server) handleUserGroupsPage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleAuditHistoryPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "audit_history.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "audit_history.html", map[string]interface{}{
 		"TEMPLATE_NAME": "audit_history.html",
 	}, r)
 	if err != nil {
@@ -1051,7 +1051,7 @@ func (s *Server) handleAuditHistoryPage(w http.ResponseWriter, r *http.Request) 
 }
 func (s *Server) handleSearchPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "search.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "search.html", map[string]interface{}{
 		"TEMPLATE_NAME": "search.html",
 	}, r)
 	if err != nil {
@@ -1061,7 +1061,7 @@ func (s *Server) handleSearchPage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleModuleSearchPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "module_search.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module_search.html", map[string]interface{}{
 		"TEMPLATE_NAME": "module_search.html",
 	}, r)
 	if err != nil {
@@ -1071,7 +1071,7 @@ func (s *Server) handleModuleSearchPage(w http.ResponseWriter, r *http.Request) 
 }
 func (s *Server) handleProviderSearchPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "provider_search.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "provider_search.html", map[string]interface{}{
 		"TEMPLATE_NAME": "provider_search.html",
 	}, r)
 	if err != nil {
@@ -1081,7 +1081,7 @@ func (s *Server) handleProviderSearchPage(w http.ResponseWriter, r *http.Request
 }
 func (s *Server) handleModulesPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "module.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module.html", map[string]interface{}{
 		"TEMPLATE_NAME": "module.html",
 	}, r)
 	if err != nil {
@@ -1091,7 +1091,7 @@ func (s *Server) handleModulesPage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleNamespacePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
 		"TEMPLATE_NAME": "namespace.html",
 	}, r)
 	if err != nil {
@@ -1101,7 +1101,7 @@ func (s *Server) handleNamespacePage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleModulePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "module.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module.html", map[string]interface{}{
 		"TEMPLATE_NAME": "module.html",
 	}, r)
 	if err != nil {
@@ -1111,7 +1111,7 @@ func (s *Server) handleModulePage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleModuleProviderPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "module_provider.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module_provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "module_provider.html",
 	}, r)
 	if err != nil {
@@ -1121,7 +1121,7 @@ func (s *Server) handleModuleProviderPage(w http.ResponseWriter, r *http.Request
 }
 func (s *Server) handleSubmodulePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "submodule.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "submodule.html", map[string]interface{}{
 		"TEMPLATE_NAME": "submodule.html",
 	}, r)
 	if err != nil {
@@ -1131,7 +1131,7 @@ func (s *Server) handleSubmodulePage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleExamplePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "example.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "example.html", map[string]interface{}{
 		"TEMPLATE_NAME": "example.html",
 	}, r)
 	if err != nil {
@@ -1158,7 +1158,7 @@ func (s *Server) handleGraphPage(w http.ResponseWriter, r *http.Request) {
 		"version":        version,
 	}
 
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "graph.html", templateData, r)
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "graph.html", templateData, r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		s.logger.Error().Err(err).Msg("Failed to render graph template")
@@ -1166,7 +1166,7 @@ func (s *Server) handleGraphPage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleProvidersPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "provider.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "provider.html",
 	}, r)
 	if err != nil {
@@ -1176,7 +1176,7 @@ func (s *Server) handleProvidersPage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleProviderPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.templateRenderer.RenderWithRequest(r.Context(), w, "provider.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "provider.html",
 	}, r)
 	if err != nil {

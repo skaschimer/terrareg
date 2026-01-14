@@ -129,6 +129,22 @@ func (r *AnalyticsRepositoryImpl) GetDownloadsByVersionID(ctx context.Context, m
 	return int(count), nil
 }
 
+// GetTotalDownloads retrieves the total count of all analytics records
+// Matches Python: AnalyticsEngine.get_total_downloads()
+func (r *AnalyticsRepositoryImpl) GetTotalDownloads(ctx context.Context) (int, error) {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&sqldb.AnalyticsDB{}).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
 // GetMostRecentlyPublished retrieves the most recently published module version
 func (r *AnalyticsRepositoryImpl) GetMostRecentlyPublished(ctx context.Context) (*analyticsCmd.ModuleVersionInfo, error) {
 	var result struct {
@@ -163,7 +179,7 @@ func (r *AnalyticsRepositoryImpl) GetMostRecentlyPublished(ctx context.Context) 
 		`).
 		Joins("JOIN module_provider ON module_version.module_provider_id = module_provider.id").
 		Joins("JOIN namespace ON module_provider.namespace_id = namespace.id").
-		Where("module_version.published_at IS NOT NULL").
+		Where("module_version.published = ?", true).
 		Where("module_version.beta = ?", false).
 		Where("module_version.internal = ?", false).
 		Order("module_version.published_at DESC").
