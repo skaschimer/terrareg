@@ -36,15 +36,29 @@ func (m *MockAnalyticsRepository) RecordProviderDownload(ctx context.Context, ev
 
 // GetDownloadStats returns mocked download stats
 // This is the key mocked method matching Python's get_total_downloads mock
+// Matches Python: AnalyticsEngine.get_module_provider_download_stats()
 func (m *MockAnalyticsRepository) GetDownloadStats(ctx context.Context, namespace, module, provider string) (*analyticsCmd.DownloadStats, error) {
-	// Return mocked total downloads for any module/provider
-	recentDownloads := m.TotalDownloads / 10
-	if recentDownloads < 1 {
-		recentDownloads = 1
+	// Return mocked download stats matching Python format
+	// Python returns: week, month, year, total
+	total := m.TotalDownloads
+	// Approximate stats: week ~ 1/20 of total, month ~ 1/4 of total, year ~ 1/2 of total
+	week := total / 20
+	if week < 1 {
+		week = 1
+	}
+	month := total / 4
+	if month < 1 {
+		month = 1
+	}
+	year := total / 2
+	if year < 1 {
+		year = 1
 	}
 	return &analyticsCmd.DownloadStats{
-		TotalDownloads:  m.TotalDownloads,
-		RecentDownloads: recentDownloads, // Approximate recent downloads
+		TotalDownloads: total,
+		Week:           week,
+		Month:          month,
+		Year:           year,
 	}, nil
 }
 

@@ -66,9 +66,12 @@ type ProviderDownloadEvent struct {
 }
 
 // DownloadStats represents download statistics
+// Matches Python: AnalyticsEngine.get_module_provider_download_stats()
 type DownloadStats struct {
-	TotalDownloads  int
-	RecentDownloads int // Last 30 days
+	TotalDownloads int
+	Week           int // Last 7 days
+	Month          int // Last 31 days
+	Year           int // Last 365 days
 }
 
 // ModuleVersionInfo represents information about a module version

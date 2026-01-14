@@ -281,6 +281,7 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_Multiple(t *testing.T) {
 }
 
 // TestAnalyticsHandler_HandleModuleDownloadsSummary_Success tests successful download summary retrieval
+// Matches Python: test_api_module_provider_downloads_summary.py
 func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
@@ -290,6 +291,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	timestamp := time.Now()
+	// Create downloads - all created at current time, so they count toward week/month/year
 	testutils.CreateAnalyticsData(t, db, moduleVersion.ID, 25, timestamp)
 
 	handler := testutils.CreateAnalyticsHandler(t, db)
@@ -313,10 +315,19 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	assert.Contains(t, data, "type")
 	assert.Contains(t, data, "id")
 	assert.Contains(t, data, "attributes")
-	assert.Equal(t, "module-downloads", data["type"])
+	// Python returns type: "module-downloads-summary"
+	assert.Equal(t, "module-downloads-summary", data["type"])
 	assert.Equal(t, "test-namespace/test-module/aws", data["id"])
 	attributes := data["attributes"].(map[string]interface{})
+	// Verify all stats fields are present (matching Python format)
+	assert.Contains(t, attributes, "week")
+	assert.Contains(t, attributes, "month")
+	assert.Contains(t, attributes, "year")
+	assert.Contains(t, attributes, "total")
 	assert.Equal(t, float64(25), attributes["total"])
+	assert.Equal(t, float64(25), attributes["week"])   // All downloads are recent
+	assert.Equal(t, float64(25), attributes["month"])  // All downloads are recent
+	assert.Equal(t, float64(25), attributes["year"])   // All downloads are recent
 }
 
 // TestAnalyticsHandler_HandleModuleDownloadsSummary_NotFound tests with non-existent module

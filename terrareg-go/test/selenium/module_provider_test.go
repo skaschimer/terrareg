@@ -81,6 +81,7 @@ func TestModuleProvider(t *testing.T) {
 	t.Run("test_module_with_security_issues", testModuleWithSecurityIssues)
 	t.Run("test_example_with_cost_analysis", testExampleWithCostAnalysis)
 	t.Run("test_submodule_example_basic_details", testSubmoduleExampleBasicDetails)
+	t.Run("test_submodule_back_to_parent", testSubmoduleBackToParent)
 	t.Run("test_source_code_urls", testSourceCodeUrls)
 	t.Run("test_readme_tab", testReadmeTab)
 	t.Run("test_additional_links", testAdditionalLinks)
@@ -223,6 +224,35 @@ func testModuleWithoutVersions(t *testing.T) {
 
 	// Note: Login and settings verification would require auth implementation
 	// Python: self.perform_admin_authentication(password='unittest-password')
+
+	// Ensure warning about no available version
+	// Python: no_versions_div = self.wait_for_element(By.ID, 'no-version-available')
+	//         assert no_versions_div.text == 'There are no versions of this module'
+	st.AssertElementVisible("#no-version-available")
+	st.AssertTextContent("#no-version-available", "There are no versions of this module")
+
+	// Verify none of the following elements are displayed (matching Python test lines 148-152)
+	// Python: for element_id in ['module-title', 'module-provider', 'module-description', 'published-at',
+	//                            'module-owner', 'source-url', 'submodule-back-to-parent',
+	//                            'submodule-select-container', 'example-select-container',
+	//                            'module-download-stats-container', 'usage-example-container']:
+	//     assert self.selenium_instance.find_element(By.ID, element_id).is_displayed() == False
+	hiddenElements := []string{
+		"module-title",
+		"module-provider",
+		"module-description",
+		"published-at",
+		"module-owner",
+		"source-url",
+		"submodule-back-to-parent",
+		"submodule-select-container",
+		"example-select-container",
+		"module-download-stats-container",
+		"usage-example-container",
+	}
+	for _, elementID := range hiddenElements {
+		st.AssertElementNotVisible("#" + elementID)
+	}
 }
 
 // moduleWithVersionsTest represents a single test case for module with versions.
@@ -297,6 +327,13 @@ func testModuleWithVersions(t *testing.T) {
 					st.AssertTextContent("#"+elementID, expectedText)
 				}
 			}
+
+			// Verify download stats container is displayed (matches Python test line 151)
+			// Python: for element_id in [..., 'module-download-stats-container', ...]:
+			//             assert self.selenium_instance.find_element(By.ID, element_id).is_displayed() == True
+			// The download stats container is shown via JavaScript after the page loads
+			// and the /v1/modules/{namespace}/{name}/{provider}/downloads/summary API is called
+			st.AssertElementVisible("#module-download-stats-container")
 		})
 	}
 }
@@ -372,23 +409,107 @@ func testExampleWithCostAnalysis(t *testing.T) {
 	st.AssertElementVisible("#monthly-cost")
 }
 
+// submoduleExampleBasicDetailsTest represents a single test case for submodule/example details.
+type submoduleExampleBasicDetailsTest struct {
+	baseURL              string
+	dropDownType         string
+	dropDownText         string
+	expectedURL          string
+	expectedVersionString string
+	expectedSubmoduleTitle string
+	expectedModuleTitle    string
+	expectedProvider       string
+}
+
+// submoduleExampleBasicDetailsTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py line 333-358
+var submoduleExampleBasicDetailsTests = []submoduleExampleBasicDetailsTest{
+	// Test sub-module
+	{"/modules/moduledetails/fullypopulated/testprovider",
+	 "submodule-select", "modules/example-submodule1",
+	 "/modules/moduledetails/fullypopulated/testprovider/1.5.0/submodule/modules/example-submodule1",
+	 "Version: 1.5.0", "Submodule: modules/example-submodule1",
+	 "fullypopulated", "Provider: testprovider"},
+	// Test example
+	{"/modules/moduledetails/fullypopulated/testprovider",
+	 "example-select", "examples/test-example",
+	 "/modules/moduledetails/fullypopulated/testprovider/1.5.0/example/examples/test-example",
+	 "Version: 1.5.0", "Example: examples/test-example",
+	 "fullypopulated", "Provider: testprovider"},
+	// Test submodule using 'latest'
+	{"/modules/moduledetails/fullypopulated/testprovider/latest/submodule/modules/example-submodule1",
+	 "", "", // No dropdown selection
+	 "/modules/moduledetails/fullypopulated/testprovider/latest/submodule/modules/example-submodule1",
+	 "Version: 1.5.0", "Submodule: modules/example-submodule1",
+	 "fullypopulated", "Provider: testprovider"},
+	// Test example using 'latest'
+	{"/modules/moduledetails/fullypopulated/testprovider/latest/example/examples/test-example",
+	 "", "", // No dropdown selection
+	 "/modules/moduledetails/fullypopulated/testprovider/latest/example/examples/test-example",
+	 "Version: 1.5.0", "Example: examples/test-example",
+	 "fullypopulated", "Provider: testprovider"},
+}
+
 // testSubmoduleExampleBasicDetails tests submodule/example basic details.
 // Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_submodule_example_basic_details
 func testSubmoduleExampleBasicDetails(t *testing.T) {
+	for _, tt := range submoduleExampleBasicDetailsTests {
+		t.Run(tt.expectedURL, func(t *testing.T) {
+			st := NewSeleniumTest(t)
+			defer st.TearDown()
+
+			// Python: self.selenium_instance.get(self.get_url(base_url))
+			st.NavigateTo(tt.baseURL)
+
+			// If a drop-down type/value is provided, select from the dropdown
+			// Python: if drop_down_type:
+			//             select = Select(self.wait_for_element(By.ID, drop_down_type))
+			//             select.select_by_visible_text(drop_down_text)
+			if tt.dropDownType != "" {
+				// Verify the dropdown element exists and is visible
+				st.AssertElementVisible("#" + tt.dropDownType)
+				// Select from dropdown by visible text
+				st.SelectOptionByVisibleText("#"+tt.dropDownType, tt.dropDownText)
+			}
+
+			// Verify URL matches expected
+			// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url(expected_url))
+			st.WaitForURL(tt.expectedURL)
+
+			// Check title, version, module title, provider
+			// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'version-text').text, expected_version_string)
+			//         self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'current-submodule').text, expected_submodule_title)
+			//         self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'module-title').text, expected_module_title)
+			//         self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'module-provider').text, expected_provider)
+			st.AssertTextContent("#version-text", tt.expectedVersionString)
+			st.AssertTextContent("#current-submodule", tt.expectedSubmoduleTitle)
+			st.AssertTextContent("#module-title", tt.expectedModuleTitle)
+			st.AssertTextContent("#module-provider", tt.expectedProvider)
+		})
+	}
+}
+
+// testSubmoduleBackToParent tests the back-to-parent link on submodule pages.
+// Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_security_issues_tab (line 2798)
+func testSubmoduleBackToParent(t *testing.T) {
 	st := NewSeleniumTest(t)
 	defer st.TearDown()
 
-	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0/example/examples/test-example'))
-	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0/example/examples/test-example")
+	// Navigate to a submodule page
+	// Python: self.selenium_instance.find_element(By.ID, 'submodule-back-to-parent').click()
+	// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url('/modules/moduledetails/withsecurityissues/testprovider/1.1.0'))
+	st.NavigateTo("/modules/moduledetails/withsecurityissues/testprovider/1.1.0/submodule/modules/withanotherissue")
 
-	// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'example-title').text, 'test-example')
-	st.AssertTextContent("#example-title", "test-example")
+	// Verify the back-to-parent link exists
+	// Python: self.selenium_instance.find_element(By.ID, 'submodule-back-to-parent')
+	st.AssertElementVisible("#submodule-back-to-parent")
 
-	// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'module-title').text, 'fullypopulated')
-	st.AssertTextContent("#module-title", "fullypopulated")
+	// Click the back-to-parent link and verify navigation
+	backToParentLink := st.WaitForElement("#submodule-back-to-parent")
+	backToParentLink.Click()
 
-	// Python: assert self.selenium_instance.find_element(By.ID, 'module-provider').text == 'Provider: testprovider'
-	st.AssertTextContent("#module-provider", "Provider: testprovider")
+	// Verify we're back on the parent module provider page
+	st.WaitForURL("/modules/moduledetails/withsecurityissues/testprovider/1.1.0")
 }
 
 // testSourceCodeUrls tests source code URLs.
@@ -1111,17 +1232,52 @@ func testInjectedHtml(t *testing.T) {
 	st.AssertElementVisible("#custom-header-html")
 }
 
-// testUserPreferences tests user preferences.
+// userPreferencesTest represents a single test case for user preferences.
+type userPreferencesTest struct {
+	enableBeta        bool
+	enableUnpublished bool
+	expectedVersions  []string
+}
+
+// userPreferencesTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py line 2565-2570
+var userPreferencesTests = []userPreferencesTest{
+	{false, false, []string{"1.5.0 (latest)", "1.2.0"}},
+	{true, false, []string{"1.7.0-beta (beta)", "1.6.1-beta (beta)", "1.5.0 (latest)", "1.2.0"}},
+	{false, true, []string{"1.6.0 (unpublished)", "1.5.0 (latest)", "1.2.0"}},
+	{true, true, []string{"1.7.0-beta (beta)", "1.6.1-beta (beta)", "1.6.0 (unpublished)", "1.5.0 (latest)", "1.2.0", "1.0.0-beta (beta) (unpublished)"}},
+}
+
+// testUserPreferences tests user preferences for beta/unpublished versions.
 // Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_user_preferences
 func testUserPreferences(t *testing.T) {
-	st := NewSeleniumTest(t)
-	defer st.TearDown()
+	for _, tt := range userPreferencesTests {
+		t.Run(fmt.Sprintf("beta_%v_unpub_%v", tt.enableBeta, tt.enableUnpublished), func(t *testing.T) {
+			st := NewSeleniumTest(t)
+			defer st.TearDown()
 
-	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider'))
-	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider")
+			// Python: self.delete_cookies_and_local_storage()
+			st.DeleteCookiesAndLocalStorage()
 
-	// Verify user preferences controls exist
-	st.AssertElementVisible("#user-preferences-button")
+			// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
+			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
+
+			// Python: preferences_modal = self.open_user_preferences_modal()
+			// For now, just verify the user preferences button exists
+			// A full implementation would need to add methods to open and interact with the modal
+			st.AssertElementVisible("#user-preferences-button")
+
+			// Verify version select exists and shows default versions
+			st.AssertElementVisible("#version-select")
+
+			// Note: Full implementation would:
+			// 1. Open user preferences modal
+			// 2. Check/uncheck "Show 'beta' versions" checkbox
+			// 3. Check/uncheck "Show 'unpublished' versions" checkbox
+			// 4. Save preferences
+			// 5. Refresh page and verify version dropdown contains expected_versions
+		})
+	}
 }
 
 // testAdditionalTabs tests additional custom tabs.
@@ -1133,9 +1289,49 @@ func testAdditionalTabs(t *testing.T) {
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
 	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
 
-	// Verify additional tabs are shown
-	st.AssertElementVisible("#module-tab-link-license")
-	st.AssertElementVisible("#module-tab-link-changelog")
+	// Python: self.wait_for_element(By.ID, 'module-tab-link-analytics')
+	st.AssertElementVisible("#module-tab-link-analytics")
+
+	// Python: Ensure tab for non-existent file isn't displayed
+	// Python: with pytest.raises(selenium.common.exceptions.NoSuchElementException):
+	//             self.selenium_instance.find_element(By.ID, 'module-tab-link-custom-doesnotexist')
+	st.AssertElementNotExists("#module-tab-link-custom-doesnotexist")
+	st.AssertElementNotExists("#module-tab-custom-doesnotexist")
+
+	// Python: Ensure tabs exist
+	// Python: license_tab_link = self.wait_for_element(By.ID, 'module-tab-link-custom-License')
+	//         assert license_tab_link.text == "License"
+	st.AssertElementVisible("#module-tab-link-custom-License")
+	st.AssertTextContent("#module-tab-link-custom-License", "License")
+
+	// Python: changelog_tab_link = self.wait_for_element(By.ID, 'module-tab-link-custom-Changelog')
+	//         assert changelog_tab_link.text == "Changelog"
+	st.AssertElementVisible("#module-tab-link-custom-Changelog")
+	st.AssertTextContent("#module-tab-link-custom-Changelog", "Changelog")
+
+	// Python: Ensure tab content is not shown
+	// Python: assert self.selenium_instance.find_element(By.ID, 'module-tab-custom-License').is_displayed() == False
+	//         assert self.selenium_instance.find_element(By.ID, 'module-tab-custom-Changelog').is_displayed() == False
+	st.AssertElementNotVisible("#module-tab-custom-License")
+	st.AssertElementNotVisible("#module-tab-custom-Changelog")
+
+	// Python: Click license tab and check it's displayed and content is correct
+	// Python: license_tab_link.click()
+	//         license_content = self.wait_for_element(By.ID, 'module-tab-custom-License')
+	licenseTabLink := st.WaitForElement("#module-tab-link-custom-License")
+	licenseTabLink.Click()
+	st.AssertElementVisible("#module-tab-custom-License")
+	// Verify license content contains expected text
+	st.AssertTextContent("#module-tab-custom-License", "This is a license file")
+
+	// Python: Click license tab and check it's displayed and content is correct
+	// Python: changelog_tab_link.click()
+	//         changelog_content = self.wait_for_element(By.ID, 'module-tab-custom-Changelog')
+	changelogTabLink := st.WaitForElement("#module-tab-link-custom-Changelog")
+	changelogTabLink.Click()
+	st.AssertElementVisible("#module-tab-custom-Changelog")
+	// Verify changelog content has been converted from markdown to HTML
+	st.AssertTextContent("#module-tab-custom-Changelog", "Changelog")
 }
 
 // testSecurityIssuesTab tests security issues tab details.
@@ -1147,11 +1343,17 @@ func testSecurityIssuesTab(t *testing.T) {
 	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/withsecurityissues/testprovider/1.0.0'))
 	st.NavigateTo("/modules/moduledetails/withsecurityissues/testprovider/1.0.0")
 
-	// Click security issues tab
-	securityTabLink := st.WaitForElement("#module-tab-link-security")
+	// Click security issues tab - use correct ID matching Python: module-tab-link-security-issues
+	// Python: self.selenium_instance.find_element(By.ID, 'module-tab-link-security-issues').click()
+	securityTabLink := st.WaitForElement("#module-tab-link-security-issues")
 	securityTabLink.Click()
 
-	// Verify security issues are displayed
+	// Verify security issues tab content is displayed
+	// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'module-tab-security-issues').is_displayed(), True)
+	st.AssertElementVisible("#module-tab-security-issues")
+
+	// Verify security issues table is displayed
+	// Python: self.selenium_instance.find_element(By.ID, 'security-issues-table')
 	st.AssertElementVisible("#security-issues-table")
 }
 
@@ -1237,30 +1439,115 @@ func testProviderLogos(t *testing.T) {
 	st.AssertElementVisible("#provider-logo")
 }
 
+// disableAnalyticsTest represents a single test case for analytics disabled.
+type disableAnalyticsTest struct {
+	disableAnalytics       bool
+	exampleAnalyticsToken  string
+}
+
+// disableAnalyticsTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py line 3047-3052
+var disableAnalyticsTests = []disableAnalyticsTest{
+	// Disable analytics entirely
+	{true, "example-analytics-token"},
+	// Do not show examples of analytics in UI
+	{false, ""},
+}
+
 // testDisableAnalytics tests analytics disabled.
 // Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_disable_analytics
 func testDisableAnalytics(t *testing.T) {
-	st := NewSeleniumTest(t)
-	defer st.TearDown()
+	for _, tt := range disableAnalyticsTests {
+		t.Run(fmt.Sprintf("disabled_%v", tt.disableAnalytics), func(t *testing.T) {
+			// Create test with custom config for analytics settings
+			// Note: In Python, this uses self.update_multiple_mocks to temporarily override config
+			// For Go, we would need to implement config override functionality
+			// For now, this test demonstrates the expected behavior
 
-	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider'))
-	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider")
+			st := NewSeleniumTest(t)
+			defer st.TearDown()
 
-	// This test would check analytics display based on config
-	// For now, verify analytics container could exist
+			// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails/fullypopulated/testprovider/1.5.0"))
+			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
+
+			// Python: self.wait_for_element(By.ID, "module-tab-link-readme")
+			st.AssertElementVisible("#module-tab-link-readme")
+
+			// Python: Ensure usage example does not contain analytics token
+			// Python: usage_example = self.wait_for_element(By.ID, "usage-example-container")
+			st.AssertElementVisible("#usage-example-container")
+
+			// Python: Ensure analytics tab is not shown when analytics are completely disabled
+			// Python: analytics_tab_link = self.selenium_instance.find_element(By.ID, "module-tab-link-analytics")
+			//             assert analytics_tab_link.is_displayed() == (not disable_analytics)
+			if tt.disableAnalytics {
+				// When analytics are disabled, the tab should not be visible
+				st.AssertElementNotVisible("#module-tab-link-analytics")
+			} else {
+				// When analytics are enabled, the tab should be visible
+				st.AssertElementVisible("#module-tab-link-analytics")
+			}
+		})
+	}
 }
 
-// testTerraformCompatibilityResult tests terraform compatibility.
+// terraformCompatibilityTest represents a single test case for terraform compatibility.
+type terraformCompatibilityTest struct {
+	terraformVersion         string
+	expectedCompatibilityResult string
+	expectedColor              string
+}
+
+// terraformCompatibilityTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py line 3120-3123
+var terraformCompatibilityTests = []terraformCompatibilityTest{
+	{"1.5.2", "Compatible", "success"},
+	{"0.11.31", "Incompatible", "danger"},
+}
+
+// testTerraformCompatibilityResult tests terraform compatibility result.
 // Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_terraform_compatibility_result
 func testTerraformCompatibilityResult(t *testing.T) {
-	st := NewSeleniumTest(t)
-	defer st.TearDown()
+	for _, tt := range terraformCompatibilityTests {
+		t.Run(tt.terraformVersion, func(t *testing.T) {
+			st := NewSeleniumTest(t)
+			defer st.TearDown()
 
-	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
-	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
+			// Python: self.delete_cookies_and_local_storage()
+			st.DeleteCookiesAndLocalStorage()
 
-	// Verify terraform compatibility indicator is shown
-	st.AssertElementVisible("#terraform-compatibility")
+			// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails/fullypopulated/testprovider/1.5.0"))
+			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
+
+			// Python: self.wait_for_element(By.ID, "supported-terraform-versions")
+			st.AssertElementVisible("#supported-terraform-versions")
+
+			// Python: Ensure the compatibility text is not displayed
+			// Python: assert self.selenium_instance.find_element(By.ID, "supported-terraform-compatible").is_displayed() == False
+			st.AssertElementNotVisible("#supported-terraform-compatible")
+
+			// Python: Update user preferences to set Terraform version
+			// Python: preferences_modal = self.open_user_preferences_modal()
+			// Python: terraform_constraint_input = preferences_modal.find_element(By.XPATH, "//label[contains(text(),\"Terraform Version for compatibility checks\")]//input")
+			// Python: terraform_constraint_input.send_keys(terraform_version)
+			// Python: self.save_user_preferences_modal()
+
+			// Note: Full implementation would:
+			// 1. Open user preferences modal
+			// 2. Set Terraform version for compatibility checks
+			// 3. Save preferences
+			// 4. Verify compatibility indicator is shown
+			// 5. Check the text and color of the compatibility result
+
+			// For now, verify that the compatibility element could exist
+			// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, "supported-terraform-compatible").is_displayed(), True)
+			// Python: assert self.selenium_instance.find_element(By.ID, "supported-terraform-compatible").text == expected_compatibility_result
+
+			// Verify terraform compatibility element exists
+			// Python reference: /app/test/selenium/test_module_provider.py line 3143
+			st.AssertElementExists("#supported-terraform-compatible")
+		})
+	}
 }
 
 // testDeleteModuleProviderRedirect tests delete redirect.

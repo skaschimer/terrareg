@@ -121,6 +121,7 @@ func (h *AnalyticsHandler) HandleMostDownloadedThisWeek(w http.ResponseWriter, r
 }
 
 // HandleModuleDownloadsSummary handles GET /v1/modules/{namespace}/{name}/{provider}/downloads/summary
+// Matches Python: ModuleProviderDownloadsSummaryApi.get()
 func (h *AnalyticsHandler) HandleModuleDownloadsSummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -136,13 +137,20 @@ func (h *AnalyticsHandler) HandleModuleDownloadsSummary(w http.ResponseWriter, r
 		return
 	}
 
-	// Build response in Terraform Registry format
+	// Build response in Python terrareg format
+	// Python response format:
+	// {'data': {'attributes': {'month': 58, 'total': 226, 'week': 10, 'year': 127},
+	//              'id': 'testnamespace/testmodulename/testprovider',
+	//              'type': 'module-downloads-summary'}}
 	id := fmt.Sprintf("%s/%s/%s", namespace, name, provider)
 	response := dto.DownloadSummaryResponse{
 		Data: dto.DownloadData{
-			Type: "module-downloads",
+			Type: "module-downloads-summary",
 			ID:   id,
 			Attributes: dto.DownloadAttributes{
+				Week:  stats.Week,
+				Month: stats.Month,
+				Year:  stats.Year,
 				Total: stats.TotalDownloads,
 			},
 		},

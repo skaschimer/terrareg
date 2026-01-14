@@ -13,9 +13,10 @@ type DownloadData struct {
 }
 
 // DownloadAttributes represents download statistics attributes
+// Matches Python: AnalyticsEngine.get_module_provider_download_stats()
 type DownloadAttributes struct {
-	Month string `json:"month,omitempty"`
-	Week  string `json:"week,omitempty"`
-	Year  string `json:"year,omitempty"`
-	Total int    `json:"total"`
+	Week  int `json:"week"`
+	Month int `json:"month"`
+	Year  int `json:"year"`
+	Total int `json:"total"`
 }

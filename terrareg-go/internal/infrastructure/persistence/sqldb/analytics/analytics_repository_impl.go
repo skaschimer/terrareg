@@ -83,11 +83,14 @@ func (r *AnalyticsRepositoryImpl) RecordProviderDownload(ctx context.Context, ev
 }
 
 // GetDownloadStats retrieves download statistics for a module provider
+// Matches Python: AnalyticsEngine.get_module_provider_download_stats()
 func (r *AnalyticsRepositoryImpl) GetDownloadStats(ctx context.Context, namespace, module, provider string) (*analyticsCmd.DownloadStats, error) {
 	var totalCount int64
-	var recentCount int64
+	var weekCount int64
+	var monthCount int64
+	var yearCount int64
 
-	// Get total downloads
+	// Get total downloads (all time)
 	err := r.db.WithContext(ctx).
 		Model(&sqldb.AnalyticsDB{}).
 		Where("namespace_name = ? AND module_name = ? AND provider_name = ?", namespace, module, provider).
@@ -96,20 +99,44 @@ func (r *AnalyticsRepositoryImpl) GetDownloadStats(ctx context.Context, namespac
 		return nil, err
 	}
 
-	// Get recent downloads (last 30 days)
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	// Get week downloads (last 7 days)
+	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 	err = r.db.WithContext(ctx).
 		Model(&sqldb.AnalyticsDB{}).
 		Where("namespace_name = ? AND module_name = ? AND provider_name = ? AND timestamp >= ?",
-			namespace, module, provider, thirtyDaysAgo).
-		Count(&recentCount).Error
+			namespace, module, provider, sevenDaysAgo).
+		Count(&weekCount).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get month downloads (last 31 days)
+	thirtyOneDaysAgo := time.Now().AddDate(0, 0, -31)
+	err = r.db.WithContext(ctx).
+		Model(&sqldb.AnalyticsDB{}).
+		Where("namespace_name = ? AND module_name = ? AND provider_name = ? AND timestamp >= ?",
+			namespace, module, provider, thirtyOneDaysAgo).
+		Count(&monthCount).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get year downloads (last 365 days)
+	threeHundredSixtyFiveDaysAgo := time.Now().AddDate(0, 0, -365)
+	err = r.db.WithContext(ctx).
+		Model(&sqldb.AnalyticsDB{}).
+		Where("namespace_name = ? AND module_name = ? AND provider_name = ? AND timestamp >= ?",
+			namespace, module, provider, threeHundredSixtyFiveDaysAgo).
+		Count(&yearCount).Error
 	if err != nil {
 		return nil, err
 	}
 
 	return &analyticsCmd.DownloadStats{
-		TotalDownloads:  int(totalCount),
-		RecentDownloads: int(recentCount),
+		TotalDownloads: int(totalCount),
+		Week:           int(weekCount),
+		Month:          int(monthCount),
+		Year:           int(yearCount),
 	}, nil
 }
 
