@@ -232,3 +232,11 @@ func (md *ModuleDetails) HasTerraformModules() bool {
 	}
 	return len(md.terraformModules) > 0
 }
+
+// HasTerraformVersionConstraint returns true if there is a terraform version constraint
+func (md *ModuleDetails) HasTerraformVersionConstraint() bool {
+	if md == nil {
+		return false
+	}
+	return md.terraformVersion != ""
+}

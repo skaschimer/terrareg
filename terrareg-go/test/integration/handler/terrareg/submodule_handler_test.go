@@ -44,7 +44,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("submodule", "submodules/terraform-aws-modules/submodule")
+	rctx.URLParams.Add("*", "submodules/terraform-aws-modules/submodule")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -96,7 +96,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters(t *testing.T)
 			rctx.URLParams.Add("name", tc.moduleName)
 			rctx.URLParams.Add("provider", tc.provider)
 			rctx.URLParams.Add("version", tc.version)
-			rctx.URLParams.Add("submodule", tc.submodule)
+			rctx.URLParams.Add("*", tc.submodule)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
@@ -137,7 +137,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_Success(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("submodule", "submodules/test-submodule")
+	rctx.URLParams.Add("*", "submodules/test-submodule")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -178,7 +178,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("submodule", "nonexistent")
+	rctx.URLParams.Add("*", "nonexistent")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -228,7 +228,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters(t *testing
 			rctx.URLParams.Add("name", tc.moduleName)
 			rctx.URLParams.Add("provider", tc.provider)
 			rctx.URLParams.Add("version", tc.version)
-			rctx.URLParams.Add("submodule", tc.submodule)
+			rctx.URLParams.Add("*", tc.submodule)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()

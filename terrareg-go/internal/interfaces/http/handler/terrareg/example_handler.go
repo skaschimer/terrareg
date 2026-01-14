@@ -40,7 +40,7 @@ func (h *ExampleHandler) HandleExampleDetails(w http.ResponseWriter, r *http.Req
 	moduleName := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 	version := chi.URLParam(r, "version")
-	examplePath := chi.URLParam(r, "example")
+	examplePath := chi.URLParam(r, "*")
 
 	// Validate required parameters
 	if namespace == "" || moduleName == "" || provider == "" || version == "" || examplePath == "" {
@@ -75,7 +75,7 @@ func (h *ExampleHandler) HandleExampleReadmeHTML(w http.ResponseWriter, r *http.
 	moduleName := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 	version := chi.URLParam(r, "version")
-	examplePath := chi.URLParam(r, "example")
+	examplePath := chi.URLParam(r, "*")
 
 	// Validate required parameters
 	if namespace == "" || moduleName == "" || provider == "" || version == "" || examplePath == "" {
@@ -118,7 +118,7 @@ func (h *ExampleHandler) HandleExampleFileList(w http.ResponseWriter, r *http.Re
 	moduleName := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 	version := chi.URLParam(r, "version")
-	examplePath := chi.URLParam(r, "example")
+	examplePath := chi.URLParam(r, "*")
 
 	// Validate required parameters
 	if namespace == "" || moduleName == "" || provider == "" || version == "" || examplePath == "" {

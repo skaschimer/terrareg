@@ -152,9 +152,9 @@ func SetupModuleProviderTestData(t *testing.T, db *sqldb.Database) {
 	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0")
 
 	// Create beta and unpublished versions for fullypopulated
-	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, fullyPopulatedMp.ID, "1.7.0-beta") // Beta
+	_ = integrationTestUtils.CreatePublishedBetaModuleVersion(t, db, fullyPopulatedMp.ID, "1.7.0-beta") // Beta
 	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.0") // Unpublished
-	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.1-beta") // Beta
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.1-beta") // Unpublished Beta
 	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0-beta") // Unpublished beta
 
 	// Create module details with full content for fullypopulated
@@ -193,6 +193,35 @@ This is a test module version for tests.
 	db.DB.Model(&sqldb.ModuleVersionDB{}).
 		Where("module_provider_id = ?", securityMp.ID).
 		Update("module_details_id", securityDetails.ID)
+
+	// Create example records for fullypopulated module
+	// Python reference: /app/test/selenium/test_data.py - integration_test_data['moduledetails']['modules']['fullypopulated']['testprovider']['versions']['1.5.0']['examples']
+	var moduleVersion1_5_0 sqldb.ModuleVersionDB
+	err := db.DB.Where("module_provider_id = ? AND version = ?", fullyPopulatedMp.ID, "1.5.0").First(&moduleVersion1_5_0).Error
+	require.NoError(t, err, "Failed to find module version 1.5.0")
+
+	// Create example submodule for "examples/test-example"
+	// Python: examples are stored in the submodule table with type='example'
+	exampleType := "example"
+	exampleDetails := integrationTestUtils.CreateModuleDetails(t, db, "# Example 1 README\n\nThis is a test example.")
+	exampleSubmodule := integrationTestUtils.CreateSubmodule(t, db, moduleVersion1_5_0.ID, "examples/test-example", "", exampleType, &exampleDetails.ID)
+
+	// Create example files for the example
+	// Python reference: example_files in test_data.py
+	_ = integrationTestUtils.CreateExampleFile(t, db, exampleSubmodule.ID, "examples/test-example/data.tf", "# This contains data objects")
+	_ = integrationTestUtils.CreateExampleFile(t, db, exampleSubmodule.ID, "examples/test-example/variables.tf", `variable "test" {
+  description = "test variable"
+  type = string
+}`)
+	_ = integrationTestUtils.CreateExampleFile(t, db, exampleSubmodule.ID, "examples/test-example/main.tf", `# Call root module
+module "root" {
+  source = "../../"
+}`)
+
+	// Create a submodule for "modules/example-submodule1" (used in tests)
+	submoduleDetails := integrationTestUtils.CreateModuleDetails(t, db, "# Submodule README\n\nThis is a test submodule.")
+	submoduleType := "submodule"
+	_ = integrationTestUtils.CreateSubmodule(t, db, moduleVersion1_5_0.ID, "modules/example-submodule1", "", submoduleType, &submoduleDetails.ID)
 }
 
 // SetupLoginTestData creates minimal test data for login tests.

@@ -277,15 +277,15 @@ func (s *Server) setupRoutes() {
 
 			// Submodules
 			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules", s.handleModuleVersionSubmodules)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/details/{submodule:.*}", s.handleSubmoduleDetails)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/readme_html/{submodule:.*}", s.handleSubmoduleReadmeHTML)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/details/*", s.handleSubmoduleDetails)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/submodules/readme_html/*", s.handleSubmoduleReadmeHTML)
 
 			// Examples
 			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples", s.handleModuleVersionExamples)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/details/{example:.*}", s.handleExampleDetails)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/readme_html/{example:.*}", s.handleExampleReadmeHTML)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/filelist/{example:.*}", s.handleExampleFileList)
-			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/file/{file:.*}", s.handleExampleFile)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/details/*", s.handleExampleDetails)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/readme_html/*", s.handleExampleReadmeHTML)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/filelist/*", s.handleExampleFileList)
+			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/examples/file/*", s.handleExampleFile)
 
 			// Graph
 			r.With(s.AuthMiddleware.OptionalAuth).Get("/modules/{namespace}/{name}/{provider}/{version}/graph/data", s.handleGraphData)
@@ -415,11 +415,11 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/modules/{namespace}/{name}", s.handleModulePage)
 	s.router.Get("/modules/{namespace}/{name}/{provider}", s.handleModuleProviderPage)
 	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}", s.handleModuleProviderPage)
-	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/submodule/{submodule:.*}", s.handleSubmodulePage)
-	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/example/{example:.*}", s.handleExamplePage)
+	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/submodule/*", s.handleSubmodulePage)
+	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/example/*", s.handleExamplePage)
 	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/graph", s.handleGraphPage)
-	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/graph/submodule/{submodule:.*}", s.handleGraphPage)
-	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/graph/example/{example:.*}", s.handleGraphPage)
+	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/graph/submodule/*", s.handleGraphPage)
+	s.router.Get("/modules/{namespace}/{name}/{provider}/{version}/graph/example/*", s.handleGraphPage)
 
 	// Provider pages
 	s.router.Get("/providers", s.handleProvidersPage)
@@ -1121,8 +1121,8 @@ func (s *Server) handleModuleProviderPage(w http.ResponseWriter, r *http.Request
 }
 func (s *Server) handleSubmodulePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "submodule.html", map[string]interface{}{
-		"TEMPLATE_NAME": "submodule.html",
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module_provider.html", map[string]interface{}{
+		"TEMPLATE_NAME": "module_provider.html",
 	}, r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -1131,12 +1131,13 @@ func (s *Server) handleSubmodulePage(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) handleExamplePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "example.html", map[string]interface{}{
-		"TEMPLATE_NAME": "example.html",
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module_provider.html", map[string]interface{}{
+		"TEMPLATE_NAME": "module_provider.html",
 	}, r)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		s.logger.Error().Err(err).Msg("Failed to render example template")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 }
 func (s *Server) handleGraphPage(w http.ResponseWriter, r *http.Request) {

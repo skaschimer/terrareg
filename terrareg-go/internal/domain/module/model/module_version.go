@@ -969,6 +969,39 @@ func (mv *ModuleVersion) GetGraphDataURL() string {
 	return fmt.Sprintf("/v1/terrareg/modules/%s/%s/%s/%s/graph/data", namespace.Name(), moduleName, mv.moduleProvider.Provider(), mv.version.String())
 }
 
+// GetSourceBrowseURL returns the browse URL for the module version with an optional path
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_source_browse_url()
+func (mv *ModuleVersion) GetSourceBrowseURL(path string) string {
+	displayURL := mv.GetDisplaySourceURL("")
+	if displayURL == "" {
+		return ""
+	}
+	if path == "" {
+		return displayURL
+	}
+	return displayURL + path
+}
+
+// GetSourceBaseURL returns the base source URL without any path
+// Python reference: /app/terrareg/models.py ModuleVersion.get_source_base_url()
+func (mv *ModuleVersion) GetSourceBaseURL() string {
+	// For now, return the display source URL as the base
+	// This could be enhanced to handle different scenarios
+	return mv.GetDisplaySourceURL("")
+}
+
+// ConvertSubmoduleToSpecs converts a submodule to ModuleSpecs by deserializing stored data
+// This is an exported version of convertSubmoduleToSpecs for use by queries
+func (mv *ModuleVersion) ConvertSubmoduleToSpecs(submodule *Submodule) *ModuleSpecs {
+	return mv.convertSubmoduleToSpecs(submodule)
+}
+
+// ConvertExampleToSpecs converts an example to ModuleSpecs by deserializing stored data
+// This is an exported version of convertExampleToSpecs for use by queries
+func (mv *ModuleVersion) ConvertExampleToSpecs(example *Example) *ModuleSpecs {
+	return mv.convertExampleToSpecs(example)
+}
+
 // GetModuleExtractionUpToDate checks if module extraction is current
 func (mv *ModuleVersion) GetModuleExtractionUpToDate() bool {
 	// TODO: Implement extraction version checking

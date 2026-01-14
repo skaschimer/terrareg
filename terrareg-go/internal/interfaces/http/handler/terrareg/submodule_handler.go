@@ -34,7 +34,7 @@ func (h *SubmoduleHandler) HandleSubmoduleDetails(w http.ResponseWriter, r *http
 	moduleName := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 	version := chi.URLParam(r, "version")
-	submodulePath := chi.URLParam(r, "submodule")
+	submodulePath := chi.URLParam(r, "*")
 
 	// Validate required parameters
 	if namespace == "" || moduleName == "" || provider == "" || version == "" || submodulePath == "" {
@@ -69,7 +69,7 @@ func (h *SubmoduleHandler) HandleSubmoduleReadmeHTML(w http.ResponseWriter, r *h
 	moduleName := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 	version := chi.URLParam(r, "version")
-	submodulePath := chi.URLParam(r, "submodule")
+	submodulePath := chi.URLParam(r, "*")
 
 	// Validate required parameters
 	if namespace == "" || moduleName == "" || provider == "" || version == "" || submodulePath == "" {

@@ -230,6 +230,39 @@ func CreatePublishedModuleVersion(t *testing.T, db *sqldb.Database, moduleProvid
 	return moduleVersion
 }
 
+// CreatePublishedBetaModuleVersion creates a published test module version in the database with Beta=true
+// Note: This does NOT set the version as the latest version, as beta versions should not be considered for latest
+func CreatePublishedBetaModuleVersion(t *testing.T, db *sqldb.Database, moduleProviderID int, version string) sqldb.ModuleVersionDB {
+	published := true
+	now := time.Now()
+	moduleVersion := sqldb.ModuleVersionDB{
+		ModuleProviderID:      moduleProviderID,
+		Version:               version,
+		Beta:                  true,
+		Internal:              false,
+		Published:             &published,
+		PublishedAt:           &now,
+		GitSHA:                nil,
+		GitPath:               nil,
+		ArchiveGitPath:        false,
+		RepoBaseURLTemplate:   nil,
+		RepoCloneURLTemplate:  nil,
+		RepoBrowseURLTemplate: nil,
+		Owner:                 nil,
+		Description:           nil,
+		VariableTemplate:      nil,
+		ExtractionVersion:     nil,
+		ModuleDetailsID:       nil,
+	}
+
+	err := db.DB.Create(&moduleVersion).Error
+	require.NoError(t, err)
+
+	// Note: We do NOT set this as the latest version because beta versions should not be considered for latest
+
+	return moduleVersion
+}
+
 // CreateModuleDetails creates test module details in the database
 func CreateModuleDetails(t *testing.T, db *sqldb.Database, readmeContent string) sqldb.ModuleDetailsDB {
 	moduleDetails := sqldb.ModuleDetailsDB{
