@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -148,55 +146,55 @@ func TestNamespaceDelete_Authentication(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 401",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"}), nil
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "user with READ permission returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace",
 					"readonly-user", "delete-test-namespace", sqldb.PermissionTypeRead,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "user with MODIFY permission returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace",
 					"modify-user", "delete-test-namespace", sqldb.PermissionTypeModify,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "user with FULL permission can delete namespace",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace",
 					"full-user", "delete-test-namespace", sqldb.PermissionTypeFull,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "admin user can delete any namespace",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAdminRequest(t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -204,12 +202,7 @@ func TestNamespaceDelete_Authentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
@@ -230,30 +223,30 @@ func TestNamespaceGet_AllAuthMethods(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "GET", "/v1/terrareg/namespaces/get-test-namespace")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"}), nil
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"})
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated regular user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequest(t, db, "GET", "/v1/terrareg/namespaces/get-test-namespace", "regular-user", false)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/v1/terrareg/namespaces/get-test-namespace", "regular-user", false)
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"})
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated admin user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/namespaces/get-test-namespace")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/namespaces/get-test-namespace")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "get-test-namespace"})
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -261,12 +254,7 @@ func TestNamespaceGet_AllAuthMethods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
@@ -284,27 +272,29 @@ func TestNamespaceList_AllAuthMethods(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildUnauthenticatedRequest(t, "GET", "/v1/terrareg/namespaces"), nil
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				return testutils.BuildUnauthenticatedRequest(t, "GET", "/v1/terrareg/namespaces")
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated regular user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAuthenticatedRequest(t, db, "GET", "/v1/terrareg/namespaces", "regular-user", false)
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/v1/terrareg/namespaces", "regular-user", false)
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated admin user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/namespaces")
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/namespaces")
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -312,12 +302,7 @@ func TestNamespaceList_AllAuthMethods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})

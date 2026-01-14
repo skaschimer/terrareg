@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -25,27 +23,29 @@ func TestGPGKeyCreate_Authentication(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildUnauthenticatedRequest(t, "POST", "/v2/gpg-keys"), nil
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				return testutils.BuildUnauthenticatedRequest(t, "POST", "/v2/gpg-keys")
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "regular authenticated user returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAuthenticatedRequest(t, db, "POST", "/v2/gpg-keys", "regular-user", false)
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "POST", "/v2/gpg-keys", "regular-user", false)
+				return req
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "admin user can create GPG keys",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAdminRequest(t, db, "POST", "/v2/gpg-keys")
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v2/gpg-keys")
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -53,12 +53,7 @@ func TestGPGKeyCreate_Authentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
@@ -78,30 +73,30 @@ func TestGPGKeyDelete_Authentication(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "DELETE", "/v2/gpg-keys/gpg-delete-namespace/test-key-id")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"}), nil
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "regular authenticated user returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequest(t, db, "DELETE", "/v2/gpg-keys/gpg-delete-namespace/test-key-id", "regular-user", false)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "DELETE", "/v2/gpg-keys/gpg-delete-namespace/test-key-id", "regular-user", false)
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "admin user can delete GPG keys",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAdminRequest(t, db, "DELETE", "/v2/gpg-keys/gpg-delete-namespace/test-key-id")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "DELETE", "/v2/gpg-keys/gpg-delete-namespace/test-key-id")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "gpg-delete-namespace", "key_id": "test-key-id"})
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -109,12 +104,7 @@ func TestGPGKeyDelete_Authentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
@@ -132,27 +122,29 @@ func TestGPGKeyList_AllAuthMethods(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildUnauthenticatedRequest(t, "GET", "/v2/gpg-keys"), nil
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				return testutils.BuildUnauthenticatedRequest(t, "GET", "/v2/gpg-keys")
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated regular user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAuthenticatedRequest(t, db, "GET", "/v2/gpg-keys", "regular-user", false)
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/v2/gpg-keys", "regular-user", false)
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated admin user returns 200",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				return testutils.BuildAdminRequest(t, db, "GET", "/v2/gpg-keys")
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/v2/gpg-keys")
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -160,12 +152,7 @@ func TestGPGKeyList_AllAuthMethods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})

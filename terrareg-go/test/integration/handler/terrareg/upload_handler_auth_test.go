@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -25,55 +23,55 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 401",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"}), nil
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "user with READ permission returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload",
 					"readonly-user", "upload-namespace", sqldb.PermissionTypeRead,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "user with MODIFY permission can upload",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload",
 					"modify-user", "upload-namespace", sqldb.PermissionTypeModify,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
 		{
 			name: "user with FULL permission can upload",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload",
 					"full-user", "upload-namespace", sqldb.PermissionTypeFull,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
 		{
 			name: "admin user can upload to any namespace",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
@@ -81,12 +79,7 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
@@ -106,55 +99,55 @@ func TestModuleImport_Authentication(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupAuth      func(*testing.T, *sqldb.Database) (*http.Request, *model.AuthContext)
+		setupAuth      func(*testing.T, *sqldb.Database) *http.Request
 		expectedStatus int
 	}{
 		{
 			name: "unauthenticated request returns 401",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"}), nil
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "user with READ permission returns 403",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import",
 					"readonly-user", "import-namespace", sqldb.PermissionTypeRead,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "user with MODIFY permission can import",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import",
 					"modify-user", "import-namespace", sqldb.PermissionTypeModify,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
 		{
 			name: "user with FULL permission can import",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAuthenticatedRequestWithNamespacePermission(
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import",
 					"full-user", "import-namespace", sqldb.PermissionTypeFull,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"}), authCtx
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
 		{
 			name: "admin user can import to any namespace",
-			setupAuth: func(t *testing.T, db *sqldb.Database) (*http.Request, *model.AuthContext) {
-				req, authCtx := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"}), authCtx
+			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK, // Will fail processing but auth passes
 		},
@@ -162,12 +155,7 @@ func TestModuleImport_Authentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, authCtx := tt.setupAuth(t, db)
-			if authCtx != nil {
-				ctx := middleware.SetAuthContextInContext(req.Context(), authCtx)
-				req = req.WithContext(ctx)
-			}
-
+			req := tt.setupAuth(t, db)
 			w := testutils.ServeHTTP(router, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
