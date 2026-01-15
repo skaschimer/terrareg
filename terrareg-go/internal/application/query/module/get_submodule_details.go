@@ -111,7 +111,7 @@ func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, modul
 	}
 
 	if moduleProvider == nil {
-		return nil, errors.New("module provider not found")
+		return nil, apperrors.ErrModuleProviderNotFound
 	}
 
 	// Get module version from the provider
@@ -121,18 +121,18 @@ func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, modul
 	}
 
 	if moduleVersion == nil {
-		return nil, errors.New("module version not found")
+		return nil, apperrors.ErrModuleVersionNotFound
 	}
 
 	// Check if version is published
 	if !moduleVersion.IsPublished() {
-		return nil, errors.New("module version is not published")
+		return nil, apperrors.ErrModuleVersionNotPublished
 	}
 
 	// Get submodule by path
 	submodule := moduleVersion.GetSubmoduleByPath(path)
 	if submodule == nil {
-		return nil, fmt.Errorf("submodule not found: %s", path)
+		return nil, apperrors.WrapNotFound(apperrors.ErrSubmoduleNotFound, path)
 	}
 
 	// Convert submodule to module specs
@@ -237,10 +237,31 @@ func (q *GetSubmoduleDetailsQuery) getDisplaySourceURL(moduleVersion *model.Modu
 }
 
 // getUsageExample returns a usage example for the submodule
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_usage_example()
 func (q *GetSubmoduleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, submodule *model.Submodule) string {
-	// For now, return a basic usage example
-	// This could be enhanced to include the actual terraform configuration
-	return fmt.Sprintf("module \"%s\" {\n  source = \"../../\"\n}", submodule.Path())
+	// Get module name from module provider
+	moduleName := ""
+	if moduleVersion.ModuleProvider() != nil {
+		moduleName = moduleVersion.ModuleProvider().Module()
+	}
+	if moduleName == "" {
+		moduleName = submodule.Path()
+	}
+
+	// Build source URL using module provider frontend ID and submodule path
+	// Format: <namespace>/<module>/<provider>//<submodule_path>
+	// Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
+	var sourceURL string
+	if moduleVersion.ModuleProvider() != nil {
+		sourceURL = fmt.Sprintf("%s//%s", moduleVersion.ModuleProvider().FrontendID(), submodule.Path())
+	}
+
+	// If we couldn't build the full URL, fall back to relative path
+	if sourceURL == "" {
+		sourceURL = submodule.Path()
+	}
+
+	return fmt.Sprintf("module \"%s\" {\n  source = \"%s\"\n}", moduleName, sourceURL)
 }
 
 // Helper functions to convert domain model types to DTO types

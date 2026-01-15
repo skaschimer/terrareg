@@ -1,10 +1,12 @@
 package terrareg
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
+	apperrors "github.com/matthewjohn/terrareg/terrareg-go/internal/application/errors"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 )
 
@@ -51,10 +53,7 @@ func (h *ExampleHandler) HandleExampleDetails(w http.ResponseWriter, r *http.Req
 	// Execute query to get example details
 	exampleDetails, err := h.getExampleDetailsQuery.Execute(ctx, namespace, moduleName, provider, version, examplePath)
 	if err != nil {
-		if err.Error() == "module provider not found" ||
-			err.Error() == "module version not found" ||
-			err.Error() == "module version is not published" ||
-			err.Error() == "example not found" {
+		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
@@ -86,11 +85,7 @@ func (h *ExampleHandler) HandleExampleReadmeHTML(w http.ResponseWriter, r *http.
 	// Execute query to get example README HTML
 	readmeHTML, err := h.getExampleReadmeHTMLQuery.Execute(ctx, namespace, moduleName, provider, version, examplePath)
 	if err != nil {
-		if err.Error() == "module provider not found" ||
-			err.Error() == "module version not found" ||
-			err.Error() == "module version is not published" ||
-			err.Error() == "example not found" ||
-			err.Error() == "no README content found" {
+		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) || errors.Is(err, apperrors.ErrNoReadmeContent) {
 			// Return HTML error message for missing README
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
@@ -129,10 +124,7 @@ func (h *ExampleHandler) HandleExampleFileList(w http.ResponseWriter, r *http.Re
 	// Execute query to get example file list
 	fileList, err := h.getExampleFileListQuery.Execute(ctx, namespace, moduleName, provider, version, examplePath)
 	if err != nil {
-		if err.Error() == "module provider not found" ||
-			err.Error() == "module version not found" ||
-			err.Error() == "module version is not published" ||
-			err.Error() == "example not found" {
+		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
@@ -186,11 +178,7 @@ func (h *ExampleHandler) HandleExampleFile(w http.ResponseWriter, r *http.Reques
 	// Execute query to get example file
 	fileContent, err := h.getExampleFileQuery.Execute(ctx, namespace, moduleName, provider, version, fullPath)
 	if err != nil {
-		if err.Error() == "module provider not found" ||
-			err.Error() == "module version not found" ||
-			err.Error() == "module version is not published" ||
-			err.Error() == "example not found" ||
-			err.Error() == "file not found" {
+		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}

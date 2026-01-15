@@ -3,9 +3,9 @@ package module
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
+	apperrors "github.com/matthewjohn/terrareg/terrareg-go/internal/application/errors"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 )
@@ -64,7 +64,7 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 	}
 
 	if moduleProvider == nil {
-		return nil, errors.New("module provider not found")
+		return nil, apperrors.ErrModuleProviderNotFound
 	}
 
 	// Get module version from the provider
@@ -76,7 +76,7 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 		// Get the latest version from the module provider
 		moduleVersion = moduleProvider.GetLatestVersion()
 		if moduleVersion == nil {
-			return nil, errors.New("module version not found")
+			return nil, apperrors.ErrModuleVersionNotFound
 		}
 	} else {
 		// Get specific version
@@ -86,20 +86,20 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 		}
 
 		if moduleVersion == nil {
-			return nil, errors.New("module version not found")
+			return nil, apperrors.ErrModuleVersionNotFound
 		}
 	}
 
 	// Check if version is published
 	// Python reference: /app/terrareg/server/__init__.py - checks module_version.published
 	if !moduleVersion.IsPublished() {
-		return nil, errors.New("module version is not published")
+		return nil, apperrors.ErrModuleVersionNotPublished
 	}
 
 	// Get example by path
 	example := moduleVersion.GetExampleByPath(path)
 	if example == nil {
-		return nil, fmt.Errorf("example not found: %s", path)
+		return nil, apperrors.WrapNotFound(apperrors.ErrExampleNotFound, path)
 	}
 
 	// Convert example to module specs
@@ -222,8 +222,29 @@ func (q *GetExampleDetailsQuery) getCostAnalysis(example *model.Example) *CostAn
 }
 
 // getUsageExample returns a usage example for the example
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_usage_example()
 func (q *GetExampleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, example *model.Example) string {
-	// For now, return a basic usage example
-	// This could be enhanced to include the actual terraform configuration
-	return fmt.Sprintf("module \"%s\" {\n  source = \"../../\"\n}", example.Path())
+	// Get module name from module provider
+	moduleName := ""
+	if moduleVersion.ModuleProvider() != nil {
+		moduleName = moduleVersion.ModuleProvider().Module()
+	}
+	if moduleName == "" {
+		moduleName = example.Path()
+	}
+
+	// Build source URL using module provider frontend ID and example path
+	// Format: <namespace>/<module>/<provider>//<example_path>
+	// Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
+	var sourceURL string
+	if moduleVersion.ModuleProvider() != nil {
+		sourceURL = fmt.Sprintf("%s//%s", moduleVersion.ModuleProvider().FrontendID(), example.Path())
+	}
+
+	// If we couldn't build the full URL, fall back to relative path
+	if sourceURL == "" {
+		sourceURL = example.Path()
+	}
+
+	return fmt.Sprintf("module \"%s\" {\n  source = \"%s\"\n}", moduleName, sourceURL)
 }

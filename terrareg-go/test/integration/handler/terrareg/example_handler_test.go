@@ -46,7 +46,7 @@ func TestExampleHandler_HandleExampleDetails_Success(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("example", "examples/test-example")
+	rctx.URLParams.Add("*", "examples/test-example")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func TestExampleHandler_HandleExampleDetails_MissingParameters(t *testing.T) {
 			rctx.URLParams.Add("name", tc.moduleName)
 			rctx.URLParams.Add("provider", tc.provider)
 			rctx.URLParams.Add("version", tc.version)
-			rctx.URLParams.Add("example", tc.example)
+			rctx.URLParams.Add("*", tc.example)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
@@ -138,7 +138,7 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("example", "nonexistent")
+	rctx.URLParams.Add("*", "nonexistent")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -146,10 +146,10 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	// Act
 	handler.HandleExampleDetails(w, req)
 
-	// Assert - Query generates fallback details for non-existent examples
-	assert.Equal(t, http.StatusOK, w.Code)
+	// Assert - Should return 404 for non-existent examples (like Python)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "path")
+	assert.Contains(t, response, "error")
 }
 
 // TestExampleHandler_HandleExampleReadmeHTML_Success tests getting example readme HTML successfully
@@ -181,7 +181,7 @@ func TestExampleHandler_HandleExampleReadmeHTML_Success(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("example", "examples/test-example")
+	rctx.URLParams.Add("*", "examples/test-example")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -232,7 +232,7 @@ func TestExampleHandler_HandleExampleReadmeHTML_MissingParameters(t *testing.T) 
 			rctx.URLParams.Add("name", tc.moduleName)
 			rctx.URLParams.Add("provider", tc.provider)
 			rctx.URLParams.Add("version", tc.version)
-			rctx.URLParams.Add("example", tc.example)
+			rctx.URLParams.Add("*", tc.example)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
@@ -274,7 +274,7 @@ func TestExampleHandler_HandleExampleFileList_Success(t *testing.T) {
 	rctx.URLParams.Add("name", "test-module")
 	rctx.URLParams.Add("provider", "aws")
 	rctx.URLParams.Add("version", "1.0.0")
-	rctx.URLParams.Add("example", "examples/test-example")
+	rctx.URLParams.Add("*", "examples/test-example")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
@@ -329,7 +329,7 @@ func TestExampleHandler_HandleExampleFileList_MissingParameters(t *testing.T) {
 			rctx.URLParams.Add("name", tc.moduleName)
 			rctx.URLParams.Add("provider", tc.provider)
 			rctx.URLParams.Add("version", tc.version)
-			rctx.URLParams.Add("example", tc.example)
+			rctx.URLParams.Add("*", tc.example)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()

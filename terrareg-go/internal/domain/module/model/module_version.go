@@ -346,7 +346,7 @@ func (mv *ModuleVersion) GetDownloads() int {
 }
 
 // parseTerraformDocs is a helper method to parse terraform-docs JSON into domain models
-func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, []Output, []ProviderDependency, []Resource) {
+func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, []Output, []ProviderDependency, []Resource, []Module) {
 	// Define struct for unmarshaling terraform-docs JSON
 	type TerraformDocsJSON struct {
 		Inputs []struct {
@@ -368,12 +368,17 @@ func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, 
 			Type string `json:"type"`
 			Name string `json:"name"`
 		} `json:"resources"`
+		Modules []struct {
+			Name    string `json:"name"`
+			Source  string `json:"source"`
+			Version string `json:"version,omitempty"`
+		} `json:"modules"`
 	}
 
 	var terraformDocs TerraformDocsJSON
 	if err := json.Unmarshal(terraformDocsJSON, &terraformDocs); err != nil {
 		// If unmarshaling fails, return empty slices
-		return []Input{}, []Output{}, []ProviderDependency{}, []Resource{}
+		return []Input{}, []Output{}, []ProviderDependency{}, []Resource{}, []Module{}
 	}
 
 	// Convert terraform docs to domain models
@@ -415,7 +420,37 @@ func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, 
 		}
 	}
 
-	return inputs, outputs, providerDependencies, resources
+	modules := make([]Module, len(terraformDocs.Modules))
+	for i, tfModule := range terraformDocs.Modules {
+		modules[i] = Module{
+			Name:    tfModule.Name,
+			Source:  tfModule.Source,
+			Version: tfModule.Version,
+		}
+	}
+
+	return inputs, outputs, providerDependencies, resources, modules
+}
+
+// convertModulesToDependencies converts modules to dependencies, filtering out local references
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_dependencies()
+func convertModulesToDependencies(modules []Module) []Dependency {
+	if modules == nil {
+		return []Dependency{}
+	}
+	dependencies := make([]Dependency, 0, len(modules))
+	for _, module := range modules {
+		// Ignore any modules that reference local directories
+		if len(module.Source) >= 2 && (module.Source[0:2] == "./" || module.Source[0:3] == "../") {
+			continue
+		}
+		dependencies = append(dependencies, Dependency{
+			Module:  module.Name,
+			Source:  module.Source,
+			Version: module.Version,
+		})
+	}
+	return dependencies
 }
 
 // GetRootModuleSpecs returns the module specifications for the root module
@@ -466,12 +501,11 @@ func (mv *ModuleVersion) GetRootModuleSpecs() *ModuleSpecs {
 	}
 
 	// Use the helper method to parse terraform docs JSON
-	inputs, outputs, providerDependencies, resources := mv.parseTerraformDocs(terraformDocsJSON)
+	inputs, outputs, providerDependencies, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
 
-	// Dependencies and modules would need to be parsed from terraform configuration files
-	// For now, return empty slices as terraform-docs doesn't provide this information
-	dependencies := []Dependency{}
-	modules := []Module{}
+	// Dependencies are derived from modules (filtering out local references)
+	// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_dependencies()
+	dependencies := convertModulesToDependencies(modules)
 
 	return &ModuleSpecs{
 		Path:                 "",
@@ -545,7 +579,7 @@ func (mv *ModuleVersion) convertSubmoduleToSpecs(submodule *Submodule) *ModuleSp
 	}
 
 	// Reuse the same terraform-docs parsing logic as GetRootModuleSpecs
-	inputs, outputs, providerDeps, resources := mv.parseTerraformDocs(terraformDocsJSON)
+	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
 
 	return &ModuleSpecs{
 		Path:                 submodule.Path(),
@@ -553,10 +587,10 @@ func (mv *ModuleVersion) convertSubmoduleToSpecs(submodule *Submodule) *ModuleSp
 		Empty:                !details.HasReadme() && len(terraformDocsJSON) == 0,
 		Inputs:               inputs,
 		Outputs:              outputs,
-		Dependencies:         []Dependency{}, // terraform-docs doesn't provide this
+		Dependencies:         convertModulesToDependencies(modules),
 		ProviderDependencies: providerDeps,
 		Resources:            resources,
-		Modules:              []Module{}, // terraform-docs doesn't provide this
+		Modules:              modules,
 	}
 }
 
@@ -639,7 +673,7 @@ func (mv *ModuleVersion) convertExampleToSpecs(example *Example) *ModuleSpecs {
 	}
 
 	// Reuse the same terraform-docs parsing logic as GetRootModuleSpecs
-	inputs, outputs, providerDeps, resources := mv.parseTerraformDocs(terraformDocsJSON)
+	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
 
 	return &ModuleSpecs{
 		Path:                 example.Path(),
@@ -647,10 +681,10 @@ func (mv *ModuleVersion) convertExampleToSpecs(example *Example) *ModuleSpecs {
 		Empty:                !details.HasReadme() && len(terraformDocsJSON) == 0,
 		Inputs:               inputs,
 		Outputs:              outputs,
-		Dependencies:         []Dependency{}, // terraform-docs doesn't provide this
+		Dependencies:         convertModulesToDependencies(modules),
 		ProviderDependencies: providerDeps,
 		Resources:            resources,
-		Modules:              []Module{}, // terraform-docs doesn't provide this
+		Modules:              modules,
 	}
 }
 
