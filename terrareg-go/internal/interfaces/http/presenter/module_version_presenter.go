@@ -8,6 +8,7 @@ import (
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	moduledto "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto/terrareg"
 )
@@ -16,13 +17,15 @@ import (
 type ModuleVersionPresenter struct {
 	namespaceService *moduleService.NamespaceService
 	analyticsRepo    analyticsCmd.AnalyticsRepository
+	urlService       *service.URLService
 }
 
 // NewModuleVersionPresenter creates a new module version presenter
-func NewModuleVersionPresenter(namespaceService *moduleService.NamespaceService, analyticsRepo analyticsCmd.AnalyticsRepository) *ModuleVersionPresenter {
+func NewModuleVersionPresenter(namespaceService *moduleService.NamespaceService, analyticsRepo analyticsCmd.AnalyticsRepository, urlService *service.URLService) *ModuleVersionPresenter {
 	return &ModuleVersionPresenter{
 		namespaceService: namespaceService,
 		analyticsRepo:    analyticsRepo,
+		urlService:       urlService,
 	}
 }
 
@@ -262,10 +265,17 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 	// Providers - TODO: Get unique providers from module version
 	response.Providers = []string{}
 
-	// UI-specific fields
-	usageExample := mv.GetUsageExample(requestDomain)
-	if usageExample != "" {
-		response.UsageExample = &usageExample
+	// UI-specific fields - build usage example with proper URL handling
+	if moduleProvider != nil {
+		// Build source URL using URLService for proper HTTP/HTTPS handling
+		providerID := moduleProvider.FrontendID()
+		version := mv.Version().String()
+		sourceURL := p.urlService.BuildTerraformSourceURL(providerID, version, "", requestDomain)
+		// Use model method to build usage example with the pre-built source URL
+		usageExample := mv.GetUsageExample(sourceURL)
+		if usageExample != "" {
+			response.UsageExample = &usageExample
+		}
 	}
 
 	publishedAtDisplay := mv.GetPublishedAtDisplay()

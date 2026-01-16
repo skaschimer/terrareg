@@ -768,27 +768,40 @@ func (mv *ModuleVersion) GetExampleVersionConstraint() string {
 	return mv.GetTerraformExampleVersionString()
 }
 
-// GetUsageExample generates a Terraform usage example with the given request domain
-func (mv *ModuleVersion) GetUsageExample(requestDomain string) string {
+// GetUsageExample generates a Terraform usage example with the given source URL
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_usage_example()
+// The sourceURL parameter should be pre-built by the URLService for proper HTTP/HTTPS handling
+func (mv *ModuleVersion) GetUsageExample(sourceURL string) string {
 	if mv.moduleProvider == nil {
 		return ""
 	}
 
-	// Generate usage example format: module "name" { source = "domain/namespace/module/provider" version = "1.0.0" }
-	// TODO: Improve formatting and include inputs if available
-	namespace := mv.moduleProvider.Namespace()
 	moduleName := mv.moduleProvider.Module()
-	provider := mv.moduleProvider.Provider()
 
+	namespace := mv.moduleProvider.Namespace()
 	if namespace == nil {
 		return ""
 	}
 
-	source := fmt.Sprintf("%s/%s/%s/%s", requestDomain, namespace.Name(), moduleName, provider)
-	return fmt.Sprintf(`module "%s" {
-  source  = "%s"
-  version = "%s"
-}`, moduleName, source, mv.version.String())
+	// Build terraform block with source and optional version
+	// Python: For HTTPS, version is added as a separate attribute
+	// For HTTP, version is embedded in the URL (so the sourceURL contains it)
+	result := fmt.Sprintf(`module "%s" {
+  source = "%s"`, moduleName, sourceURL)
+
+	// Check if version is already in the source URL (HTTP mode)
+	// HTTP URL format: http://domain/modules/provider/{version}
+	// HTTPS URL format: domain/provider (no version)
+	if !strings.Contains(sourceURL, "/"+mv.version.String()) {
+		// Version is not in URL (HTTPS mode), add it as a separate attribute
+		result += fmt.Sprintf(`
+  version = "%s"`, mv.version.String())
+	}
+
+	result += `
+}`
+
+	return result
 }
 
 // GetSecurityResults returns security scan results (tfsec)

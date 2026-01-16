@@ -82,9 +82,14 @@ func CreateTestDomainConfig(t *testing.T) *model.DomainConfig {
 
 // CreateTestInfraConfig creates a test infrastructure configuration
 func CreateTestInfraConfig(t *testing.T) *config.InfrastructureConfig {
+	return CreateTestInfraConfigWithPublicURL(t, "http://localhost:5000")
+}
+
+// CreateTestInfraConfigWithPublicURL creates a test infrastructure configuration with a custom PUBLIC_URL
+func CreateTestInfraConfigWithPublicURL(t *testing.T, publicURL string) *config.InfrastructureConfig {
 	return &config.InfrastructureConfig{
 		ListenPort:                5000,
-		PublicURL:                 "http://localhost:5000",
+		PublicURL:                 publicURL,
 		DomainName:                "localhost",
 		Debug:                     true,
 		DatabaseURL:               "sqlite:///:memory:",

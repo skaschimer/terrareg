@@ -16,6 +16,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	moduledto "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
@@ -86,6 +87,7 @@ func NewModuleHandler(
 	domainConfig *model.DomainConfig,
 	namespaceService *moduleService.NamespaceService,
 	analyticsRepo analyticsCmd.AnalyticsRepository,
+	urlService *service.URLService,
 ) (*ModuleHandler, error) {
 	// Validate all pointer dependencies
 	if listModulesQuery == nil {
@@ -197,7 +199,7 @@ func NewModuleHandler(
 		getModuleProviderRedirectsQuery: getModuleProviderRedirectsQuery,
 		recordModuleDownloadCmd:         recordModuleDownloadCmd,
 		presenter:                       presenter.NewModulePresenter(analyticsRepo),
-		versionPresenter:                presenter.NewModuleVersionPresenter(namespaceService, analyticsRepo),
+		versionPresenter:                presenter.NewModuleVersionPresenter(namespaceService, analyticsRepo, urlService),
 		domainConfig:                    domainConfig,
 		analyticsRepo:                   analyticsRepo,
 	}, nil

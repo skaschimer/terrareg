@@ -564,7 +564,7 @@ func TestModuleVersion_GetUsageExample(t *testing.T) {
 		// For now, test the nil case
 		mv, _ := NewModuleVersion("1.0.0", nil, false)
 
-		example := mv.GetUsageExample("example.com")
+		example := mv.GetUsageExample("example.com/namespace/module/provider")
 
 		assert.Empty(t, example) // Empty because no module provider is set
 	})
@@ -572,7 +572,7 @@ func TestModuleVersion_GetUsageExample(t *testing.T) {
 	t.Run("without module provider", func(t *testing.T) {
 		mv, _ := NewModuleVersion("1.0.0", nil, false)
 
-		example := mv.GetUsageExample("example.com")
+		example := mv.GetUsageExample("example.com/namespace/module/provider")
 
 		assert.Empty(t, example)
 	})

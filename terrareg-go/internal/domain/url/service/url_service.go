@@ -121,7 +121,8 @@ func (s *URLService) GetHostWithPort(fallbackDomain *string) string {
 // BuildTerraformSourceURL builds the terraform source URL for a module
 // Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
 // For HTTP: http://{domain}:{port}/modules/{provider_id}/{version}//{module_path}
-// For HTTPS: {provider_id}//{module_path}
+// For HTTPS: {domain}:{port}/{provider_id}//{module_path}
+// Domain is ALWAYS included
 func (s *URLService) BuildTerraformSourceURL(providerID, version, modulePath, requestDomain string) string {
 	// Get public URL details (protocol, domain, port)
 	// Python reference: get_public_url_details(fallback_domain=request_domain)
@@ -131,7 +132,8 @@ func (s *URLService) BuildTerraformSourceURL(providerID, version, modulePath, re
 	}
 	details := s.GetPublicURLDetails(domainPtr)
 
-	// Check if using HTTPS using the IsHTTPS method
+	// Check if using HTTPS - use same domainPtr to get consistent protocol
+	// Python: isHttps = protocol.lower() == "https"
 	isHttps := s.IsHTTPS(domainPtr)
 
 	// Determine if port should be included (non-standard ports only)
@@ -141,26 +143,47 @@ func (s *URLService) BuildTerraformSourceURL(providerID, version, modulePath, re
 		(details.Port == 80 && !isHttps)
 
 	// Build source URL
+	// Python: source_url = '' if isHttps else 'http://'
 	var sourceURL string
-	if isHttps {
-		// For HTTPS: just use provider ID
-		sourceURL = providerID
-	} else {
-		// For HTTP: build full URL
-		sourceURL = "http://" + details.Domain
-		if !isDefaultPort && details.Port != 0 {
-			sourceURL += fmt.Sprintf(":%d", details.Port)
-		}
-		sourceURL += "/modules/"
-		// TODO: Add analytics token if configured (Python: EXAMPLE_ANALYTICS_TOKEN + '__')
-		sourceURL += providerID
+	if !isHttps {
+		sourceURL = "http://"
+	}
+
+	// Python: source_url += domain (domain is ALWAYS added)
+	sourceURL += details.Domain
+
+	// Python: source_url += '' if isDefaultPort else f':{port}'
+	if !isDefaultPort && details.Port != 0 {
+		sourceURL += fmt.Sprintf(":%d", details.Port)
+	}
+
+	// Python: source_url += '' if isHttps else '/modules'
+	if !isHttps {
+		sourceURL += "/modules"
+	}
+
+	// Python: source_url += '/'
+	sourceURL += "/"
+
+	// Python: Add analytics token if configured (TODO: implement this)
+	// source_url += (EXAMPLE_ANALYTICS_TOKEN + '__') if EXAMPLE_ANALYTICS_TOKEN and not DISABLE_ANALYTICS else ''
+
+	// Python: source_url += module_provider_id
+	sourceURL += providerID
+
+	// Python: source_url += '' if isHttps else f'/{version}'
+	if !isHttps && version != "" {
 		sourceURL += "/" + version
 	}
 
-	// Add module path with //
 	// Python: source_url += f'//{module_path}' if module_path else ''
-	if modulePath != "" {
-		sourceURL += "//" + modulePath
+	// Remove any leading slashes from modulePath (Python: module_path = re.sub(r'^\/+', '', module_path))
+	cleanPath := modulePath
+	for len(cleanPath) > 0 && cleanPath[0] == '/' {
+		cleanPath = cleanPath[1:]
+	}
+	if cleanPath != "" {
+		sourceURL += "//" + cleanPath
 	}
 
 	return sourceURL

@@ -878,6 +878,7 @@ func NewContainer(
 		domainConfig,
 		c.NamespaceService,
 		c.AnalyticsRepo,
+		c.URLService,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create module handler: %w", err)

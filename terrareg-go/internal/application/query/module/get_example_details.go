@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	apperrors "github.com/matthewjohn/terrareg/terrareg-go/internal/application/errors"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
@@ -241,5 +242,20 @@ func (q *GetExampleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVers
 	version := moduleVersion.Version().String()
 	sourceURL := q.urlService.BuildTerraformSourceURL(providerID, version, example.Path(), requestDomain)
 
-	return fmt.Sprintf("module \"%s\" {\n  source = \"%s\"\n}", moduleName, sourceURL)
+	// Build terraform block with source and optional version
+	// Python: For HTTPS, version is added as a separate attribute
+	// For HTTP, version is embedded in the URL (so the sourceURL contains it)
+	result := fmt.Sprintf("module \"%s\" {\n  source = \"%s\"", moduleName, sourceURL)
+
+	// Check if version is already in the source URL (HTTP mode)
+	// HTTP URL format: http://domain/modules/provider/{version}
+	// HTTPS URL format: domain/provider (no version)
+	if !strings.Contains(sourceURL, "/"+version) {
+		// Version is not in URL (HTTPS mode), add it as a separate attribute
+		result += fmt.Sprintf("\n  version = \"%s\"", version)
+	}
+
+	result += "\n}"
+
+	return result
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -60,6 +61,12 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 	assert.Contains(t, response, "path")
 	assert.Equal(t, "submodules/terraform-aws-modules/submodule", response["path"])
+
+	// Verify usage_example contains the full URL with domain and port (HTTP mode)
+	usageExample, ok := response["usage_example"].(string)
+	assert.True(t, ok, "usage_example should be a string")
+	assert.Contains(t, usageExample, "localhost:5000/modules/", "usage_example should contain full URL with domain and port")
+	assert.Contains(t, usageExample, "test-namespace/test-module/aws/1.0.0//submodules/terraform-aws-modules/submodule", "usage_example should contain provider, version and path")
 }
 
 // TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters tests missing required path parameters
@@ -244,4 +251,77 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters(t *testing
 			assert.Contains(t, response, "error")
 		})
 	}
+}
+
+// TestSubmoduleHandler_HandleSubmoduleDetails_HTTPSWithNonStandardPort tests terraform source URL
+// with HTTPS and non-standard port (e.g., 5000 instead of 443)
+func TestSubmoduleHandler_HandleSubmoduleDetails_HTTPSWithNonStandardPort(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data
+	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
+	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
+	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "modules/example-submodule1", "Submodule description", "", nil)
+
+	// Create handler with repositories
+	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepo, domainConfig)
+	require.NoError(t, err)
+	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
+	require.NoError(t, err)
+
+	// Create infra config with HTTPS and non-standard port (5000)
+	infraConfig := testutils.CreateTestInfraConfigWithPublicURL(t, "https://local-dev.dock.studio:5000")
+	urlService := service.NewURLService(infraConfig)
+	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
+	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
+
+	// Create request with chi context
+	req := httptest.NewRequest("GET", "/v1/terrareg/modules/test-namespace/test-module/aws/1.0.0/submodules/details/modules/example-submodule1", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "test-namespace")
+	rctx.URLParams.Add("name", "test-module")
+	rctx.URLParams.Add("provider", "aws")
+	rctx.URLParams.Add("version", "1.0.0")
+	rctx.URLParams.Add("*", "modules/example-submodule1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleSubmoduleDetails(w, req)
+
+	// Assert - Should return 200 with submodule details
+	assert.Equal(t, http.StatusOK, w.Code)
+	response := testutils.GetJSONBody(t, w)
+	assert.Contains(t, response, "path")
+	assert.Equal(t, "modules/example-submodule1", response["path"])
+
+	// Verify usage_example contains the domain:port format (HTTPS with non-standard port)
+	usageExample, ok := response["usage_example"].(string)
+	assert.True(t, ok, "usage_example should be a string")
+	// For HTTPS with non-standard port, format should be: domain:port/providerID//modulePath
+	// e.g., local-dev.dock.studio:5000/test-namespace/test-module/aws//modules/example-submodule1
+	assert.Contains(t, usageExample, "local-dev.dock.studio:5000/", "usage_example should contain domain with port for HTTPS with non-standard port")
+	assert.Contains(t, usageExample, "test-namespace/test-module/aws//modules/example-submodule1", "usage_example should contain provider and path")
+	// Verify no protocol in HTTPS URL
+	assert.NotContains(t, usageExample, "http://", "HTTPS URL should not contain http:// protocol")
+	assert.NotContains(t, usageExample, "https://", "HTTPS URL should not contain https:// protocol")
+	// Verify version is NOT in the URL for HTTPS (it should only be after the source, as a separate attribute)
+	// Check that the source line doesn't contain /1.0.0 (the version would be on a separate version line)
+	sourceLineIdx := strings.Index(usageExample, "source =")
+	if sourceLineIdx != -1 {
+		// Extract just the source line and verify version is not in it
+		sourceLineEnd := strings.Index(usageExample[sourceLineIdx:], "\n")
+		if sourceLineEnd == -1 {
+			sourceLineEnd = len(usageExample)
+		}
+		sourceLine := usageExample[sourceLineIdx : sourceLineIdx+sourceLineEnd]
+		assert.NotContains(t, sourceLine, "/1.0.0", "HTTPS source URL should not contain version in the source attribute")
+	}
+	// For HTTPS with non-standard port, version should be present as a separate attribute
+	assert.Contains(t, usageExample, "version =", "HTTPS URL should have version as a separate attribute")
 }
