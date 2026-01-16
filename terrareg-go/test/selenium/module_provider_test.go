@@ -132,7 +132,7 @@ func TestModuleProvider(t *testing.T) {
 	t.Run("test_example_usage_ensure_not_shown", testExampleUsageEnsureNotShown)
 	t.Run("test_outdated_extraction_data_warning", testOutdatedExtractionDataWarning)
 	t.Run("test_provider_logos", testProviderLogos)
-	t.Run("test_disable_analytics", testDisableAnalytics)
+	t.Run("test_disable_analytics", testDisableAnalyticsInUsageExample)
 	t.Run("test_terraform_compatibility_result", testTerraformCompatibilityResult)
 	t.Run("test_delete_module_provider_redirect", testDeleteModuleProviderRedirect)
 }
@@ -494,6 +494,17 @@ func testSubmoduleExampleBasicDetails(t *testing.T) {
 			st.AssertTextContent("#current-submodule", tt.expectedSubmoduleTitle)
 			st.AssertTextContent("#module-title", tt.expectedModuleTitle)
 			st.AssertTextContent("#module-provider", tt.expectedProvider)
+
+			// Validate usage_example content (terraform source URL)
+			// Python reference: /app/test/selenium/test_module_provider.py - test_example_usage
+			st.AssertElementVisible("#usage-example-container")
+			usageExampleText := st.GetElementText("#usage-example-terraform")
+
+			// Validate terraform source URL format contains expected elements
+			// The usage example should contain: module "..." { source = "localhost/..." }
+			assert.Contains(t, usageExampleText, "module \"", "Usage example should contain terraform module declaration")
+			assert.Contains(t, usageExampleText, "source =", "Usage example should contain source attribute")
+			assert.Contains(t, usageExampleText, "localhost/moduledetails/fullypopulated/testprovider", "Usage example should contain correct terraform source URL")
 		})
 	}
 }
@@ -522,6 +533,175 @@ func testSubmoduleBackToParent(t *testing.T) {
 
 	// Verify we're back on the parent module provider page
 	st.WaitForURL("/modules/moduledetails/withsecurityissues/testprovider/1.1.0")
+}
+
+// exampleUsageTest represents a single test case for example usage validation.
+// Python reference: /app/test/selenium/test_module_provider.py line 2905-2933
+type exampleUsageTest struct {
+	url                              string
+	expectedModuleName              string
+	expectedModulePath              string
+	expectedComment                  string
+	expectedModuleVersionConstraint string
+}
+
+// exampleUsageTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py - test_example_usage
+var exampleUsageTests = []exampleUsageTest{
+	// Base module
+	{
+		"/modules/moduledetails/fullypopulated/testprovider",
+		"fullypopulated",
+		"moduledetails/fullypopulated/testprovider",
+		"",
+		">= 1.5.0, < 2.0.0, unittest",
+	},
+	// Explicit version
+	{
+		"/modules/moduledetails/fullypopulated/testprovider/1.5.0",
+		"fullypopulated",
+		"moduledetails/fullypopulated/testprovider",
+		"",
+		">= 1.5.0, < 2.0.0, unittest",
+	},
+	// Submodule
+	{
+		"/modules/moduledetails/fullypopulated/testprovider/1.5.0/submodule/modules/example-submodule1",
+		"fullypopulated",
+		"moduledetails/fullypopulated/testprovider//modules/example-submodule1",
+		"",
+		">= 1.5.0, < 2.0.0, unittest",
+	},
+	// Non-latest version
+	{
+		"/modules/moduledetails/fullypopulated/testprovider/1.2.0",
+		"fullypopulated",
+		"moduledetails/fullypopulated/testprovider",
+		"\n  # This version of the module is not the latest version.\n  # To use this specific version, it must be pinned in Terraform",
+		"1.2.0",
+	},
+	// Beta version
+	{
+		"/modules/moduledetails/fullypopulated/testprovider/1.7.0-beta",
+		"fullypopulated",
+		"moduledetails/fullypopulated/testprovider",
+		"\n  # This version of the module is a beta version.\n  # To use this version, it must be pinned in Terraform",
+		"1.7.0-beta",
+	},
+}
+
+// testExampleUsage tests the terraform usage example panel content.
+// Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_example_usage
+func testExampleUsage(t *testing.T) {
+	for _, tt := range exampleUsageTests {
+		t.Run(tt.url, func(t *testing.T) {
+			st := NewSeleniumTest(t)
+			defer st.TearDown()
+
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
+
+			// Navigate to the test URL
+			st.NavigateTo(tt.url)
+
+			// Wait for inputs tab to be ready (indicates page is loaded)
+			// Python: self.wait_for_element(By.ID, 'module-tab-link-inputs')
+			st.AssertElementVisible("#module-tab-link-inputs")
+
+			// Get the actual usage example text from the page
+			// Python: self.selenium_instance.find_element(By.ID, "usage-example-terraform").text
+			usageExampleText := st.GetElementText("#usage-example-terraform")
+
+			// Build the expected terraform usage example
+			// Python: expected_text = f'''module "{expected_module_name}" {{\n  source  = "localhost/example-analytics-token__{expected_module_path}"{expected_comment}\n  version = "{expected_module_version_constraint}"\n\n  # Provide variables here\n}}'''
+			// Note: Python tests include analytics token, but Go tests use DISABLE_ANALYTICS config
+			expectedText := fmt.Sprintf(`module "%s" {
+  source  = "localhost/%s"%s
+  version = "%s"
+
+  # Provide variables here
+}`, tt.expectedModuleName, tt.expectedModulePath, tt.expectedComment, tt.expectedModuleVersionConstraint)
+
+			// Assert the actual usage example matches the expected
+			assert.Equal(t, expectedText, usageExampleText, "Usage example terraform code should match expected format")
+		})
+	}
+}
+
+// disableAnalyticsTest represents a single test case for analytics token handling.
+// Python reference: /app/test/selenium/test_module_provider.py line 3047-3053
+type disableAnalyticsTest struct {
+	disableAnalytics      bool
+	exampleAnalyticsToken string
+	expectTokenInURL      bool
+}
+
+// disableAnalyticsTests contains all test cases from Python's @pytest.mark.parametrize.
+// Python reference: /app/test/selenium/test_module_provider.py - test_disable_analytics
+var disableAnalyticsTests = []disableAnalyticsTest{
+	// Disable analytics entirely - token should NOT be in URL
+	{
+		disableAnalytics:      true,
+		exampleAnalyticsToken: "example-analytics-token",
+		expectTokenInURL:      false,
+	},
+	// Do not show examples of analytics in UI (empty token) - token should NOT be in URL
+	{
+		disableAnalytics:      false,
+		exampleAnalyticsToken: "",
+		expectTokenInURL:      false,
+	},
+}
+
+// testDisableAnalyticsInUsageExample tests analytics token handling in terraform usage example.
+// Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_disable_analytics
+func testDisableAnalyticsInUsageExample(t *testing.T) {
+	for _, tt := range disableAnalyticsTests {
+		t.Run(fmt.Sprintf("disable_analytics=%v_token=%s", tt.disableAnalytics, tt.exampleAnalyticsToken), func(t *testing.T) {
+			// Create config overrides for this test case
+			configOverrides := map[string]string{
+				"DISABLE_ANALYTICS":       fmt.Sprintf("%t", tt.disableAnalytics),
+				"EXAMPLE_ANALYTICS_TOKEN": tt.exampleAnalyticsToken,
+			}
+
+			st := NewSeleniumTestWithConfig(t, configOverrides)
+			defer st.TearDown()
+
+			// Set up central test data for module provider tests
+			SetupModuleProviderTestData(st.t, st.server.GetDB())
+
+			// Navigate to the test URL
+			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
+
+			// Wait for README tab link (indicates page is loaded)
+			// Python: self.wait_for_element(By.ID, "module-tab-link-readme")
+			st.AssertElementVisible("#module-tab-link-readme")
+
+			// Get the actual usage example text from the page
+			// Python: self.selenium_instance.find_element(By.ID, "usage-example-terraform").text
+			usageExampleText := st.GetElementText("#usage-example-terraform")
+
+			// Verify analytics token handling
+			// When analytics are disabled or token is empty, URL should NOT contain token
+			if tt.expectTokenInURL {
+				assert.Contains(t, usageExampleText, "source  = \"localhost/", "Usage example should contain source URL")
+				// Token would be prepended to the module path
+			} else {
+				// Should not have analytics token in URL - just "localhost/moduledetails/..."
+				assert.Contains(t, usageExampleText, "source  = \"localhost/moduledetails/", "Usage example should NOT contain analytics token")
+				assert.NotContains(t, usageExampleText, "source  = \"localhost/"+tt.exampleAnalyticsToken+"__", "Usage example should NOT contain analytics token prefix")
+			}
+
+			// Verify analytics tab visibility based on DISABLE_ANALYTICS
+			// Python: analytics_tab_link.is_displayed() == (not disable_analytics)
+			analyticsTabLink := st.WaitForElement("#module-tab-link-analytics", WithoutVisibilityCheck())
+			if tt.disableAnalytics {
+				assert.False(t, analyticsTabLink.IsDisplayed(), "Analytics tab should NOT be visible when analytics are disabled")
+			} else {
+				assert.True(t, analyticsTabLink.IsDisplayed(), "Analytics tab should be visible when analytics are enabled")
+			}
+		})
+	}
 }
 
 // testSourceCodeUrls tests source code URLs.
@@ -1398,19 +1578,6 @@ func testResourceGraph(t *testing.T) {
 	st.AssertElementVisible("#resource-graph-container")
 }
 
-// testExampleUsage tests example usage code.
-// Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_example_usage
-func testExampleUsage(t *testing.T) {
-	st := NewSeleniumTest(t)
-	defer st.TearDown()
-
-	// Python: self.selenium_instance.get(self.get_url('/modules/moduledetails/fullypopulated/testprovider/1.5.0'))
-	st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
-
-	// Verify usage example is shown
-	st.AssertElementVisible("#usage-example-container")
-}
-
 // testExampleUsageTerraformVersion tests terraform version in usage.
 // Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_example_usage_terraform_version
 func testExampleUsageTerraformVersion(t *testing.T) {
@@ -1461,61 +1628,6 @@ func testProviderLogos(t *testing.T) {
 
 	// Verify provider logo is displayed
 	st.AssertElementVisible("#provider-logo")
-}
-
-// disableAnalyticsTest represents a single test case for analytics disabled.
-type disableAnalyticsTest struct {
-	disableAnalytics       bool
-	exampleAnalyticsToken  string
-}
-
-// disableAnalyticsTests contains all test cases from Python's @pytest.mark.parametrize.
-// Python reference: /app/test/selenium/test_module_provider.py line 3047-3052
-var disableAnalyticsTests = []disableAnalyticsTest{
-	// Disable analytics entirely
-	{true, "example-analytics-token"},
-	// Do not show examples of analytics in UI
-	{false, ""},
-}
-
-// testDisableAnalytics tests analytics disabled.
-// Python reference: /app/test/selenium/test_module_provider.py - TestModuleProvider.test_disable_analytics
-func testDisableAnalytics(t *testing.T) {
-	for _, tt := range disableAnalyticsTests {
-		t.Run(fmt.Sprintf("disabled_%v", tt.disableAnalytics), func(t *testing.T) {
-			// Create test with custom config for analytics settings
-			// Note: In Python, this uses self.update_multiple_mocks to temporarily override config
-			// For Go, we would need to implement config override functionality
-			// For now, this test demonstrates the expected behavior
-
-			st := NewSeleniumTest(t)
-			defer st.TearDown()
-
-			// Set up central test data for module provider tests
-			SetupModuleProviderTestData(st.t, st.server.GetDB())
-
-			// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails/fullypopulated/testprovider/1.5.0"))
-			st.NavigateTo("/modules/moduledetails/fullypopulated/testprovider/1.5.0")
-
-			// Python: self.wait_for_element(By.ID, "module-tab-link-readme")
-			st.AssertElementVisible("#module-tab-link-readme")
-
-			// Python: Ensure usage example does not contain analytics token
-			// Python: usage_example = self.wait_for_element(By.ID, "usage-example-container")
-			st.AssertElementVisible("#usage-example-container")
-
-			// Python: Ensure analytics tab is not shown when analytics are completely disabled
-			// Python: analytics_tab_link = self.selenium_instance.find_element(By.ID, "module-tab-link-analytics")
-			//             assert analytics_tab_link.is_displayed() == (not disable_analytics)
-			if tt.disableAnalytics {
-				// When analytics are disabled, the tab should not be visible
-				st.AssertElementNotVisible("#module-tab-link-analytics")
-			} else {
-				// When analytics are enabled, the tab should be visible
-				st.AssertElementVisible("#module-tab-link-analytics")
-			}
-		})
-	}
 }
 
 // terraformCompatibilityTest represents a single test case for terraform compatibility.

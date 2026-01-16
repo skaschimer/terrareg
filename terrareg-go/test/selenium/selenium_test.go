@@ -620,6 +620,17 @@ func (st *SeleniumTest) GetInnerHTML(selector string) string {
 	return html
 }
 
+// GetElementText returns the full text content of an element.
+// This is similar to AssertTextContent but returns the text instead of asserting on it.
+func (st *SeleniumTest) GetElementText(selector string) string {
+	var text string
+	err := st.runChromedp(chromedp.Text(selector, &text, chromedp.ByQuery))
+	if err != nil {
+		return ""
+	}
+	return text
+}
+
 // WaitForURLContains waits for the current URL to contain the expected string.
 func (st *SeleniumTest) WaitForURLContains(expectedStr string) {
 	timeout := time.After(30 * time.Second)
