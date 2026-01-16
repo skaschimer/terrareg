@@ -214,7 +214,7 @@ golang-unit-tests:
   image: golang:1.25.4-trixie
   extends: .before_script_golang
   script:
-    - go test -v -race -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
+    - go test -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
     - go tool cover -func=coverage.out | tee coverage.txt
     - go tool cover -html=coverage.out -o coverage.html
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < test-report.txt > junit-report.xml
@@ -243,7 +243,7 @@ golang-integration-tests-sqlite:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    - go test -v -race ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
+    - go test ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-test-report.txt > junit-integration-report.xml
   artifacts:
     reports:
@@ -271,7 +271,7 @@ golang-integration-tests-mysql:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    - go test -v -race ./test/integration/... -timeout 10m 2>&1 | tee integration-mysql-test-report.txt
+    - go test ./test/integration/... -timeout 10m 2>&1 | tee integration-mysql-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-mysql-test-report.txt > junit-integration-mysql-report.xml
   artifacts:
     reports:
