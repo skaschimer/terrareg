@@ -13,6 +13,7 @@ import (
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -34,7 +35,9 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
-	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	urlService := service.NewURLService(infraConfig)
+	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
 	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
 
 	// Create request with chi context
@@ -70,7 +73,9 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters(t *testing.T)
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
-	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	urlService := service.NewURLService(infraConfig)
+	getSubmoduleDetailsQuery := moduleQuery.NewGetSubmoduleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
 	handler := terrareg.NewSubmoduleHandler(getSubmoduleDetailsQuery, nil)
 
 	tests := []struct {

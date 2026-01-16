@@ -773,9 +773,9 @@ func NewContainer(
 	c.GetExamplesQuery = moduleQuery.NewGetExamplesQuery(c.ModuleProviderRepo)     // Uses database instead of filesystem
 	c.GetIntegrationsQuery = moduleQuery.NewGetIntegrationsQuery(c.ModuleProviderRepo)
 	c.GetReadmeHTMLQuery = moduleQuery.NewGetReadmeHTMLQuery(c.ModuleProviderRepo, c.MarkdownService)
-	c.GetSubmoduleDetailsQuery = moduleQuery.NewGetSubmoduleDetailsQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)
+	c.GetSubmoduleDetailsQuery = moduleQuery.NewGetSubmoduleDetailsQuery(c.ModuleProviderRepo, c.ModuleVersionRepo, c.URLService)
 	c.GetSubmoduleReadmeHTMLQuery = moduleQuery.NewGetSubmoduleReadmeHTMLQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)
-	c.GetExampleDetailsQuery = moduleQuery.NewGetExampleDetailsQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)
+	c.GetExampleDetailsQuery = moduleQuery.NewGetExampleDetailsQuery(c.ModuleProviderRepo, c.ModuleVersionRepo, c.URLService)
 	c.GetExampleReadmeHTMLQuery = moduleQuery.NewGetExampleReadmeHTMLQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)
 	c.GetExampleFileListQuery = moduleQuery.NewGetExampleFileListQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)
 	c.GetExampleFileQuery = moduleQuery.NewGetExampleFileQuery(c.ModuleProviderRepo, c.ModuleVersionRepo)

@@ -50,8 +50,12 @@ func (h *ExampleHandler) HandleExampleDetails(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Extract request domain for terraform source URL generation
+	// Python reference: /app/terrareg/server/__init__.py - request_domain = request.host
+	requestDomain := r.Host
+
 	// Execute query to get example details
-	exampleDetails, err := h.getExampleDetailsQuery.Execute(ctx, namespace, moduleName, provider, version, examplePath)
+	exampleDetails, err := h.getExampleDetailsQuery.Execute(ctx, namespace, moduleName, provider, version, examplePath, requestDomain)
 	if err != nil {
 		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) {
 			RespondError(w, http.StatusNotFound, err.Error())

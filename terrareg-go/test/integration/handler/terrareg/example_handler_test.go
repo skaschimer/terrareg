@@ -14,6 +14,7 @@ import (
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -36,7 +37,9 @@ func TestExampleHandler_HandleExampleDetails_Success(t *testing.T) {
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
-	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	urlService := service.NewURLService(infraConfig)
+	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
 	// Create request with chi context
@@ -71,7 +74,9 @@ func TestExampleHandler_HandleExampleDetails_MissingParameters(t *testing.T) {
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
-	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	urlService := service.NewURLService(infraConfig)
+	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
 	tests := []struct {
@@ -128,7 +133,9 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	require.NoError(t, err)
 	moduleVersionRepository, err := moduleRepo.NewModuleVersionRepository(db.DB)
 	require.NoError(t, err)
-	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository)
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	urlService := service.NewURLService(infraConfig)
+	getExampleDetailsQuery := moduleQuery.NewGetExampleDetailsQuery(moduleProviderRepository, moduleVersionRepository, urlService)
 	handler := terrareg.NewExampleHandler(getExampleDetailsQuery, nil, nil, nil)
 
 	// Create request with chi context

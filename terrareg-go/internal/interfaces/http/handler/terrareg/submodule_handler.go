@@ -44,8 +44,12 @@ func (h *SubmoduleHandler) HandleSubmoduleDetails(w http.ResponseWriter, r *http
 		return
 	}
 
+	// Extract request domain for terraform source URL generation
+	// Python reference: /app/terrareg/server/__init__.py - request_domain = request.host
+	requestDomain := r.Host
+
 	// Execute query to get submodule details
-	submoduleDetails, err := h.getSubmoduleDetailsQuery.Execute(ctx, namespace, moduleName, provider, version, submodulePath)
+	submoduleDetails, err := h.getSubmoduleDetailsQuery.Execute(ctx, namespace, moduleName, provider, version, submodulePath, requestDomain)
 	if err != nil {
 		if apperrors.IsNotFound(err) || errors.Is(err, apperrors.ErrModuleVersionNotPublished) {
 			RespondError(w, http.StatusNotFound, err.Error())

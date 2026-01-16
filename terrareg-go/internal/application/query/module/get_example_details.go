@@ -8,44 +8,48 @@ import (
 	apperrors "github.com/matthewjohn/terrareg/terrareg-go/internal/application/errors"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 )
 
 // GetExampleDetailsQuery retrieves details for a specific example
 type GetExampleDetailsQuery struct {
 	moduleProviderRepo repository.ModuleProviderRepository
 	moduleVersionRepo  repository.ModuleVersionRepository
+	urlService         *service.URLService
 }
 
 // NewGetExampleDetailsQuery creates a new query
 func NewGetExampleDetailsQuery(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	moduleVersionRepo repository.ModuleVersionRepository,
+	urlService *service.URLService,
 ) *GetExampleDetailsQuery {
 	return &GetExampleDetailsQuery{
 		moduleProviderRepo: moduleProviderRepo,
 		moduleVersionRepo:  moduleVersionRepo,
+		urlService:         urlService,
 	}
 }
 
 // ExampleDetails represents example details
 // Python reference: /app/terrareg/models.py Example.get_terrareg_api_details()
 type ExampleDetails struct {
-	Path                      string              `json:"path"`
-	Readme                    string              `json:"readme"`
-	Empty                     bool                `json:"empty"`
-	Inputs                    []Input             `json:"inputs"`
-	Outputs                   []Output            `json:"outputs"`
-	Dependencies              []Dependency        `json:"dependencies"`
-	ProviderDependencies      []ProviderDependency `json:"provider_dependencies"`
-	Resources                 []Resource          `json:"resources"`
-	Modules                   []Module            `json:"modules"`
-	DisplaySourceURL          string              `json:"display_source_url,omitempty"`
-	SecurityFailures          int                 `json:"security_failures"`
-	SecurityResults           []SecurityResult    `json:"security_results,omitempty"`
-	GraphURL                  string              `json:"graph_url,omitempty"`
-	UsageExample              string              `json:"usage_example,omitempty"`
-	TerraformVersionConstraint *string             `json:"terraform_version_constraint,omitempty"`
-	CostAnalysis              *CostAnalysis        `json:"cost_analysis,omitempty"`
+	Path                       string               `json:"path"`
+	Readme                     string               `json:"readme"`
+	Empty                      bool                 `json:"empty"`
+	Inputs                     []Input              `json:"inputs"`
+	Outputs                    []Output             `json:"outputs"`
+	Dependencies               []Dependency         `json:"dependencies"`
+	ProviderDependencies       []ProviderDependency `json:"provider_dependencies"`
+	Resources                  []Resource           `json:"resources"`
+	Modules                    []Module             `json:"modules"`
+	DisplaySourceURL           string               `json:"display_source_url,omitempty"`
+	SecurityFailures           int                  `json:"security_failures"`
+	SecurityResults            []SecurityResult     `json:"security_results,omitempty"`
+	GraphURL                   string               `json:"graph_url,omitempty"`
+	UsageExample               string               `json:"usage_example,omitempty"`
+	TerraformVersionConstraint *string              `json:"terraform_version_constraint,omitempty"`
+	CostAnalysis               *CostAnalysis        `json:"cost_analysis,omitempty"`
 }
 
 // CostAnalysis represents infracost cost analysis for an example
@@ -56,7 +60,7 @@ type CostAnalysis struct {
 
 // Execute retrieves example details
 // Python reference: /app/terrareg/models.py Example.get_terrareg_api_details()
-func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, path string) (*ExampleDetails, error) {
+func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, path, requestDomain string) (*ExampleDetails, error) {
 	// Get module provider first
 	moduleProvider, err := q.moduleProviderRepo.FindByNamespaceModuleProvider(ctx, namespace, moduleName, provider)
 	if err != nil {
@@ -106,10 +110,11 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 	specs := moduleVersion.ConvertExampleToSpecs(example)
 	if specs == nil {
 		// Return empty details if no specs available
+		// TODO return nil with an error
 		return &ExampleDetails{
-			Path:  path,
+			Path:   path,
 			Readme: "",
-			Empty: true,
+			Empty:  true,
 		}, nil
 	}
 
@@ -123,7 +128,7 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 	// Generate additional fields
 	graphURL := fmt.Sprintf("/modules/%d/graph/example/%s", moduleVersion.ID(), path)
 	displaySourceURL := moduleVersion.GetSourceBrowseURL(example.Path())
-	usageExample := q.getUsageExample(moduleVersion, example)
+	usageExample := q.getUsageExample(moduleVersion, example, requestDomain)
 
 	// Get terraform version constraint from example details if defined
 	var terraformVersionConstraint *string
@@ -133,22 +138,22 @@ func (q *GetExampleDetailsQuery) Execute(ctx context.Context, namespace, moduleN
 	}
 
 	return &ExampleDetails{
-		Path:                      specs.Path,
-		Readme:                    specs.Readme,
-		Empty:                     specs.Empty,
-		Inputs:                    convertInputs(specs.Inputs),
-		Outputs:                   convertOutputs(specs.Outputs),
-		Dependencies:              convertDependencies(specs.Dependencies),
-		ProviderDependencies:      convertProviderDependencies(specs.ProviderDependencies),
-		Resources:                 convertResources(specs.Resources),
-		Modules:                   convertModules(specs.Modules),
-		DisplaySourceURL:          displaySourceURL,
-		SecurityFailures:          securityFailures,
-		SecurityResults:           securityResults,
-		GraphURL:                  graphURL,
-		UsageExample:              usageExample,
+		Path:                       specs.Path,
+		Readme:                     specs.Readme,
+		Empty:                      specs.Empty,
+		Inputs:                     convertInputs(specs.Inputs),
+		Outputs:                    convertOutputs(specs.Outputs),
+		Dependencies:               convertDependencies(specs.Dependencies),
+		ProviderDependencies:       convertProviderDependencies(specs.ProviderDependencies),
+		Resources:                  convertResources(specs.Resources),
+		Modules:                    convertModules(specs.Modules),
+		DisplaySourceURL:           displaySourceURL,
+		SecurityFailures:           securityFailures,
+		SecurityResults:            securityResults,
+		GraphURL:                   graphURL,
+		UsageExample:               usageExample,
 		TerraformVersionConstraint: terraformVersionConstraint,
-		CostAnalysis:              costAnalysis,
+		CostAnalysis:               costAnalysis,
 	}, nil
 }
 
@@ -178,9 +183,9 @@ func (q *GetExampleDetailsQuery) getSecurityResults(example *model.Example) []Se
 		}
 
 		securityResult := SecurityResult{
-			RuleID:    getStringValue(resultMap, "rule_id"),
-			Severity:  getStringValue(resultMap, "severity"),
-			Title:     getStringValue(resultMap, "title"),
+			RuleID:      getStringValue(resultMap, "rule_id"),
+			Severity:    getStringValue(resultMap, "severity"),
+			Title:       getStringValue(resultMap, "title"),
 			Description: getStringValue(resultMap, "description"),
 		}
 
@@ -223,28 +228,18 @@ func (q *GetExampleDetailsQuery) getCostAnalysis(example *model.Example) *CostAn
 
 // getUsageExample returns a usage example for the example
 // Python reference: /app/terrareg/models.py BaseSubmodule.get_usage_example()
-func (q *GetExampleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, example *model.Example) string {
+func (q *GetExampleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, example *model.Example, requestDomain string) string {
 	// Get module name from module provider
-	moduleName := ""
-	if moduleVersion.ModuleProvider() != nil {
-		moduleName = moduleVersion.ModuleProvider().Module()
-	}
+	moduleProvider := moduleVersion.ModuleProvider()
+	moduleName := moduleProvider.Module()
 	if moduleName == "" {
 		moduleName = example.Path()
 	}
 
-	// Build source URL using module provider frontend ID and example path
-	// Format: <namespace>/<module>/<provider>//<example_path>
-	// Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
-	var sourceURL string
-	if moduleVersion.ModuleProvider() != nil {
-		sourceURL = fmt.Sprintf("%s//%s", moduleVersion.ModuleProvider().FrontendID(), example.Path())
-	}
-
-	// If we couldn't build the full URL, fall back to relative path
-	if sourceURL == "" {
-		sourceURL = example.Path()
-	}
+	// Build terraform source URL using URL service
+	providerID := moduleProvider.FrontendID()
+	version := moduleVersion.Version().String()
+	sourceURL := q.urlService.BuildTerraformSourceURL(providerID, version, example.Path(), requestDomain)
 
 	return fmt.Sprintf("module \"%s\" {\n  source = \"%s\"\n}", moduleName, sourceURL)
 }

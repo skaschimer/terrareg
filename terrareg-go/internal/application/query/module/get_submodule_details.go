@@ -3,27 +3,31 @@ package module
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
+	apperrors "github.com/matthewjohn/terrareg/terrareg-go/internal/application/errors"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 )
 
 // GetSubmoduleDetailsQuery retrieves details for a specific submodule
 type GetSubmoduleDetailsQuery struct {
 	moduleProviderRepo repository.ModuleProviderRepository
 	moduleVersionRepo  repository.ModuleVersionRepository
+	urlService         *service.URLService
 }
 
 // NewGetSubmoduleDetailsQuery creates a new query
 func NewGetSubmoduleDetailsQuery(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	moduleVersionRepo repository.ModuleVersionRepository,
+	urlService *service.URLService,
 ) *GetSubmoduleDetailsQuery {
 	return &GetSubmoduleDetailsQuery{
 		moduleProviderRepo: moduleProviderRepo,
 		moduleVersionRepo:  moduleVersionRepo,
+		urlService:         urlService,
 	}
 }
 
@@ -103,7 +107,7 @@ type SecurityResult struct {
 
 // Execute retrieves submodule details
 // Python reference: /app/terrareg/models.py BaseSubmodule.get_terrareg_api_details()
-func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, path string) (*SubmoduleDetails, error) {
+func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, moduleName, provider, version, path, requestDomain string) (*SubmoduleDetails, error) {
 	// Get module provider first
 	moduleProvider, err := q.moduleProviderRepo.FindByNamespaceModuleProvider(ctx, namespace, moduleName, provider)
 	if err != nil {
@@ -160,7 +164,7 @@ func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, modul
 	// Generate additional fields
 	graphURL := fmt.Sprintf("/modules/%d/graph/submodule/%s", moduleVersion.ID(), path)
 	displaySourceURL := q.getDisplaySourceURL(moduleVersion, submodule)
-	usageExample := q.getUsageExample(moduleVersion, submodule)
+	usageExample := q.getUsageExample(moduleVersion, submodule, requestDomain)
 
 	// Get terraform version constraint from submodule details if defined
 	var terraformVersionConstraint *string
@@ -238,7 +242,7 @@ func (q *GetSubmoduleDetailsQuery) getDisplaySourceURL(moduleVersion *model.Modu
 
 // getUsageExample returns a usage example for the submodule
 // Python reference: /app/terrareg/models.py BaseSubmodule.get_usage_example()
-func (q *GetSubmoduleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, submodule *model.Submodule) string {
+func (q *GetSubmoduleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVersion, submodule *model.Submodule, requestDomain string) string {
 	// Get module name from module provider
 	moduleName := ""
 	if moduleVersion.ModuleProvider() != nil {
@@ -248,16 +252,13 @@ func (q *GetSubmoduleDetailsQuery) getUsageExample(moduleVersion *model.ModuleVe
 		moduleName = submodule.Path()
 	}
 
-	// Build source URL using module provider frontend ID and submodule path
-	// Format: <namespace>/<module>/<provider>//<submodule_path>
-	// Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
+	// Build terraform source URL using URL service
 	var sourceURL string
 	if moduleVersion.ModuleProvider() != nil {
-		sourceURL = fmt.Sprintf("%s//%s", moduleVersion.ModuleProvider().FrontendID(), submodule.Path())
-	}
-
-	// If we couldn't build the full URL, fall back to relative path
-	if sourceURL == "" {
+		providerID := moduleVersion.ModuleProvider().FrontendID()
+		version := moduleVersion.Version().String()
+		sourceURL = q.urlService.BuildTerraformSourceURL(providerID, version, submodule.Path(), requestDomain)
+	} else {
 		sourceURL = submodule.Path()
 	}
 

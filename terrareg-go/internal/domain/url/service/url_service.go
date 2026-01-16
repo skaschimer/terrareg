@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -115,4 +116,52 @@ func (s *URLService) GetHostWithPort(fallbackDomain *string) string {
 	}
 
 	return details.Domain + ":" + strconv.Itoa(details.Port)
+}
+
+// BuildTerraformSourceURL builds the terraform source URL for a module
+// Python reference: /app/terrareg/models.py TerraformSpecsObject.get_terraform_url_and_version_strings()
+// For HTTP: http://{domain}:{port}/modules/{provider_id}/{version}//{module_path}
+// For HTTPS: {provider_id}//{module_path}
+func (s *URLService) BuildTerraformSourceURL(providerID, version, modulePath, requestDomain string) string {
+	// Get public URL details (protocol, domain, port)
+	// Python reference: get_public_url_details(fallback_domain=request_domain)
+	var domainPtr *string
+	if requestDomain != "" {
+		domainPtr = &requestDomain
+	}
+	details := s.GetPublicURLDetails(domainPtr)
+
+	// Check if using HTTPS using the IsHTTPS method
+	isHttps := s.IsHTTPS(domainPtr)
+
+	// Determine if port should be included (non-standard ports only)
+	// Python: isDefaultPort = not port or (str(port) == "443" and isHttps) or (str(port) == "80" and not isHttps)
+	isDefaultPort := details.Port == 0 ||
+		(details.Port == 443 && isHttps) ||
+		(details.Port == 80 && !isHttps)
+
+	// Build source URL
+	var sourceURL string
+	if isHttps {
+		// For HTTPS: just use provider ID
+		sourceURL = providerID
+	} else {
+		// For HTTP: build full URL
+		sourceURL = "http://" + details.Domain
+		if !isDefaultPort && details.Port != 0 {
+			sourceURL += fmt.Sprintf(":%d", details.Port)
+		}
+		sourceURL += "/modules/"
+		// TODO: Add analytics token if configured (Python: EXAMPLE_ANALYTICS_TOKEN + '__')
+		sourceURL += providerID
+		sourceURL += "/" + version
+	}
+
+	// Add module path with //
+	// Python: source_url += f'//{module_path}' if module_path else ''
+	if modulePath != "" {
+		sourceURL += "//" + modulePath
+	}
+
+	return sourceURL
 }
