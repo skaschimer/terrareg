@@ -180,6 +180,155 @@ func TestProviderHandler_HandleProviderList_Pagination(t *testing.T) {
 	assert.Equal(t, float64(3), meta["limit"])
 }
 
+// TestProviderHandler_HandleProviderList_PaginationScenarios tests pagination with various limit/offset combinations
+// Python reference: /app/test/unit/terrareg/server/test_api_provider_list.py - parameterized pagination tests
+// This test validates:
+// 1. Meta structure (limit, current_offset values)
+// 2. Result count matches limit/offset
+// 3. Results are consistent and deterministically ordered across pagination
+func TestProviderHandler_HandleProviderList_PaginationScenarios(t *testing.T) {
+	tests := []struct {
+		name              string
+		limit             string
+		offset            string
+		expectedLimit     float64
+		expectedOffset    float64
+		expectedResultLen int
+		// Expected provider names to validate consistency and ordering
+		expectedProviders []string
+	}{
+		{
+			name:              "default pagination (no params)",
+			limit:             "",
+			offset:            "",
+			expectedLimit:     20, // Default limit
+			expectedOffset:    0,  // Default offset
+			expectedResultLen: 2,  // Both providers fit in default limit
+			// Providers are ordered by id DESC (newest first), so provider2 (id=2) comes before provider1 (id=1)
+			expectedProviders: []string{"provider2", "provider1"},
+		},
+		{
+			name:              "custom limit",
+			limit:             "5",
+			offset:            "0",
+			expectedLimit:     5,
+			expectedOffset:    0,
+			expectedResultLen: 2, // Both providers fit
+			expectedProviders: []string{"provider2", "provider1"},
+		},
+		{
+			name:              "limit of 1",
+			limit:             "1",
+			offset:            "0",
+			expectedLimit:     1,
+			expectedOffset:    0,
+			expectedResultLen: 1, // Only first (newest) provider
+			expectedProviders: []string{"provider2"},
+		},
+		{
+			name:              "with offset 1",
+			limit:             "10",
+			offset:            "1",
+			expectedLimit:     10,
+			expectedOffset:    1,
+			expectedResultLen: 1, // Only 1 remaining after offset
+			expectedProviders: []string{"provider1"},
+		},
+		{
+			name:              "offset 0, limit 1 - first (newest) provider",
+			limit:             "1",
+			offset:            "0",
+			expectedLimit:     1,
+			expectedOffset:    0,
+			expectedResultLen: 1,
+			expectedProviders: []string{"provider2"},
+		},
+		{
+			name:              "offset 1, limit 1 - second (older) provider",
+			limit:             "1",
+			offset:            "1",
+			expectedLimit:     1,
+			expectedOffset:    1,
+			expectedResultLen: 1,
+			expectedProviders: []string{"provider1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := testutils.SetupTestDatabase(t)
+			defer testutils.CleanupTestDatabase(t, db)
+
+			// Create test data with multiple providers
+			namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+			gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
+
+			// Create 2 providers with versions in a specific order
+			// Using timestamps to ensure consistent ordering
+			now := time.Now()
+			provider1 := testutils.CreateProvider(t, db, namespace.ID, "provider1", nil, sqldb.ProviderTierOfficial, nil)
+			version1 := testutils.CreateProviderVersion(t, db, provider1.ID, "1.0.0", gpgKey.ID, false, &now)
+			testutils.SetProviderLatestVersion(t, db, provider1.ID, version1.ID)
+
+			provider2 := testutils.CreateProvider(t, db, namespace.ID, "provider2", nil, sqldb.ProviderTierOfficial, nil)
+			version2 := testutils.CreateProviderVersion(t, db, provider2.ID, "1.0.0", gpgKey.ID, false, &now)
+			testutils.SetProviderLatestVersion(t, db, provider2.ID, version2.ID)
+
+			providerRepository := providerRepo.NewProviderRepository(db.DB)
+			listProvidersQuery := providerQuery.NewListProvidersQuery(providerRepository)
+			handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil)
+
+			// Build request with limit/offset
+			requestURL := "/v1/providers"
+			if tt.limit != "" || tt.offset != "" {
+				params := url.Values{}
+				if tt.limit != "" {
+					params.Add("limit", tt.limit)
+				}
+				if tt.offset != "" {
+					params.Add("offset", tt.offset)
+				}
+				requestURL += "?" + params.Encode()
+			}
+
+			req := httptest.NewRequest("GET", requestURL, nil)
+			w := httptest.NewRecorder()
+
+			handler.HandleProviderList(w, req)
+
+			// Validate response
+			assert.Equal(t, http.StatusOK, w.Code)
+			response := testutils.GetJSONBody(t, w)
+
+			// Validate meta structure and values (Python validates exact values)
+			assert.Contains(t, response, "meta")
+			meta := response["meta"].(map[string]interface{})
+			assert.Equal(t, tt.expectedLimit, meta["limit"], "Limit should match expected value")
+			assert.Equal(t, tt.expectedOffset, meta["current_offset"], "Offset should match expected value")
+
+			// Validate result count matches limit/offset (Python validates result structure)
+			providers := response["providers"].([]interface{})
+			assert.Len(t, providers, tt.expectedResultLen, "Should return exactly %d providers", tt.expectedResultLen)
+
+			// Validate that the correct providers are returned in the correct order
+			// This ensures pagination is deterministic and returns consistent results
+			actualProviderNames := make([]string, 0, len(providers))
+			for _, p := range providers {
+				provider := p.(map[string]interface{})
+				assert.Contains(t, provider, "namespace")
+				assert.Contains(t, provider, "name")
+
+				name := provider["name"].(string)
+				actualProviderNames = append(actualProviderNames, name)
+			}
+
+			// Verify the provider names match expected (validates ordering and consistency)
+			assert.Equal(t, tt.expectedProviders, actualProviderNames,
+				"Provider names should match expected values for consistent pagination")
+		})
+	}
+}
+
 // TestProviderHandler_HandleProviderSearch_Success tests successful provider search
 func TestProviderHandler_HandleProviderSearch_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
@@ -396,9 +545,9 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_MissingFields(t *testing.T
 
 	handler.HandleCreateOrUpdateProvider(w, req)
 
+	// Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	testutils.AssertErrorContains(t, w, "namespace and name are required")
 }
 
 // TestProviderHandler_HandleCreateOrUpdateProvider_InvalidJSON tests with invalid JSON
@@ -417,9 +566,9 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_InvalidJSON(t *testing.T) 
 
 	handler.HandleCreateOrUpdateProvider(w, req)
 
+	// Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	testutils.AssertErrorContains(t, w, "Invalid JSON body")
 }
 
 // TestProviderHandler_HandleGetProviderVersion_Success tests successful provider version retrieval
@@ -478,7 +627,7 @@ func TestProviderHandler_HandleGetProviderVersion_MissingParameters(t *testing.T
 
 	handler.HandleGetProviderVersion(w, req)
 
+	// Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	testutils.AssertErrorContains(t, w, "namespace, provider, and version are required")
 }

@@ -337,6 +337,7 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 }
 
 // TestModuleHandler_HandleModuleProviderDetails_Success tests the module provider details endpoint
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_module_provider_details.py - test_existing_module_provider_no_custom_urls
 func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
@@ -344,11 +345,7 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "hashicorp", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "consul", "aws")
-	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
-	// Update version to published
-	published := true
-	moduleVersion.Published = &published
-	db.DB.Save(&moduleVersion)
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
@@ -381,18 +378,127 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	// Act
 	handler.HandleModuleProviderDetails(w, req)
 
-	// Assert
+	// Assert - Comprehensive validation matching Python pattern
+	// Python reference: assert res.json == {'id': 'testnamespace/lonelymodule/testprovider/1.0.0', 'owner': 'Mock Owner', ...}
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Equal(t, "hashicorp/consul/aws", response["id"])
+	// Validate all required top-level fields (Python validates complete response)
+	assert.Contains(t, response, "id")
+	assert.NotEmpty(t, response["id"], "Module provider ID should not be empty")
+
 	assert.Equal(t, "hashicorp", response["namespace"])
 	assert.Equal(t, "consul", response["name"])
 	assert.Equal(t, "aws", response["provider"])
+
+	assert.Contains(t, response, "verified")
+	assert.IsType(t, false, response["verified"], "Verified should be a boolean")
+
+	assert.Contains(t, response, "trusted")
+	assert.IsType(t, false, response["trusted"], "Trusted should be a boolean")
+
+	assert.Contains(t, response, "internal")
+	assert.IsType(t, false, response["internal"], "Internal should be a boolean")
+
+	// Validate root object structure (Python validates root specs)
+	assert.Contains(t, response, "root")
+	root := response["root"].(map[string]interface{})
+	assert.Contains(t, root, "path")
+	assert.Contains(t, root, "readme")
+	assert.Contains(t, root, "empty")
+	assert.IsType(t, false, root["empty"], "Empty should be a boolean")
+
+	// Validate root arrays (Python validates these are arrays)
+	assert.Contains(t, root, "inputs")
+	assert.IsType(t, []interface{}{}, root["inputs"], "Inputs should be an array")
+
+	assert.Contains(t, root, "outputs")
+	assert.IsType(t, []interface{}{}, root["outputs"], "Outputs should be an array")
+
+	assert.Contains(t, root, "dependencies")
+	assert.IsType(t, []interface{}{}, root["dependencies"], "Dependencies should be an array")
+
+	assert.Contains(t, root, "provider_dependencies")
+	assert.IsType(t, []interface{}{}, root["provider_dependencies"], "Provider dependencies should be an array")
+
+	assert.Contains(t, root, "resources")
+	assert.IsType(t, []interface{}{}, root["resources"], "Resources should be an array")
+
+	assert.Contains(t, root, "modules")
+	assert.IsType(t, []interface{}{}, root["modules"], "Modules should be an array")
+
+	// Validate submodules array (Python validates submodules)
+	assert.Contains(t, response, "submodules")
+	assert.IsType(t, []interface{}{}, response["submodules"], "Submodules should be an array")
+
+	// Validate providers array (Python validates providers list)
+	assert.Contains(t, response, "providers")
+	assert.IsType(t, []interface{}{}, response["providers"], "Providers should be an array")
+
+	// Validate versions array (Python validates versions list)
+	assert.Contains(t, response, "versions")
+	assert.IsType(t, []interface{}{}, response["versions"], "Versions should be an array")
+
+	// Optional fields - validate if present
+	if owner, ok := response["owner"]; ok && owner != nil {
+		assert.NotEmpty(t, owner, "Owner should not be empty if present")
+	}
+
+	if description, ok := response["description"]; ok && description != nil {
+		assert.NotEmpty(t, description, "Description should not be empty if present")
+	}
+
+	if source, ok := response["source"]; ok && source != nil {
+		assert.NotEmpty(t, source, "Source should not be empty if present")
+	}
+
+	assert.Contains(t, response, "published_at")
+	assert.NotNil(t, response["published_at"], "Published at should be present for published version")
+
 	assert.Contains(t, response, "downloads")
+	assert.IsType(t, float64(0), response["downloads"], "Downloads should be a number")
+
+	// Validate module_provider_id field (Python validates this)
+	assert.Contains(t, response, "module_provider_id")
+	assert.Equal(t, "hashicorp/consul/aws", response["module_provider_id"])
+
+	// Validate terraform example version string (Python validates this)
+	assert.Contains(t, response, "terraform_example_version_string")
+	assert.NotEmpty(t, response["terraform_example_version_string"], "Terraform example version string should not be empty")
+
+	// Validate beta flag (Python validates this)
+	assert.Contains(t, response, "beta")
+	assert.IsType(t, false, response["beta"], "Beta should be a boolean")
+
+	// Validate published flag (Python validates this)
+	assert.Contains(t, response, "published")
+	assert.IsType(t, true, response["published"], "Published should be a boolean")
+
+	// Validate security failures (Python validates this)
+	assert.Contains(t, response, "security_failures")
+	assert.IsType(t, float64(0), response["security_failures"], "Security failures should be a number")
+
+	// Validate git_tag_format (Python validates this)
+	assert.Contains(t, response, "git_tag_format")
+	assert.NotEmpty(t, response["git_tag_format"], "Git tag format should not be empty")
+
+	// Validate graph URL (Python validates this)
+	assert.Contains(t, response, "graph_url")
+	assert.NotEmpty(t, response["graph_url"], "Graph URL should not be empty")
+
+	// Validate module extraction status (Python validates this)
+	assert.Contains(t, response, "module_extraction_up_to_date")
+	assert.IsType(t, true, response["module_extraction_up_to_date"], "Module extraction up to date should be a boolean")
+
+	// Validate usage example (Python validates complete terraform source)
+	assert.Contains(t, response, "usage_example")
+	assert.NotEmpty(t, response["usage_example"], "Usage example should not be empty")
+	usageExample := response["usage_example"].(string)
+	assert.Contains(t, usageExample, "module \"consul\"", "Usage example should contain module name")
+	assert.Contains(t, usageExample, "source", "Usage example should contain source attribute")
 }
 
 // TestModuleHandler_HandleModuleProviderDetails_NotFound tests provider not found

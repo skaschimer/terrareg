@@ -19,6 +19,7 @@ import (
 )
 
 // TestSubmoduleHandler_HandleSubmoduleDetails_Success tests getting submodule details successfully
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_module_version_details.py - test_submodules
 func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
@@ -56,13 +57,45 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	// Act
 	handler.HandleSubmoduleDetails(w, req)
 
-	// Assert - Should return 200 with submodule details
+	// Assert - Comprehensive validation matching Python pattern
+	// Python reference: validates root["modules"] with name, source, version, description
 	assert.Equal(t, http.StatusOK, w.Code)
 	response := testutils.GetJSONBody(t, w)
+
+	// Validate all required fields (Python validates complete response)
 	assert.Contains(t, response, "path")
 	assert.Equal(t, "submodules/terraform-aws-modules/submodule", response["path"])
 
-	// Verify usage_example contains the full URL with domain and port (HTTP mode)
+	// Validate readme field (Python validates readme)
+	assert.Contains(t, response, "readme")
+	assert.NotEmpty(t, response["readme"], "Readme should not be empty")
+
+	// Validate empty flag (Python validates this)
+	assert.Contains(t, response, "empty")
+	assert.IsType(t, false, response["empty"], "Empty should be a boolean")
+
+	// Validate all array fields (Python validates these are arrays)
+	assert.Contains(t, response, "inputs")
+	assert.IsType(t, []interface{}{}, response["inputs"], "Inputs should be an array")
+
+	assert.Contains(t, response, "outputs")
+	assert.IsType(t, []interface{}{}, response["outputs"], "Outputs should be an array")
+
+	assert.Contains(t, response, "dependencies")
+	assert.IsType(t, []interface{}{}, response["dependencies"], "Dependencies should be an array")
+
+	assert.Contains(t, response, "provider_dependencies")
+	assert.IsType(t, []interface{}{}, response["provider_dependencies"], "Provider dependencies should be an array")
+
+	assert.Contains(t, response, "resources")
+	assert.IsType(t, []interface{}{}, response["resources"], "Resources should be an array")
+
+	// Validate modules array (Python validates this contains submodule/module references)
+	// Python reference: root["modules"] == [{name, source, version, description}, ...]
+	assert.Contains(t, response, "modules")
+	assert.IsType(t, []interface{}{}, response["modules"], "Modules should be an array")
+
+	// Validate usage_example contains the full URL with domain and port (HTTP mode)
 	usageExample, ok := response["usage_example"].(string)
 	assert.True(t, ok, "usage_example should be a string")
 	assert.Contains(t, usageExample, "localhost:5000/modules/", "usage_example should contain full URL with domain and port")

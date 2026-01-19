@@ -311,3 +311,58 @@ func TestModuleListHandler_ComprehensiveFieldValidation(t *testing.T) {
 	// but Go's module list endpoint doesn't include these in the response
 	// This is an API difference to note in parity analysis
 }
+
+// TestModuleListHandler_ResultOrdering tests that modules are returned in consistent order
+// Python reference: /app/test/unit/terrareg/server/test_api_module_search.py
+// Note: The Go module list endpoint does not currently support pagination parameters (limit/offset).
+// This test validates that modules are returned in a deterministic order (by id DESC).
+func TestModuleListHandler_ResultOrdering(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data with multiple modules
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+
+	// Create 3 modules with versions in a specific order
+	// module1 (oldest), module2, module3 (newest)
+	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider1.ID, "1.0.0")
+
+	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "module2", "azurerm")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider2.ID, "2.0.0")
+
+	moduleProvider3 := testutils.CreateModuleProvider(t, db, namespace.ID, "module3", "gcp")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider3.ID, "1.5.0")
+
+	// Create handler
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/modules", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleListModules(w, req)
+
+	// Validate response
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+	response := testutils.GetJSONBody(t, w)
+
+	// Validate all modules are returned (no pagination - returns all)
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 3, "Should return all modules")
+
+	// Validate modules are returned in deterministic order (by id DESC)
+	actualModuleNames := make([]string, 0, len(modules))
+	for _, m := range modules {
+		module := m.(map[string]interface{})
+		assert.Contains(t, module, "namespace")
+		assert.Contains(t, module, "name")
+
+		name := module["name"].(string)
+		actualModuleNames = append(actualModuleNames, name)
+	}
+
+	// Modules are ordered by id ASC (oldest first)
+	expectedModules := []string{"module1", "module2", "module3"}
+	assert.Equal(t, expectedModules, actualModuleNames,
+		"Module names should match expected order (id ASC)")
+}

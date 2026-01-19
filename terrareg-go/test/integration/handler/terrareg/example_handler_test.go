@@ -115,9 +115,9 @@ func TestExampleHandler_HandleExampleDetails_MissingParameters(t *testing.T) {
 			w := httptest.NewRecorder()
 			handler.HandleExampleDetails(w, req)
 
+			// Enhanced error validation - validate specific error message
 			assert.Equal(t, http.StatusBadRequest, w.Code)
-			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			testutils.AssertErrorContains(t, w, "Missing required path parameters")
 		})
 	}
 }
@@ -161,9 +161,9 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	handler.HandleExampleDetails(w, req)
 
 	// Assert - Should return 404 for non-existent examples (like Python)
+	// Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	testutils.AssertErrorContains(t, w, "example not found")
 }
 
 // TestExampleHandler_HandleExampleReadmeHTML_Success tests getting example readme HTML successfully
@@ -252,9 +252,9 @@ func TestExampleHandler_HandleExampleReadmeHTML_MissingParameters(t *testing.T) 
 			w := httptest.NewRecorder()
 			handler.HandleExampleReadmeHTML(w, req)
 
+			// Enhanced error validation - validate specific error message
 			assert.Equal(t, http.StatusBadRequest, w.Code)
-			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			testutils.AssertErrorContains(t, w, "Missing required path parameters")
 		})
 	}
 }
@@ -349,9 +349,9 @@ func TestExampleHandler_HandleExampleFileList_MissingParameters(t *testing.T) {
 			w := httptest.NewRecorder()
 			handler.HandleExampleFileList(w, req)
 
+			// Enhanced error validation - validate specific error message
 			assert.Equal(t, http.StatusBadRequest, w.Code)
-			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			testutils.AssertErrorContains(t, w, "Missing required path parameters")
 		})
 	}
 }
@@ -427,10 +427,9 @@ func TestExampleHandler_HandleExampleFile_MissingFileParam(t *testing.T) {
 	// Act
 	handler.HandleExampleFile(w, req)
 
-	// Assert
+	// Assert - Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	testutils.AssertErrorContains(t, w, "Invalid file path format")
 }
 
 // TestExampleHandler_HandleExampleFile_MissingOtherParameters tests missing other required parameters
@@ -466,9 +465,9 @@ func TestExampleHandler_HandleExampleFile_MissingOtherParameters(t *testing.T) {
 			w := httptest.NewRecorder()
 			handler.HandleExampleFile(w, req)
 
+			// Enhanced error validation - validate specific error message
 			assert.Equal(t, http.StatusBadRequest, w.Code)
-			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			testutils.AssertErrorContains(t, w, "Missing required path parameters")
 		})
 	}
 }
