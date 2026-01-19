@@ -77,9 +77,9 @@ func TestNamespace_GetTotalCount(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create some test namespaces
-	_ = testutils.CreateNamespace(t, db, "test-namespace-1")
-	_ = testutils.CreateNamespace(t, db, "test-namespace-2")
-	_ = testutils.CreateNamespace(t, db, "test-namespace-3")
+	_ = testutils.CreateNamespace(t, db, "test-namespace-1", nil)
+	_ = testutils.CreateNamespace(t, db, "test-namespace-2", nil)
+	_ = testutils.CreateNamespace(t, db, "test-namespace-3", nil)
 
 	var count int64
 	err := db.DB.Table("namespace").Count(&count).Error
@@ -148,7 +148,7 @@ func TestNamespace_CreateDuplicate(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create first namespace
-	namespace1 := testutils.CreateNamespace(t, db, "duplicate-namespace-test")
+	namespace1 := testutils.CreateNamespace(t, db, "duplicate-namespace-test", nil)
 	assert.NotZero(t, namespace1.ID)
 
 	// Try to create duplicate - without unique constraint, this will succeed

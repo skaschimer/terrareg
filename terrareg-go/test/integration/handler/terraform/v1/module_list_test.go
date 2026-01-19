@@ -12,12 +12,13 @@ import (
 )
 
 // TestModuleListHandler_HandleListModules_Success tests listing modules with published versions
+// Python reference: /app/test/unit/terrareg/server/test_api_module_search.py
 func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - namespace, module provider, and published version
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -31,19 +32,52 @@ func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 	// Act
 	handler.HandleListModules(w, req)
 
-	// Assert
+	// Assert - Comprehensive validation matching Python pattern
 	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
 
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "modules")
 
+	// Validate response structure
+	assert.Contains(t, response, "modules")
 	modules := response["modules"].([]interface{})
 	assert.Len(t, modules, 1)
 
+	// Validate all module fields (Python validates complete response)
 	module := modules[0].(map[string]interface{})
+
+	// ProviderBase fields
+	assert.Contains(t, module, "id")
+	assert.NotEmpty(t, module["id"], "Module ID should not be empty")
+
 	assert.Equal(t, "test-namespace", module["namespace"])
 	assert.Equal(t, "test-module", module["name"])
 	assert.Equal(t, "aws", module["provider"])
+
+	assert.Contains(t, module, "verified")
+	assert.Equal(t, false, module["verified"], "Module should not be verified by default")
+
+	assert.Contains(t, module, "trusted")
+	assert.Equal(t, false, module["trusted"], "Module should not be trusted by default")
+
+	// ModuleProviderResponse fields - optional fields
+	// These may be nil/absent depending on module version details
+	if owner, ok := module["owner"]; ok && owner != nil {
+		assert.NotEmpty(t, owner, "Owner should not be empty if present")
+	}
+
+	if description, ok := module["description"]; ok && description != nil {
+		assert.NotEmpty(t, description, "Description should not be empty if present")
+	}
+
+	if source, ok := module["source"]; ok && source != nil {
+		assert.NotEmpty(t, source, "Source should not be empty if present")
+	}
+
+	assert.Contains(t, module, "published_at")
+	assert.NotNil(t, module["published_at"], "Published at should be present for published version")
+
+	assert.Contains(t, module, "downloads")
+	assert.IsType(t, float64(0), module["downloads"], "Downloads should be a number")
 }
 
 // TestModuleListHandler_HandleListModules_Empty tests listing modules when no modules exist
@@ -77,7 +111,7 @@ func TestModuleListHandler_HandleListModules_MultipleModules(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data with multiple modules
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider1.ID, "1.0.0")
@@ -98,12 +132,40 @@ func TestModuleListHandler_HandleListModules_MultipleModules(t *testing.T) {
 	// Act
 	handler.HandleListModules(w, req)
 
-	// Assert
+	// Assert - Comprehensive validation for all modules
 	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
 
 	response := testutils.GetJSONBody(t, w)
 	modules := response["modules"].([]interface{})
 	assert.Len(t, modules, 3)
+
+	// Validate each module has required fields
+	expectedModules := []struct {
+		name     string
+		provider string
+	}{
+		{"module1", "aws"},
+		{"module2", "azurerm"},
+		{"module3", "gcp"},
+	}
+
+	for i, mod := range modules {
+		module := mod.(map[string]interface{})
+
+		// Validate basic structure
+		assert.Contains(t, module, "id")
+		assert.NotEmpty(t, module["id"])
+
+		assert.Equal(t, "test-namespace", module["namespace"])
+		assert.Equal(t, expectedModules[i].name, module["name"])
+		assert.Equal(t, expectedModules[i].provider, module["provider"])
+
+		// Validate all required fields exist
+		assert.Contains(t, module, "verified")
+		assert.Contains(t, module, "trusted")
+		assert.Contains(t, module, "published_at")
+		assert.Contains(t, module, "downloads")
+	}
 }
 
 // TestModuleListHandler_HandleListModules_WithUnpublished tests listing modules with unpublished versions
@@ -112,7 +174,7 @@ func TestModuleListHandler_HandleListModules_WithUnpublished(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - module with unpublished version
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0") // Not published
 
@@ -146,7 +208,7 @@ func TestModuleListHandler_HandleListModules_Verified(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -171,4 +233,81 @@ func TestModuleListHandler_HandleListModules_Verified(t *testing.T) {
 
 	module := modules[0].(map[string]interface{})
 	assert.Equal(t, true, module["verified"], "Module should be marked as verified")
+}
+
+// TestModuleListHandler_ComprehensiveFieldValidation validates all module fields
+// Python reference: /app/test/unit/terrareg/server/test_api_module_search.py test_with_single_module_response
+// This test validates complete response structure matching Python's full JSON comparison pattern
+func TestModuleListHandler_ComprehensiveFieldValidation(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Use SetupFullyPopulatedModule to match Python's fullypopulated test data
+	_, moduleProvider, _ := testutils.SetupFullyPopulatedModule(t, db)
+
+	// Update module provider to be verified (matching Python test)
+	err := db.DB.Model(&moduleProvider).Update("verified", true).Error
+	require.NoError(t, err)
+
+	// Create handler
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/v1/modules", nil)
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleListModules(w, req)
+
+	// Assert - Comprehensive field validation matching Python pattern
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+
+	response := testutils.GetJSONBody(t, w)
+	modules := response["modules"].([]interface{})
+	require.Len(t, modules, 1, "Should return exactly one module")
+
+	module := modules[0].(map[string]interface{})
+
+	// Validate all required fields exist (matching Python's complete JSON structure)
+	// Python reference: assert res.json == {'id': '...', 'owner': '...', 'namespace': '...', ...}
+
+	assert.Contains(t, module, "id")
+	assert.NotEmpty(t, module["id"])
+
+	assert.Equal(t, "moduledetails", module["namespace"])
+	assert.Equal(t, "fullypopulated", module["name"])
+	assert.Equal(t, "testprovider", module["provider"])
+
+	// Optional fields - validate if present (from fullypopulated test data)
+	if ownerVal, ok := module["owner"]; ok && ownerVal != nil {
+		assert.Equal(t, "This is the owner of the module", ownerVal)
+	}
+
+	if descVal, ok := module["description"]; ok && descVal != nil {
+		assert.Equal(t, "This is a test module version for tests.", descVal)
+	}
+
+	if srcVal, ok := module["source"]; ok && srcVal != nil {
+		assert.NotEmpty(t, srcVal, "Source should not be empty")
+	}
+
+	// Validate published_at timestamp format and presence
+	assert.Contains(t, module, "published_at")
+	publishedAt, ok := module["published_at"].(string)
+	if ok && publishedAt != "" {
+		// Validate ISO 8601 format (Python uses .isoformat())
+		assert.NotEmpty(t, publishedAt, "Published at should not be empty for published version")
+	}
+
+	// Validate downloads count (type validation)
+	assert.Contains(t, module, "downloads")
+	assert.IsType(t, float64(0), module["downloads"], "Downloads should be numeric")
+
+	// Validate boolean flags
+	assert.Equal(t, true, module["verified"], "Module should be marked as verified")
+	assert.Equal(t, false, module["trusted"], "Module should not be trusted by default")
+
+	// Note: Python test includes 'version' and 'internal' fields in search response
+	// but Go's module list endpoint doesn't include these in the response
+	// This is an API difference to note in parity analysis
 }

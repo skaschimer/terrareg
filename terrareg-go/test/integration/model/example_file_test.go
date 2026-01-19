@@ -24,7 +24,7 @@ func TestExampleFile_Save(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data: namespace, module provider, module version
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-save")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-save", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -70,7 +70,7 @@ func TestExampleFile_SaveBatch(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-batch")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-batch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -133,7 +133,7 @@ func TestExampleFile_FindBySubmoduleID(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-find")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-find", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -202,7 +202,7 @@ func TestExampleFile_DeleteBySubmoduleID(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-delete")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-delete", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -253,7 +253,7 @@ func TestExampleFile_DeleteByModuleVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-deletever")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-deletever", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version1 := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 	version2 := testutils.CreateModuleVersion(t, db, provider.ID, "2.0.0")
@@ -359,7 +359,7 @@ func TestExampleFile_WithReadme(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-readme")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-readme", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -418,7 +418,7 @@ func TestExampleFile_MultipleExamples(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-multiple")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-multiple", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -480,7 +480,7 @@ func TestExampleFile_EmptyContent(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-examplefile-empty")
+	namespace := testutils.CreateNamespace(t, db, "test-examplefile-empty", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 

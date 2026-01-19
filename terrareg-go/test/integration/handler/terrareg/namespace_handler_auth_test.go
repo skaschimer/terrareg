@@ -66,7 +66,7 @@ func TestNamespaceUpdate_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "test-namespace")
+	_ = testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -142,7 +142,7 @@ func TestNamespaceDelete_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "delete-test-namespace")
+	_ = testutils.CreateNamespace(t, db, "delete-test-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -219,7 +219,7 @@ func TestNamespaceGet_AllAuthMethods(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "get-test-namespace")
+	_ = testutils.CreateNamespace(t, db, "get-test-namespace", nil)
 
 	tests := []struct {
 		name           string

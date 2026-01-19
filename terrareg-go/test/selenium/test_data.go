@@ -83,13 +83,13 @@ func GetModuleVersion(t *testing.T, db *sqldb.Database, moduleProviderID int, ve
 // Python reference: /app/test/selenium/test_homepage.py - TestHomePage data setup
 func SetupHomepageTestData(t *testing.T, db *sqldb.Database) {
 	// Create "mostrecent" namespace and module for latest module version tests
-	mostRecentNs := integrationTestUtils.CreateNamespace(t, db, "mostrecent")
+	mostRecentNs := integrationTestUtils.CreateNamespace(t, db, "mostrecent", nil)
 	mostRecentMp := integrationTestUtils.CreateModuleProvider(t, db, mostRecentNs.ID, "modulename", "providername")
 	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mostRecentMp.ID, "1.2.3")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Test Module\n\nThis is a test module for homepage display.")
 
 	// Create "trustednamespace" for trusted module tests
-	trustedNs := integrationTestUtils.CreateNamespace(t, db, "trustednamespace")
+	trustedNs := integrationTestUtils.CreateNamespace(t, db, "trustednamespace", nil)
 	trustedMp := integrationTestUtils.CreateModuleProvider(t, db, trustedNs.ID, "secondlatestmodule", "aws")
 	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, trustedMp.ID, "4.4.1")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Trusted Module\n\nThis is a trusted module.")
@@ -100,8 +100,8 @@ func SetupHomepageTestData(t *testing.T, db *sqldb.Database) {
 // Python reference: /app/test/selenium/test_module_search.py - search test data
 func SetupSearchTestData(t *testing.T, db *sqldb.Database) {
 	// Create namespaces
-	ns1 := integrationTestUtils.CreateNamespace(t, db, "modulesearch")
-	_ = integrationTestUtils.CreateNamespace(t, db, "mixedsearch")
+	ns1 := integrationTestUtils.CreateNamespace(t, db, "modulesearch", nil)
+	_ = integrationTestUtils.CreateNamespace(t, db, "mixedsearch", nil)
 
 	// Create module providers for module search
 	mp1 := integrationTestUtils.CreateModuleProvider(t, db, ns1.ID, "modulesearch-trusted", "testprovider")
@@ -124,7 +124,7 @@ func SetupSearchTestData(t *testing.T, db *sqldb.Database) {
 // Python reference: /app/test/selenium/test_namespace.py - namespace test data
 func SetupNamespaceTestData(t *testing.T, db *sqldb.Database) {
 	// Create namespace with various module types
-	namespace := integrationTestUtils.CreateNamespace(t, db, "testnamespace")
+	namespace := integrationTestUtils.CreateNamespace(t, db, "testnamespace", nil)
 
 	// Create a standard module provider
 	moduleProvider := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
@@ -142,7 +142,7 @@ func SetupNamespaceTestData(t *testing.T, db *sqldb.Database) {
 // Python reference: /app/test/selenium/test_data.py - integration_test_data['moduledetails']
 func SetupModuleProviderTestData(t *testing.T, db *sqldb.Database) {
 	// Create namespace
-	namespace := integrationTestUtils.CreateNamespace(t, db, "moduledetails")
+	namespace := integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
 
 	// Create "fullypopulated" module provider with multiple versions
 	fullyPopulatedMp := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "fullypopulated", "testprovider")
@@ -230,5 +230,5 @@ module "root" {
 func SetupLoginTestData(t *testing.T, db *sqldb.Database) {
 	// Login tests typically don't need any module data
 	// Just creating a namespace for basic testing
-	_ = integrationTestUtils.CreateNamespace(t, db, "login-test")
+	_ = integrationTestUtils.CreateNamespace(t, db, "login-test", nil)
 }

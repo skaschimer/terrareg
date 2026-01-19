@@ -19,7 +19,7 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "upload-namespace")
+	_ = testutils.CreateNamespace(t, db, "upload-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -95,7 +95,7 @@ func TestModuleImport_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "import-namespace")
+	_ = testutils.CreateNamespace(t, db, "import-namespace", nil)
 
 	tests := []struct {
 		name           string

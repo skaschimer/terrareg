@@ -24,7 +24,7 @@ func TestTerraformV2ProviderHandler_Integration_HandleProviderDetails_Success(t 
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	testProvider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", stringPtr("Test description"), "community", nil)
 
 	// Create queries and handler
@@ -115,7 +115,7 @@ func TestTerraformV2ProviderHandler_Integration_HandleProviderVersions_Success(t
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	testProvider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", stringPtr("Test description"), "community", nil)
 	publishedAt := time.Now()
 	testProviderVersion1 := testutils.CreateProviderVersion(t, db, testProvider.ID, "1.0.0", 0, false, &publishedAt)

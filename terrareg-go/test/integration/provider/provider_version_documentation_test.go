@@ -47,7 +47,7 @@ func TestProviderVersionDocumentation_Create(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-doc-create")
+	namespace := testutils.CreateNamespace(t, db, "test-doc-create", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -135,7 +135,7 @@ func TestProviderVersionDocumentation_FindByID(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-doc-get")
+	namespace := testutils.CreateNamespace(t, db, "test-doc-get", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -169,7 +169,7 @@ func TestProviderVersionDocumentation_FindByTypeSlugAndLanguage(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -216,7 +216,7 @@ func TestProviderVersionDocumentation_FindByVersion(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -252,7 +252,7 @@ func TestProviderVersionDocumentation_Search(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -298,7 +298,7 @@ func TestProviderVersionDocumentation_Properties(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-doc-props")
+	namespace := testutils.CreateNamespace(t, db, "test-doc-props", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -367,7 +367,7 @@ func TestProviderVersionDocumentation_Content(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-doc-content")
+	namespace := testutils.CreateNamespace(t, db, "test-doc-content", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 

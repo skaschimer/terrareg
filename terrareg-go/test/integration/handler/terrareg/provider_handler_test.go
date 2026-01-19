@@ -22,24 +22,21 @@ import (
 )
 
 // TestProviderHandler_HandleProviderList_Success tests successful provider list retrieval
+// Python reference: /app/test/unit/terrareg/server/test_api_provider_list.py - test_endpoint
 func TestProviderHandler_HandleProviderList_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
 
-	// Create test providers with versions (required for providers to appear in list)
-	provider1 := testutils.CreateProvider(t, db, namespace.ID, "provider1", nil, sqldb.ProviderTierOfficial, nil)
-	provider2 := testutils.CreateProvider(t, db, namespace.ID, "provider2", nil, sqldb.ProviderTierCommunity, nil)
+	// Create test providers with repository and versions (matching Python test structure)
+	description := "Test Multiple Versions"
+	_, _, _ = testutils.CreateProviderVersionWithRepository(t, db, namespace.ID, "test-provider", "1.0.0", "v1.0.0", &description, sqldb.ProviderTierCommunity, gpgKey.ID, nil)
 
-	// Create versions and set as latest (required for providers to appear in list)
-	now := time.Now()
-	version1 := testutils.CreateProviderVersion(t, db, provider1.ID, "1.0.0", gpgKey.ID, false, &now)
-	version2 := testutils.CreateProviderVersion(t, db, provider2.ID, "1.0.0", gpgKey.ID, false, &now)
-	testutils.SetProviderLatestVersion(t, db, provider1.ID, version1.ID)
-	testutils.SetProviderLatestVersion(t, db, provider2.ID, version2.ID)
+	emptyDesc := "Empty Provider Publish"
+	_, _, _ = testutils.CreateProviderVersionWithRepository(t, db, namespace.ID, "another-provider", "2.0.1", "v2.0.1", &emptyDesc, sqldb.ProviderTierOfficial, gpgKey.ID, nil)
 
 	// Create handler
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
@@ -51,13 +48,72 @@ func TestProviderHandler_HandleProviderList_Success(t *testing.T) {
 
 	handler.HandleProviderList(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	// Assert - Comprehensive validation matching Python pattern
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+
 	response := testutils.GetJSONBody(t, w)
 
-	// Should have providers array
+	// Validate meta structure (Python validates pagination metadata)
+	assert.Contains(t, response, "meta")
+	meta := response["meta"].(map[string]interface{})
+	assert.Equal(t, float64(0), meta["current_offset"])
+	assert.Equal(t, float64(20), meta["limit"])
+
+	// Validate providers array exists
 	assert.Contains(t, response, "providers")
 	providers := response["providers"].([]interface{})
 	assert.Len(t, providers, 2)
+
+	// Validate all provider fields (Python validates complete response)
+	for _, p := range providers {
+		provider := p.(map[string]interface{})
+
+		// Validate all required fields exist (matching Python's complete JSON structure)
+		assert.Contains(t, provider, "id")
+		assert.NotEmpty(t, provider["id"], "Provider ID should not be empty")
+
+		assert.Contains(t, provider, "namespace")
+		assert.NotEmpty(t, provider["namespace"], "Namespace should not be empty")
+
+		assert.Contains(t, provider, "name")
+		assert.NotEmpty(t, provider["name"], "Provider name should not be empty")
+
+		assert.Contains(t, provider, "alias")
+		// alias should be nil (not set) in Python test
+
+		assert.Contains(t, provider, "version")
+		assert.NotEmpty(t, provider["version"], "Version should not be empty")
+
+		assert.Contains(t, provider, "tier")
+		assert.NotEmpty(t, provider["tier"], "Tier should not be empty")
+
+		assert.Contains(t, provider, "downloads")
+		assert.IsType(t, float64(0), provider["downloads"], "Downloads should be a number")
+
+		assert.Contains(t, provider, "owner")
+		assert.NotEmpty(t, provider["owner"], "Owner should not be empty")
+
+		// Optional fields - validate if present
+		if tag, ok := provider["tag"]; ok && tag != nil {
+			assert.NotEmpty(t, tag, "Tag should not be empty if present")
+		}
+
+		if description, ok := provider["description"]; ok && description != nil {
+			assert.NotEmpty(t, description, "Description should not be empty if present")
+		}
+
+		if logoURL, ok := provider["logo_url"]; ok && logoURL != nil {
+			assert.NotEmpty(t, logoURL, "Logo URL should not be empty if present")
+		}
+
+		if source, ok := provider["source"]; ok && source != nil {
+			assert.NotEmpty(t, source, "Source should not be empty if present")
+		}
+
+		if publishedAt, ok := provider["published_at"]; ok && publishedAt != nil {
+			assert.NotEmpty(t, publishedAt, "Published at should not be empty if present")
+		}
+	}
 }
 
 // TestProviderHandler_HandleProviderList_Empty tests provider list with no data
@@ -86,7 +142,7 @@ func TestProviderHandler_HandleProviderList_Pagination(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
 
 	// Create multiple providers with versions
@@ -129,7 +185,7 @@ func TestProviderHandler_HandleProviderSearch_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
 
 	// Create test providers with versions (required for providers to appear in search results)
@@ -190,7 +246,7 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	description := "Test provider"
 	testutils.CreateProvider(t, db, namespace.ID, "test-provider", &description, sqldb.ProviderTierOfficial, nil)
 
@@ -227,7 +283,7 @@ func TestProviderHandler_HandleProviderVersions_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	provider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", nil, sqldb.ProviderTierOfficial, nil)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
 
@@ -261,6 +317,9 @@ func TestProviderHandler_HandleProviderVersions_Success(t *testing.T) {
 }
 
 // TestProviderHandler_HandleNamespaceProviders_ReturnsEmpty tests that namespace providers returns empty list
+// Note: This endpoint is not fully implemented in Go yet - it returns hardcoded empty list
+// Python reference: /app/test/unit/terrareg/server/test_api_namespace_providers.py
+// Parity gap: Handler needs to be implemented to return actual providers for a namespace
 func TestProviderHandler_HandleNamespaceProviders_ReturnsEmpty(t *testing.T) {
 	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
@@ -284,7 +343,7 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	_ = testutils.CreateNamespace(t, db, "test-namespace")
+	_ = testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
@@ -368,7 +427,7 @@ func TestProviderHandler_HandleGetProviderVersion_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	provider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", nil, sqldb.ProviderTierOfficial, nil)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "ABC123")
 

@@ -502,7 +502,7 @@ func TestModuleDetails_FindByModuleVersionID(t *testing.T) {
 	detailsID := getModuleDetailsID(t, db, savedDetails)
 
 	// Create a namespace
-	namespace := testutils.CreateNamespace(t, db, "test-namespace-details")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace-details", nil)
 
 	// Create a module provider (module name is stored as a string)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module-details", "test-provider")

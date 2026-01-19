@@ -27,7 +27,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_Success(t *testing.
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "another-source", namespace.ID, "WXYZ6789")
 
@@ -75,8 +75,8 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_MultipleNamespaces(
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace1 := testutils.CreateNamespace(t, db, "ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "ns2")
+	namespace1 := testutils.CreateNamespace(t, db, "ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "ns2", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source1", namespace1.ID, "KEY1111")
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source2", namespace2.ID, "KEY2222")
 
@@ -171,7 +171,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_Success(t *testing.T)
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service
@@ -227,7 +227,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_NotFound(t *testing.T
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - namespace exists but no GPG key
-	_ = testutils.CreateNamespace(t, db, "test-namespace")
+	_ = testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	// Create repositories and service
 	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
@@ -333,7 +333,7 @@ func TestTerraformV2GPGHandler_Integration_URLParsing(t *testing.T) {
 
 	// Create test data with special characters in namespace name
 	namespaceName := "test-namespace-with-dashes"
-	namespace := testutils.CreateNamespace(t, db, namespaceName)
+	namespace := testutils.CreateNamespace(t, db, namespaceName, nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "SPECIAL123")
 
 	// Create repositories and service
@@ -379,9 +379,9 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_WhitespaceNamespace
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace1 := testutils.CreateNamespace(t, db, "ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "ns2")
-	namespace3 := testutils.CreateNamespace(t, db, "ns3")
+	namespace1 := testutils.CreateNamespace(t, db, "ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "ns2", nil)
+	namespace3 := testutils.CreateNamespace(t, db, "ns3", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source1", namespace1.ID, "KEY1111")
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source2", namespace2.ID, "KEY2222")
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "source3", namespace3.ID, "KEY3333")
@@ -430,7 +430,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_KeyIDWithSpecialChars
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data with special characters in key ID
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	specialKeyID := "ABCD/1234-EFGH.5678" // Key IDs can contain special characters
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, specialKeyID)
 
@@ -481,7 +481,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_EmptyResult(t *test
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - namespace exists but has no GPG keys
-	_ = testutils.CreateNamespace(t, db, "empty-namespace")
+	_ = testutils.CreateNamespace(t, db, "empty-namespace", nil)
 
 	// Create repositories and service
 	gpgKeyRepository, err := gpgkeyRepo.NewGPGKeyRepository(db.DB)
@@ -525,7 +525,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_JSONContentType(t *
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service
@@ -572,7 +572,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_ASCIIArmorInResponse(
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	_ = testutils.CreateGPGKeyWithNamespace(t, db, "test-source", namespace.ID, "ABCD1234")
 
 	// Create repositories and service

@@ -17,7 +17,7 @@ func TestAnalyticsHandler_HandleGlobalStatsSummary_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -106,7 +106,7 @@ func TestAnalyticsHandler_HandleMostRecentlyPublished_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -163,7 +163,7 @@ func TestAnalyticsHandler_HandleMostRecentlyPublished_Multiple(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
 	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "module2", "aws")
 
@@ -199,7 +199,7 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -249,7 +249,7 @@ func TestAnalyticsHandler_HandleMostDownloadedThisWeek_Multiple(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
 	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "module2", "aws")
 
@@ -286,7 +286,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -360,7 +360,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_PathParams(t *testing.T) 
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "my-namespace")
+	namespace := testutils.CreateNamespace(t, db, "my-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "my-module", "gcp")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "2.5.0")
 
@@ -390,7 +390,7 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Format(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "format-ns")
+	namespace := testutils.CreateNamespace(t, db, "format-ns", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "format-module", "azurerm")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -432,7 +432,7 @@ func TestAnalyticsHandler_HandleTokenVersions_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -513,7 +513,7 @@ func TestAnalyticsHandler_HandleTokenVersions_Format(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "format-ns")
+	namespace := testutils.CreateNamespace(t, db, "format-ns", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "format-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "3.0.0")
 
@@ -558,7 +558,7 @@ func TestAnalyticsHandler_HandleGlobalUsageStats_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -606,7 +606,7 @@ func TestAnalyticsHandler_HandleGlobalUsageStats_Structure(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "struct-ns")
+	namespace := testutils.CreateNamespace(t, db, "struct-ns", nil)
 	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "struct-module1", "aws")
 	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "struct-module2", "gcp")
 

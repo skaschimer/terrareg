@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -110,10 +111,11 @@ func CleanupTestDatabase(t *testing.T, db *sqldb.Database) {
 }
 
 // CreateNamespace creates a test namespace in the database
-func CreateNamespace(t *testing.T, db *sqldb.Database, name string) sqldb.NamespaceDB {
+// displayName is optional - pass nil or empty string for no display name
+func CreateNamespace(t *testing.T, db *sqldb.Database, name string, displayName *string) sqldb.NamespaceDB {
 	namespace := sqldb.NamespaceDB{
 		Namespace:     name,
-		DisplayName:   nil,  // No display name by default - use namespace name (matching Python)
+		DisplayName:   displayName,
 		NamespaceType: sqldb.NamespaceTypeNone,
 	}
 
@@ -286,6 +288,56 @@ func CreateModuleDetails(t *testing.T, db *sqldb.Database, readmeContent string)
 	return moduleDetails
 }
 
+// CreateFullyPopulatedModuleVersion creates a fully populated published module version.
+// Python reference: /app/test/unit/terrareg/test_data.py - fullypopulated module
+// This populates all optional fields for comprehensive testing, matching the Python test data pattern.
+func CreateFullyPopulatedModuleVersion(t *testing.T, db *sqldb.Database, moduleProviderID int, version string) sqldb.ModuleVersionDB {
+	t.Helper()
+
+	// Populate all fields similar to Python's fullypopulated test data
+	owner := "This is the owner of the module"
+	description := "This is a test module version for tests."
+	repoBaseURL := "https://link-to.com/source-code-here"
+	repoCloneURL := "ssh://mp-clone-url.com/namespace-module-provider"
+	repoBrowseURL := "https://mp-browse-url.com/namespace-module-provider/browse/{tag}/{path}suffix"
+	gitPath := "modules/test"
+	gitSHA := "abc123def456"
+
+	published := true
+	now := time.Now()
+
+	moduleVersion := sqldb.ModuleVersionDB{
+		ModuleProviderID:      moduleProviderID,
+		Version:               version,
+		Beta:                  false,
+		Internal:              false,
+		Published:             &published,
+		PublishedAt:           &now,
+		Owner:                 &owner,
+		Description:           &description,
+		RepoBaseURLTemplate:   &repoBaseURL,
+		RepoCloneURLTemplate:  &repoCloneURL,
+		RepoBrowseURLTemplate: &repoBrowseURL,
+		GitPath:               &gitPath,
+		GitSHA:                &gitSHA,
+		ArchiveGitPath:        false,
+		VariableTemplate:      nil,
+		ExtractionVersion:     nil,
+		ModuleDetailsID:       nil,
+	}
+
+	err := db.DB.Create(&moduleVersion).Error
+	require.NoError(t, err, "Failed to create fully populated module version")
+
+	// Update the module provider to set this as the latest version
+	err = db.DB.Model(&sqldb.ModuleProviderDB{}).
+		Where("id = ?", moduleProviderID).
+		Update("latest_version_id", moduleVersion.ID).Error
+	require.NoError(t, err, "Failed to set latest version")
+
+	return moduleVersion
+}
+
 // CreateSubmodule creates a test submodule in the database
 func CreateSubmodule(t *testing.T, db *sqldb.Database, moduleVersionID int, path, name, submoduleType string, moduleDetailsID *int) sqldb.SubmoduleDB {
 	submodule := sqldb.SubmoduleDB{
@@ -347,6 +399,72 @@ func CreateProvider(t *testing.T, db *sqldb.Database, namespaceID int, name stri
 	require.NoError(t, err)
 
 	return provider
+}
+
+// CreateRepository creates a test repository in the database
+// Python reference: /app/test/unit/terrareg/test_data.py - repository creation
+func CreateRepository(t *testing.T, db *sqldb.Database, providerID *string, owner, name, description, cloneURL, logoURL, providerSourceName string) sqldb.RepositoryDB {
+	t.Helper()
+
+	repo := sqldb.RepositoryDB{
+		ProviderID:         providerID,
+		Owner:              &owner,
+		Name:               &name,
+		Description:        []byte(description),
+		CloneURL:           &cloneURL,
+		LogoURL:            &logoURL,
+		ProviderSourceName: providerSourceName,
+	}
+
+	err := db.DB.Create(&repo).Error
+	require.NoError(t, err)
+
+	return repo
+}
+
+// CreateProviderVersionWithRepository creates a test provider with repository and version
+// This is a comprehensive helper that creates all necessary entities for a fully populated provider
+// matching Python's test_data.py structure
+// Python reference: /app/test/unit/terrareg/server/test_api_provider_list.py - test_data
+func CreateProviderVersionWithRepository(t *testing.T, db *sqldb.Database, namespaceID int, providerName, version, gitTag string, description *string, tier sqldb.ProviderTier, gpgKeyID int, publishedAt *time.Time) (sqldb.ProviderDB, sqldb.RepositoryDB, sqldb.ProviderVersionDB) {
+	t.Helper()
+
+	// Create provider
+	provider := CreateProvider(t, db, namespaceID, providerName, description, tier, nil)
+
+	// Create repository linked to the provider
+	providerID := fmt.Sprintf("%d", provider.ID)
+	owner := fmt.Sprintf("namespace-%d", namespaceID)
+	repoName := fmt.Sprintf("terraform-provider-%s", providerName)
+	repoDescription := "Test Provider Description"
+	if description != nil && *description != "" {
+		repoDescription = *description
+	}
+	cloneURL := fmt.Sprintf("https://github.example.com/%s/%s.git", owner, repoName)
+	logoURL := fmt.Sprintf("https://github.example.com/%s/logo.png", owner)
+	repository := CreateRepository(t, db, &providerID, owner, repoName, repoDescription, cloneURL, logoURL, "Test Github Autogenerate")
+
+	// Update provider to link to repository
+	err := db.DB.Model(&provider).Update("repository_id", repository.ID).Error
+	require.NoError(t, err)
+
+	// Create provider version with git tag
+	gitTagPtr := &gitTag
+	providerVersion := sqldb.ProviderVersionDB{
+		ProviderID:  provider.ID,
+		Version:     version,
+		GPGKeyID:    gpgKeyID,
+		GitTag:      gitTagPtr,
+		Beta:        false,
+		PublishedAt: publishedAt,
+	}
+	err = db.DB.Create(&providerVersion).Error
+	require.NoError(t, err)
+
+	// Set as latest version
+	SetProviderLatestVersion(t, db, provider.ID, providerVersion.ID)
+
+	return provider, repository, providerVersion
 }
 
 // CreateProviderVersion creates a test provider version in the database

@@ -168,7 +168,7 @@ func TestUserGroupNamespacePermissionsCreate_Authentication(t *testing.T) {
 
 	// Create test user group and namespace
 	userGroup := testutils.CreateTestAuthUserGroup(t, db, "perm-test-group", false)
-	_ = testutils.CreateNamespace(t, db, "perm-test-namespace")
+	_ = testutils.CreateNamespace(t, db, "perm-test-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -222,7 +222,7 @@ func TestUserGroupNamespacePermissionsDelete_Authentication(t *testing.T) {
 
 	// Create test user group and namespace with permission
 	userGroup := testutils.CreateTestAuthUserGroup(t, db, "perm-delete-group", false)
-	namespace := testutils.CreateNamespace(t, db, "perm-delete-namespace")
+	namespace := testutils.CreateNamespace(t, db, "perm-delete-namespace", nil)
 	_ = testutils.CreateTestNamespacePermission(t, db, userGroup.ID, namespace.ID, sqldb.PermissionTypeFull)
 
 	tests := []struct {

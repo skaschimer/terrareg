@@ -23,7 +23,7 @@ func TestProviderVersion_GetByProviderAndVersion(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -57,7 +57,7 @@ func TestProviderVersion_GetByID(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -90,7 +90,7 @@ func TestProviderVersion_PublishedAtFormatting(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -132,7 +132,7 @@ func TestProviderVersion_BetaDetection(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-beta")
+	namespace := testutils.CreateNamespace(t, db, "test-beta", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -171,7 +171,7 @@ func TestProviderVersion_GetBinaries(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-binaries")
+	namespace := testutils.CreateNamespace(t, db, "test-binaries", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -220,7 +220,7 @@ func TestProviderVersion_GitTag(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-gittag")
+	namespace := testutils.CreateNamespace(t, db, "test-gittag", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -263,7 +263,7 @@ func TestProviderVersion_Delete(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-delete")
+	namespace := testutils.CreateNamespace(t, db, "test-delete", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -319,7 +319,7 @@ func TestProviderVersion_ProtocolVersions(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-protocol")
+	namespace := testutils.CreateNamespace(t, db, "test-protocol", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -355,7 +355,7 @@ func TestProviderVersion_VersionCount(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-count")
+	namespace := testutils.CreateNamespace(t, db, "test-count", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 

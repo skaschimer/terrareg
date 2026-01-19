@@ -53,7 +53,7 @@ func TestInitialSetupHandler_HandleInitialSetup_NamespaceOnly(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace only
-	testutils.CreateNamespace(t, db, "test-namespace")
+	testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
@@ -87,7 +87,7 @@ func TestInitialSetupHandler_HandleInitialSetup_WithModule(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace and module provider
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
@@ -125,7 +125,7 @@ func TestInitialSetupHandler_HandleInitialSetup_WithVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace, module provider, and version
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -161,7 +161,7 @@ func TestInitialSetupHandler_HandleInitialSetup_PublishedVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace, module provider, and published version
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -197,7 +197,7 @@ func TestInitialSetupHandler_HandleInitialSetup_WithGit(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace and module provider with git configuration
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	gitCloneURL := "https://github.com/example/repo.git"
 	moduleProvider := testutils.CreateModuleProviderWithGit(t, db, namespace.ID, "test-module", "aws", &gitCloneURL)
 
@@ -259,7 +259,7 @@ func TestInitialSetupHandler_HandleInitialSetup_CompleteSetup(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create complete setup with git configuration
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	gitCloneURL := "https://github.com/example/repo.git"
 	moduleProvider := testutils.CreateModuleProviderWithGit(t, db, namespace.ID, "test-module", "aws", &gitCloneURL)
 	testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")

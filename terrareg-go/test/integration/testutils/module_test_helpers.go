@@ -16,7 +16,7 @@ func SetupModuleVersion(t *testing.T, db *sqldb.Database, namespace, moduleName,
 	t.Helper()
 
 	// Create namespace
-	ns := CreateNamespace(t, db, namespace)
+	ns := CreateNamespace(t, db, namespace, nil)
 
 	// Create module provider
 	modProvider := CreateModuleProvider(t, db, ns.ID, moduleName, provider)
@@ -32,7 +32,7 @@ func SetupPublishedModuleVersion(t *testing.T, db *sqldb.Database, namespace, mo
 	t.Helper()
 
 	// Create namespace
-	ns := CreateNamespace(t, db, namespace)
+	ns := CreateNamespace(t, db, namespace, nil)
 
 	// Create module provider
 	modProvider := CreateModuleProvider(t, db, ns.ID, moduleName, provider)
@@ -88,7 +88,7 @@ func SetupMultipleVersions(t *testing.T, db *sqldb.Database, namespace, moduleNa
 	t.Helper()
 
 	// Create namespace
-	ns := CreateNamespace(t, db, namespace)
+	ns := CreateNamespace(t, db, namespace, nil)
 
 	// Create module provider
 	modProvider := CreateModuleProvider(t, db, ns.ID, moduleName, provider)

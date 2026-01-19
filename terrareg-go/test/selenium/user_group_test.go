@@ -36,8 +36,8 @@ func newUserGroupTest(t *testing.T) *SeleniumTest {
 
 	// Setup test data - two empty namespaces
 	db := st.server.GetDB()
-	_ = integrationTestUtils.CreateNamespace(t, db, "firstnamespace")
-	_ = integrationTestUtils.CreateNamespace(t, db, "second-namespace")
+	_ = integrationTestUtils.CreateNamespace(t, db, "firstnamespace", nil)
+	_ = integrationTestUtils.CreateNamespace(t, db, "second-namespace", nil)
 
 	return st
 }

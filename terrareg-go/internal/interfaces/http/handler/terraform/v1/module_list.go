@@ -65,11 +65,15 @@ func convertModuleProviderToListResponse(mp *model.ModuleProvider) moduledto.Mod
 	}
 
 	var owner *string
-	// Owner is typically the namespace, but the DTO allows for an explicit owner field
-	// For now, use namespace name as owner
-	nsName := mp.Namespace().Name()
-	if nsName != "" {
-		owner = &nsName
+	if latest := mp.GetLatestVersion(); latest != nil {
+		owner = latest.Owner()
+	}
+	// Fallback to namespace name if no owner is set on the version
+	if owner == nil || *owner == "" {
+		nsName := mp.Namespace().Name()
+		if nsName != "" {
+			owner = &nsName
+		}
 	}
 
 	// Dummy values for fields not yet fully implemented or easily accessible from ModuleProvider

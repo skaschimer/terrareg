@@ -385,7 +385,7 @@ func TestModuleProvider_GitPath(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "git-test")
+			namespace := testutils.CreateNamespace(t, db, "git-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update git path
@@ -415,7 +415,7 @@ func TestModuleProvider_Delete(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create a module provider with three versions
-	namespace := testutils.CreateNamespace(t, db, "delete-test")
+	namespace := testutils.CreateNamespace(t, db, "delete-test", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "deleteme", "testprovider")
 
 	// Create three versions
@@ -464,7 +464,7 @@ func TestModuleProvider_UpdateRepoCloneURLTemplate(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "url-test")
+			namespace := testutils.CreateNamespace(t, db, "url-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update clone URL
@@ -496,7 +496,7 @@ func TestModuleProvider_UpdateRepoBrowseURLTemplate(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "browse-test")
+			namespace := testutils.CreateNamespace(t, db, "browse-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update browse URL
@@ -528,7 +528,7 @@ func TestModuleProvider_UpdateRepoBaseURLTemplate(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "base-test")
+			namespace := testutils.CreateNamespace(t, db, "base-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update base URL
@@ -566,7 +566,7 @@ func TestModuleProvider_UpdateGitTagFormat_Valid(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "tagformat-test")
+			namespace := testutils.CreateNamespace(t, db, "tagformat-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update tag format
@@ -588,7 +588,7 @@ func TestModuleProvider_UpdateVerified(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "verified-test")
+	namespace := testutils.CreateNamespace(t, db, "verified-test", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 	// Initially not verified
@@ -709,7 +709,7 @@ func TestModuleProvider_UpdateRepoCloneURLTemplate_InvalidURL(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "url-test")
+			namespace := testutils.CreateNamespace(t, db, "url-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update clone URL - validation might be in domain layer
@@ -734,7 +734,7 @@ func TestModuleProvider_UpdateRepoBrowseURLTemplate_InvalidURL(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "browse-test")
+			namespace := testutils.CreateNamespace(t, db, "browse-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update browse URL
@@ -758,7 +758,7 @@ func TestModuleProvider_UpdateRepoBaseURLTemplate_InvalidURL(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "base-test")
+			namespace := testutils.CreateNamespace(t, db, "base-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update base URL
@@ -784,7 +784,7 @@ func TestModuleProvider_UpdateGitTagFormat_Invalid(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "tagformat-test")
+			namespace := testutils.CreateNamespace(t, db, "tagformat-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			// Update tag format
@@ -830,7 +830,7 @@ func TestModuleProvider_GetVersionFromTag(t *testing.T) {
 			db := testutils.SetupTestDatabase(t)
 			defer testutils.CleanupTestDatabase(t, db)
 
-			namespace := testutils.CreateNamespace(t, db, "tag-test")
+			namespace := testutils.CreateNamespace(t, db, "tag-test", nil)
 			moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 			moduleProvider.GitTagFormat = &tc.tagFormat
@@ -850,7 +850,7 @@ func TestModuleProvider_WithMultipleVersions(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "multiversion")
+	namespace := testutils.CreateNamespace(t, db, "multiversion", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create multiple versions
@@ -884,7 +884,7 @@ func TestModuleProvider_VerifiedStatusPropagation(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "verified-test")
+	namespace := testutils.CreateNamespace(t, db, "verified-test", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Initially not verified
@@ -932,7 +932,7 @@ func TestModuleProvider_GitConfigHandling(t *testing.T) {
 	err := db.DB.Create(&gitProvider).Error
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "gitconfig")
+	namespace := testutils.CreateNamespace(t, db, "gitconfig", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Associate with git provider

@@ -24,7 +24,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/terraform-aws-modules/submodule", "Submodule description", "", nil)
@@ -127,7 +127,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "submodules/test-submodule", "Test submodule", "", nil)
@@ -168,7 +168,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_NoReadme(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - module without submodule
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Don't create a submodule - testing the case where it doesn't exist
@@ -260,7 +260,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_HTTPSWithNonStandardPort(t *tes
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	_ = testutils.CreateSubmodule(t, db, moduleVersion.ID, "modules/example-submodule1", "Submodule description", "", nil)

@@ -26,7 +26,7 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "testnamespace")
+	namespace := testutils.CreateNamespace(t, db, "testnamespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -133,7 +133,7 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "mynamespace")
+	namespace := testutils.CreateNamespace(t, db, "mynamespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "mymodule", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Update version to published
@@ -234,14 +234,17 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 }
 
 // TestModuleHandler_HandleModuleDetails_Success tests the module details endpoint
+// Python reference: /app/test/unit/terrareg/server/test_api_module_details.py - test_existing_module
 func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "testns")
-	testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
-	testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "azure")
+	namespace := testutils.CreateNamespace(t, db, "testns", nil)
+	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider1.ID, "1.0.0")
+	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "azure")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider2.ID, "2.0.0")
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
@@ -273,22 +276,63 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 	// Act
 	handler.HandleModuleDetails(w, req)
 
-	// Assert
+	// Assert - Comprehensive validation matching Python pattern
+	// Python reference: assert res.json == {'meta': {'limit': 10, 'current_offset': 0}, 'modules': [...]}
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
+	// Validate meta structure (Python validates pagination metadata)
+	assert.Contains(t, response, "meta")
+	meta := response["meta"].(map[string]interface{})
+	assert.Contains(t, meta, "limit")
+	assert.Contains(t, meta, "current_offset")
+
+	// Validate modules array exists and has expected providers
 	assert.Contains(t, response, "modules")
 	modules := response["modules"].([]interface{})
-	assert.GreaterOrEqual(t, len(modules), 2)
+	assert.Len(t, modules, 2, "Should return exactly two module providers (aws and azure)")
 
-	// Verify all modules match the requested namespace and name
-	for _, m := range modules {
+	// Validate all module fields (Python validates complete response)
+	// Python reference: {'id': 'testnamespace/lonelymodule/testprovider/1.0.0', 'owner': 'Mock Owner', ...}
+	expectedProviders := []string{"aws", "azure"}
+	for i, m := range modules {
 		module := m.(map[string]interface{})
+
+		// Validate all required fields exist (matching Python's complete JSON structure)
+		assert.Contains(t, module, "id")
+		assert.NotEmpty(t, module["id"], "Module ID should not be empty")
+
 		assert.Equal(t, "testns", module["namespace"])
 		assert.Equal(t, "testmodule", module["name"])
+		assert.Equal(t, expectedProviders[i], module["provider"])
+
+		assert.Contains(t, module, "verified")
+		assert.IsType(t, false, module["verified"], "Verified should be a boolean")
+
+		assert.Contains(t, module, "trusted")
+		assert.IsType(t, false, module["trusted"], "Trusted should be a boolean")
+
+		// Optional fields - validate if present
+		if owner, ok := module["owner"]; ok && owner != nil {
+			assert.NotEmpty(t, owner, "Owner should not be empty if present")
+		}
+
+		if description, ok := module["description"]; ok && description != nil {
+			assert.NotEmpty(t, description, "Description should not be empty if present")
+		}
+
+		if source, ok := module["source"]; ok && source != nil {
+			assert.NotEmpty(t, source, "Source should not be empty if present")
+		}
+
+		assert.Contains(t, module, "published_at")
+		assert.NotNil(t, module["published_at"], "Published at should be present for published version")
+
+		assert.Contains(t, module, "downloads")
+		assert.IsType(t, float64(0), module["downloads"], "Downloads should be a number")
 	}
 }
 
@@ -298,7 +342,7 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "hashicorp")
+	namespace := testutils.CreateNamespace(t, db, "hashicorp", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "consul", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Update version to published
@@ -404,7 +448,7 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "searchns")
+	namespace := testutils.CreateNamespace(t, db, "searchns", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "networking-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Update version to published
@@ -574,7 +618,7 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data with version
-	namespace := testutils.CreateNamespace(t, db, "versionns")
+	namespace := testutils.CreateNamespace(t, db, "versionns", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "versionmodule", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Update version to published
@@ -631,7 +675,7 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data with multiple providers
-	namespace := testutils.CreateNamespace(t, db, "multins")
+	namespace := testutils.CreateNamespace(t, db, "multins", nil)
 	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "aws")
 	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "azure")
 	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "gcp")

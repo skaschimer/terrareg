@@ -31,8 +31,8 @@ func TestModuleSearch_BasicSearch(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test namespaces
-	namespace1 := testutils.CreateNamespace(t, db, "search-ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "search-ns2")
+	namespace1 := testutils.CreateNamespace(t, db, "search-ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "search-ns2", nil)
 
 	// Create module providers with a pattern
 	provider1 := testutils.CreateModuleProvider(t, db, namespace1.ID, "searchmodule", "aws")
@@ -111,9 +111,9 @@ func TestModuleSearch_NamespaceFilter(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test namespaces
-	namespace1 := testutils.CreateNamespace(t, db, "filter-ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "filter-ns2")
-	namespace3 := testutils.CreateNamespace(t, db, "different-ns")
+	namespace1 := testutils.CreateNamespace(t, db, "filter-ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "filter-ns2", nil)
+	namespace3 := testutils.CreateNamespace(t, db, "different-ns", nil)
 
 	// Create module providers
 	provider1 := testutils.CreateModuleProvider(t, db, namespace1.ID, "testmodule", "aws")
@@ -176,7 +176,7 @@ func TestModuleSearch_ProviderFilter(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "provider-filter-ns")
+	namespace := testutils.CreateNamespace(t, db, "provider-filter-ns", nil)
 
 	// Create module providers with different providers
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
@@ -240,7 +240,7 @@ func TestModuleSearch_VerifiedFilter(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "verified-ns")
+	namespace := testutils.CreateNamespace(t, db, "verified-ns", nil)
 
 	// Create verified and unverified providers
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "verified-module", "aws")
@@ -306,7 +306,7 @@ func TestModuleSearch_OffsetAndLimit(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "pagination-ns")
+	namespace := testutils.CreateNamespace(t, db, "pagination-ns", nil)
 
 	// Create multiple module providers with unique provider names
 	providers := make([]sqldb.ModuleProviderDB, 5)
@@ -383,7 +383,7 @@ func TestModuleSearch_ExcludeModulesWithoutLatestVersion(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "latest-version-ns")
+	namespace := testutils.CreateNamespace(t, db, "latest-version-ns", nil)
 
 	// Create a provider with a published version
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "has-latest", "aws")
@@ -425,7 +425,7 @@ func TestModuleSearch_CaseInsensitiveSearch(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "case-ns")
+	namespace := testutils.CreateNamespace(t, db, "case-ns", nil)
 
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "MixedCaseModule", "aws")
 	testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
@@ -470,8 +470,8 @@ func TestModuleSearch_CombinedFilters(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace1 := testutils.CreateNamespace(t, db, "combined-ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "combined-ns2")
+	namespace1 := testutils.CreateNamespace(t, db, "combined-ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "combined-ns2", nil)
 
 	// Create various providers
 	provider1 := testutils.CreateModuleProvider(t, db, namespace1.ID, "combined-module", "aws")
@@ -542,8 +542,8 @@ func TestModuleSearch_TrustedNamespaceFilter(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace1 := testutils.CreateNamespace(t, db, "trusted-ns")
-	namespace2 := testutils.CreateNamespace(t, db, "untrusted-ns")
+	namespace1 := testutils.CreateNamespace(t, db, "trusted-ns", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "untrusted-ns", nil)
 
 	provider1 := testutils.CreateModuleProvider(t, db, namespace1.ID, "trust-module", "aws")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace2.ID, "trust-module", "aws")
@@ -599,7 +599,7 @@ func TestModuleSearch_MultiTermSearch(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "multiterm-ns")
+	namespace := testutils.CreateNamespace(t, db, "multiterm-ns", nil)
 
 	// Create modules that should match different terms
 	// "aws vpc" should match both terms (when multi-term search is implemented)
@@ -728,7 +728,7 @@ func TestModuleSearch_LimitEnforcement(t *testing.T) {
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "limit-ns")
+	namespace := testutils.CreateNamespace(t, db, "limit-ns", nil)
 
 	// Create multiple providers
 	for i := 1; i <= 10; i++ {
@@ -1042,7 +1042,7 @@ func TestModuleSearch_NoDuplicateResultsForMultiplePublishedVersions(t *testing.
 	searchQuery, err := modulequery.NewSearchModulesQuery(moduleProviderRepo)
 	require.NoError(t, err)
 
-	namespace := testutils.CreateNamespace(t, db, "multiversion-ns")
+	namespace := testutils.CreateNamespace(t, db, "multiversion-ns", nil)
 
 	// Create a module provider with multiple published versions
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "multiversion-module", "aws")

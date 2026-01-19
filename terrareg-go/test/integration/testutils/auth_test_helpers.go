@@ -78,7 +78,7 @@ func BuildAuthenticatedRequestWithNamespacePermission(
 	var namespaceDB sqldb.NamespaceDB
 	err := db.DB.Where("namespace = ?", namespace).First(&namespaceDB).Error
 	if err != nil {
-		namespaceDB = CreateNamespace(t, db, namespace)
+		namespaceDB = CreateNamespace(t, db, namespace, nil)
 	}
 
 	// Create permission
@@ -152,7 +152,7 @@ func BuildAuthenticatedRequestWithMultipleNamespacePermissions(
 		var namespaceDB sqldb.NamespaceDB
 		err := db.DB.Where("namespace = ?", namespace).First(&namespaceDB).Error
 		if err != nil {
-			namespaceDB = CreateNamespace(t, db, namespace)
+			namespaceDB = CreateNamespace(t, db, namespace, nil)
 		}
 
 		// Create permission

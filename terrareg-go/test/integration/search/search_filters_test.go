@@ -63,7 +63,7 @@ func TestSearchFilters_ContributedModuleOneVersion(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: namespace, module provider with published version
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-oneversion", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -101,7 +101,7 @@ func TestSearchFilters_ContributedModuleMultiVersion(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with multiple versions (should still count as 1 module)
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-multiversion", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.1.0")
@@ -141,7 +141,7 @@ func TestSearchFilters_ContributedMultipleModules(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: multiple modules matching "contributedmodule"
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 
 	// Three modules with aws provider, one with gcp
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-one", "aws")
@@ -188,7 +188,7 @@ func TestSearchFilters_UnpublishedModule(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with UNPUBLISHED version
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-unpublished", "aws")
 	_ = testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0") // Not published
 
@@ -228,7 +228,7 @@ func TestSearchFilters_TrustedModuleOneVersion(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-oneversion", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -266,7 +266,7 @@ func TestSearchFilters_TrustedModuleMultiVersion(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with multiple versions
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-multiversion", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.1.0")
@@ -306,7 +306,7 @@ func TestSearchFilters_TrustedMultipleModules(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data: multiple modules
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-one", "aws")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "contributedmodule-two", "aws")
@@ -352,7 +352,7 @@ func TestSearchFilters_VerifiedModuleOneVersion(t *testing.T) {
 	searchFiltersQuery := modulequery.NewSearchFiltersQuery(moduleProviderRepo, domainConfig)
 
 	// Create test data with VERIFIED module provider
-	namespace := testutils.CreateNamespace(t, db, "modulesearch")
+	namespace := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	verified := true
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "verifiedmodule-oneversion", "aws")
 	// Set verified status
@@ -395,14 +395,14 @@ func TestSearchFilters_MixedResults(t *testing.T) {
 
 	// Create test data for mixed results
 	// Contributed namespace (not in trusted list)
-	namespaceContributed := testutils.CreateNamespace(t, db, "modulesearch-contributed")
+	namespaceContributed := testutils.CreateNamespace(t, db, "modulesearch-contributed", nil)
 	provider1 := testutils.CreateModuleProvider(t, db, namespaceContributed.ID, "modulesearch-one", "aws")
 	provider2 := testutils.CreateModuleProvider(t, db, namespaceContributed.ID, "modulesearch-two", "gcp")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider1.ID, "1.0.0")
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider2.ID, "1.0.0")
 
 	// Trusted namespace (not verified)
-	namespaceTrusted := testutils.CreateNamespace(t, db, "modulesearch-trusted")
+	namespaceTrusted := testutils.CreateNamespace(t, db, "modulesearch-trusted", nil)
 	provider3 := testutils.CreateModuleProvider(t, db, namespaceTrusted.ID, "modulesearch-three", "aws")
 	provider4 := testutils.CreateModuleProvider(t, db, namespaceTrusted.ID, "modulesearch-four", "aws")
 	provider5 := testutils.CreateModuleProvider(t, db, namespaceTrusted.ID, "modulesearch-five", "gcp")
@@ -411,7 +411,7 @@ func TestSearchFilters_MixedResults(t *testing.T) {
 	_ = testutils.CreatePublishedModuleVersion(t, db, provider5.ID, "1.0.0")
 
 	// Verified AND trusted namespace
-	namespaceVerified := testutils.CreateNamespace(t, db, "modulesearch")
+	namespaceVerified := testutils.CreateNamespace(t, db, "modulesearch", nil)
 	verified := true
 	provider6 := testutils.CreateModuleProvider(t, db, namespaceVerified.ID, "modulesearch-six", "aws")
 	provider7 := testutils.CreateModuleProvider(t, db, namespaceVerified.ID, "modulesearch-seven", "aws")

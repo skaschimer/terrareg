@@ -19,7 +19,7 @@ func TestGPGKeyCreate_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "gpg-namespace")
+	_ = testutils.CreateNamespace(t, db, "gpg-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -69,7 +69,7 @@ func TestGPGKeyDelete_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "gpg-delete-namespace")
+	_ = testutils.CreateNamespace(t, db, "gpg-delete-namespace", nil)
 
 	tests := []struct {
 		name           string

@@ -23,7 +23,7 @@ func TestProviderVersionBinary_CreateAndRetrieve(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-binary-create")
+	namespace := testutils.CreateNamespace(t, db, "test-binary-create", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -93,7 +93,7 @@ func TestProviderVersionBinary_FindByPlatform(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -137,7 +137,7 @@ func TestProviderVersionBinary_FindByVersion(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "initial-providers")
+	namespace := testutils.CreateNamespace(t, db, "initial-providers", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -183,7 +183,7 @@ func TestProviderVersionBinary_Properties(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-properties")
+	namespace := testutils.CreateNamespace(t, db, "test-properties", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -261,7 +261,7 @@ func TestProviderVersionBinary_EmptyResults(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-empty")
+	namespace := testutils.CreateNamespace(t, db, "test-empty", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 
@@ -291,7 +291,7 @@ func TestProviderVersionBinary_MultipleVersions(t *testing.T) {
 	providerRepo := providerrepo.NewProviderRepository(db.DB)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-multi")
+	namespace := testutils.CreateNamespace(t, db, "test-multi", nil)
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
 	gpgKey := testutils.CreateGPGKeyWithNamespace(t, db, "test-key", namespace.ID, "test-key-id")
 

@@ -19,7 +19,7 @@ func TestModuleProviderCreate_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "test-namespace")
+	_ = testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -95,7 +95,7 @@ func TestModuleProviderDelete_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace and module provider
-	namespace := testutils.CreateNamespace(t, db, "delete-namespace")
+	namespace := testutils.CreateNamespace(t, db, "delete-namespace", nil)
 	_ = testutils.CreateModuleProvider(t, db, namespace.ID, "testmod", "testprovider")
 
 	tests := []struct {
@@ -172,7 +172,7 @@ func TestModuleProviderSettingsUpdate_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace and module provider
-	namespace := testutils.CreateNamespace(t, db, "settings-namespace")
+	namespace := testutils.CreateNamespace(t, db, "settings-namespace", nil)
 	_ = testutils.CreateModuleProvider(t, db, namespace.ID, "testmod", "testprovider")
 
 	tests := []struct {
@@ -250,7 +250,7 @@ func TestModuleVersionDelete_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test data: namespace -> module provider -> version
-	namespace := testutils.CreateNamespace(t, db, "version-delete-namespace")
+	namespace := testutils.CreateNamespace(t, db, "version-delete-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodulename", "testprovider")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "2.4.1")
 
@@ -328,7 +328,7 @@ func TestModuleVersionPublish_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "publish-namespace")
+	namespace := testutils.CreateNamespace(t, db, "publish-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmod", "testprovider")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -382,7 +382,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "details-namespace")
+	namespace := testutils.CreateNamespace(t, db, "details-namespace", nil)
 	_ = testutils.CreateModuleProvider(t, db, namespace.ID, "testmod", "testprovider")
 
 	tests := []struct {

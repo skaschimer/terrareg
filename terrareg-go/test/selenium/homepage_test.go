@@ -71,7 +71,7 @@ func testHomepageTitle(t *testing.T) {
 	// Create a namespace so the initial setup page doesn't redirect
 	// Python tests likely have test data already created, so we do the same
 	db := st.server.GetDB()
-	_ = integrationTestUtils.CreateNamespace(t, db, "test-namespace")
+	_ = integrationTestUtils.CreateNamespace(t, db, "test-namespace", nil)
 
 	st.NavigateTo("/")
 
@@ -105,19 +105,19 @@ func testHomepageCounts(t *testing.T, element string, count int) {
 	if element == "namespace" {
 		// Create 3 namespaces as minimal test data
 		for i := 1; i <= 3; i++ {
-			_ = integrationTestUtils.CreateNamespace(t, db, fmt.Sprintf("testns%d", i))
+			_ = integrationTestUtils.CreateNamespace(t, db, fmt.Sprintf("testns%d", i), nil)
 		}
 		// Adjust expected count to match actual created data
 		count = 3
 	} else if element == "module" {
 		// Create 1 namespace with 2 modules
-		ns := integrationTestUtils.CreateNamespace(t, db, "count-test-ns")
+		ns := integrationTestUtils.CreateNamespace(t, db, "count-test-ns", nil)
 		_ = integrationTestUtils.CreateModuleProvider(t, db, ns.ID, "module1", "aws")
 		_ = integrationTestUtils.CreateModuleProvider(t, db, ns.ID, "module2", "aws")
 		count = 2
 	} else if element == "version" {
 		// Create 1 module with 3 versions
-		ns := integrationTestUtils.CreateNamespace(t, db, "count-test-ns")
+		ns := integrationTestUtils.CreateNamespace(t, db, "count-test-ns", nil)
 		mp := integrationTestUtils.CreateModuleProvider(t, db, ns.ID, "versiontest", "aws")
 		_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.0.0")
 		_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.1.0")
@@ -126,7 +126,7 @@ func testHomepageCounts(t *testing.T, element string, count int) {
 	} else if element == "download" {
 		// Create minimal data to get past initial setup page
 		// The mock will return 2005 regardless of actual data
-		_ = integrationTestUtils.CreateNamespace(t, db, "download-test-ns")
+		_ = integrationTestUtils.CreateNamespace(t, db, "download-test-ns", nil)
 		// count remains 2005 from the mock
 	}
 
@@ -160,7 +160,7 @@ func testHomepageLatestModuleVersion(t *testing.T) {
 
 	// Python: module_version = ModuleVersion(module_provider=ModuleProvider(module=Module(namespace=Namespace(name='mostrecent'), name='modulename'), name='providername'), version='1.2.3')
 	//         module_version.update_attributes(published_at=datetime.now())
-	namespace := integrationTestUtils.CreateNamespace(t, db, "mostrecent")
+	namespace := integrationTestUtils.CreateNamespace(t, db, "mostrecent", nil)
 	moduleProvider := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "modulename", "providername")
 	moduleVersion := integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.2.3")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Test Module\n\nThis is a test module.")
@@ -206,7 +206,7 @@ func testHomepageVerifiedModuleLabel(t *testing.T) {
 
 	// Python: module_version = ModuleVersion(module_provider=ModuleProvider(module=Module(namespace=Namespace(name='mostrecent'), name='modulename'), name='providername'), version='1.2.3')
 	//         module_version.update_attributes(published_at=datetime.now())
-	namespace := integrationTestUtils.CreateNamespace(t, db, "mostrecent")
+	namespace := integrationTestUtils.CreateNamespace(t, db, "mostrecent", nil)
 	moduleProvider := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "modulename", "providername")
 	moduleVersion := integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.2.3")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Test Module\n\nThis is a test module.")
@@ -251,7 +251,7 @@ func testHomepageUpdatedTrustedModule(t *testing.T) {
 	//         provider = ModuleProvider(module=module, name='aws')
 	//         module_version = ModuleVersion(module_provider=provider, version='4.4.1')
 	//         module_version.update_attributes(published_at=datetime.now())
-	namespace := integrationTestUtils.CreateNamespace(t, db, "trustednamespace")
+	namespace := integrationTestUtils.CreateNamespace(t, db, "trustednamespace", nil)
 	moduleProvider := integrationTestUtils.CreateModuleProvider(t, db, namespace.ID, "secondlatestmodule", "aws")
 	moduleVersion := integrationTestUtils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "4.4.1")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Trusted Module\n\nThis is a trusted module.")

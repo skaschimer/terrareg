@@ -22,7 +22,7 @@ func TestSubmodule_Save(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data: namespace, module provider, module version
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-save")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-save", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -58,7 +58,7 @@ func TestSubmodule_SaveWithDetails(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-details")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-details", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -102,7 +102,7 @@ func TestSubmodule_FindByParentModuleVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-find")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-find", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version1 := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 	version2 := testutils.CreateModuleVersion(t, db, provider.ID, "2.0.0")
@@ -169,7 +169,7 @@ func TestSubmodule_FindByPath(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-findpath")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-findpath", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -219,7 +219,7 @@ func TestSubmodule_FindByPath_NotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-notfound")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-notfound", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -240,7 +240,7 @@ func TestSubmodule_DeleteByParentModuleVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-delete")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-delete", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -283,7 +283,7 @@ func TestSubmodule_NilSubmodule(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-nil")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-nil", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -308,7 +308,7 @@ func TestSubmodule_OptionalFields(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-optional")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-optional", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -342,7 +342,7 @@ func TestSubmodule_EmptyPath(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-empty")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-empty", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -377,7 +377,7 @@ func TestSubmodule_MultipleVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-multiversion")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-multiversion", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version1 := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 	version2 := testutils.CreateModuleVersion(t, db, provider.ID, "2.0.0")
@@ -425,7 +425,7 @@ func TestSubmodule_WithModuleDetails(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-submodule-preload")
+	namespace := testutils.CreateNamespace(t, db, "test-submodule-preload", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 

@@ -26,7 +26,7 @@ func TestModuleExtractor_BasicModule(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test namespace, module provider, and version
-	namespace := testutils.CreateNamespace(t, db, "testbasicmodule")
+	namespace := testutils.CreateNamespace(t, db, "testbasicmodule", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -60,7 +60,7 @@ func TestModuleExtractor_WithREADME(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testreadme")
+	namespace := testutils.CreateNamespace(t, db, "testreadme", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -90,7 +90,7 @@ func TestModuleExtractor_WithSubmodules(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testsubmodules")
+	namespace := testutils.CreateNamespace(t, db, "testsubmodules", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -141,7 +141,7 @@ func TestModuleExtractor_WithExamples(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testexamples")
+	namespace := testutils.CreateNamespace(t, db, "testexamples", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -184,7 +184,7 @@ func TestModuleExtractor_TerraregMetadata(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testmetadata")
+	namespace := testutils.CreateNamespace(t, db, "testmetadata", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -231,7 +231,7 @@ func TestModuleExtractor_InvalidTerraregMetadata(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testinvalidmetadata")
+	namespace := testutils.CreateNamespace(t, db, "testinvalidmetadata", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -269,7 +269,7 @@ func TestModuleExtractor_MetadataRequiredAttributes(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testrequiredattrs")
+	namespace := testutils.CreateNamespace(t, db, "testrequiredattrs", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -308,7 +308,7 @@ func TestModuleExtractor_TarGzArchive(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testtargz")
+	namespace := testutils.CreateNamespace(t, db, "testtargz", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -337,7 +337,7 @@ func TestModuleExtractor_PathTraversalProtection(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testpathtraversal")
+	namespace := testutils.CreateNamespace(t, db, "testpathtraversal", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -408,7 +408,7 @@ func TestModuleExtractor_CompleteWorkflow(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testcomplete")
+	namespace := testutils.CreateNamespace(t, db, "testcomplete", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -480,7 +480,7 @@ func TestModuleExtractor_MetadataVariableTemplate(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testvartemplate")
+	namespace := testutils.CreateNamespace(t, db, "testvartemplate", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -539,7 +539,7 @@ func TestModuleExtractor_EmptyArchive(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testempty")
+	namespace := testutils.CreateNamespace(t, db, "testempty", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -567,7 +567,7 @@ func TestModuleExtractor_MultipleVersions(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testmultiver")
+	namespace := testutils.CreateNamespace(t, db, "testmultiver", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	versions := []string{"1.0.0", "1.1.0", "2.0.0"}
@@ -604,7 +604,7 @@ func TestModuleExtractor_BetaVersion(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testbeta")
+	namespace := testutils.CreateNamespace(t, db, "testbeta", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create beta version
@@ -718,7 +718,7 @@ func TestModuleExtractor_MetadataNoFile(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testnofile")
+	namespace := testutils.CreateNamespace(t, db, "testnofile", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -754,7 +754,7 @@ func TestModuleExtractor_MetadataOverrideAutogenerate(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testmetadataoverride")
+	namespace := testutils.CreateNamespace(t, db, "testmetadataoverride", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -810,7 +810,7 @@ func TestModuleExtractor_MetadataRepoUrls(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testrepourls")
+	namespace := testutils.CreateNamespace(t, db, "testrepourls", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -859,7 +859,7 @@ func TestModuleExtractor_MetadataWithAllOptionalFields(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testallfields")
+	namespace := testutils.CreateNamespace(t, db, "testallfields", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -926,7 +926,7 @@ func TestModuleExtractor_HiddenTerraregJson(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testhiddenmetadata")
+	namespace := testutils.CreateNamespace(t, db, "testhiddenmetadata", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -971,7 +971,7 @@ func TestModuleExtractor_NonRootDirectory(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	_ = testutils.CreateNamespace(t, db, "testnonroot")
+	_ = testutils.CreateNamespace(t, db, "testnonroot", nil)
 
 	// Simulate module in subdirectory structure
 	// Create archive with module in subdirectory
@@ -1000,7 +1000,7 @@ func TestModuleExtractor_PathspecIgnore(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testpathspecignore")
+	namespace := testutils.CreateNamespace(t, db, "testpathspecignore", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -1044,7 +1044,7 @@ func TestModuleExtractor_EmptyTerraregJson(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testemptyjson")
+	namespace := testutils.CreateNamespace(t, db, "testemptyjson", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -1083,7 +1083,7 @@ func TestModuleExtractor_BothMetadataFiles(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testbothmetadata")
+	namespace := testutils.CreateNamespace(t, db, "testbothmetadata", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -1127,7 +1127,7 @@ func TestModuleExtractor_NonRootDirectoryWithTfIgnore(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	_ = testutils.CreateNamespace(t, db, "testnonroottfignore")
+	_ = testutils.CreateNamespace(t, db, "testnonroottfignore", nil)
 
 	// Create archive with module in subdirectory and .terraformignore in different locations
 	ignoreContent := `# Ignore specific files
@@ -1174,7 +1174,7 @@ func TestModuleExtractor_MultipleTfIgnoreFiles(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	_ = testutils.CreateNamespace(t, db, "testmultipletfignore")
+	_ = testutils.CreateNamespace(t, db, "testmultipletfignore", nil)
 
 	// Create archive with .terraformignore in root and subdirectory
 	rootIgnore := `# Root ignore
@@ -1230,7 +1230,7 @@ func TestModuleExtractor_TfIgnoreWithWildcardPatterns(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	_ = testutils.CreateNamespace(t, db, "testwildcardpatterns")
+	_ = testutils.CreateNamespace(t, db, "testwildcardpatterns", nil)
 
 	// Create .terraformignore with various glob patterns
 	ignoreContent := `# Various glob patterns

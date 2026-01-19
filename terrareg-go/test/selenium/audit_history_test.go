@@ -31,7 +31,7 @@ func newAuditHistoryTest(t *testing.T) *SeleniumTest {
 	// Setup test data to prevent redirect to initial-setup
 	// Python reference: /app/test/selenium/test_audit_history.py - setup_method
 	db := st.server.GetDB()
-	integrationTestUtils.CreateNamespace(t, db, "test-namespace")
+	integrationTestUtils.CreateNamespace(t, db, "test-namespace", nil)
 
 	return st
 }

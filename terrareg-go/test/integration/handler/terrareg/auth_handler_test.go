@@ -429,7 +429,7 @@ func TestAuthHandler_HandleUserGroupList_Success(t *testing.T) {
 	permGroup := testutils.CreateTestAuthUserGroup(t, db, "onepermissiongroup", false)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "namespace1")
+	namespace := testutils.CreateNamespace(t, db, "namespace1", nil)
 
 	// Add permission to onepermissiongroup
 	testutils.CreateTestNamespacePermission(t, db, permGroup.ID, namespace.ID, "FULL")
@@ -535,8 +535,8 @@ func TestAuthHandler_HandleUserGroupList_MultiplePermissions(t *testing.T) {
 	multiPermGroup := testutils.CreateTestAuthUserGroup(t, db, "multipermissiongroup", false)
 
 	// Create test namespaces
-	ns1 := testutils.CreateNamespace(t, db, "namespace1")
-	ns2 := testutils.CreateNamespace(t, db, "namespace2")
+	ns1 := testutils.CreateNamespace(t, db, "namespace1", nil)
+	ns2 := testutils.CreateNamespace(t, db, "namespace2", nil)
 
 	// Add multiple permissions
 	testutils.CreateTestNamespacePermission(t, db, multiPermGroup.ID, ns1.ID, "MODIFY")

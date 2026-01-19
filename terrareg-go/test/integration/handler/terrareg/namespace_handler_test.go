@@ -18,13 +18,14 @@ import (
 )
 
 // TestNamespaceHandler_HandleNamespaceList_Success tests successful namespace list retrieval
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_namespace_list.py - test_with_namespaces_present
 func TestNamespaceHandler_HandleNamespaceList_Success(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test namespaces
-	testutils.CreateNamespace(t, db, "namespace1")
-	testutils.CreateNamespace(t, db, "namespace2")
+	testutils.CreateNamespace(t, db, "namespace1", nil)
+	testutils.CreateNamespace(t, db, "namespace2", nil)
 
 	// Create handler using test utils
 	handler := testutils.CreateNamespaceHandler(t, db)
@@ -41,6 +42,27 @@ func TestNamespaceHandler_HandleNamespaceList_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.Len(t, response, 2)
+
+	// Validate all namespace fields (Python validates complete response)
+	// Python reference: assert res.json == [{'name': 'testnamespace', 'view_href': '/modules/testnamespace', 'display_name': None}, ...]
+	for _, ns := range response {
+		namespace := ns.(map[string]interface{})
+
+		// Validate all required fields exist
+		assert.Contains(t, namespace, "name")
+		assert.NotEmpty(t, namespace["name"], "Namespace name should not be empty")
+
+		assert.Contains(t, namespace, "view_href")
+		assert.NotEmpty(t, namespace["view_href"], "View href should not be empty")
+		// Verify view_href format
+		viewHref := namespace["view_href"].(string)
+		assert.Contains(t, viewHref, "/modules/", "View href should contain /modules/ path")
+
+		// display_name may be nil or a string
+		if displayName, ok := namespace["display_name"]; ok && displayName != nil {
+			assert.IsType(t, "", displayName, "Display name should be a string if present")
+		}
+	}
 }
 
 // TestNamespaceHandler_HandleNamespaceList_Empty tests namespace list with no data
@@ -71,8 +93,8 @@ func TestNamespaceHandler_HandleNamespaceList_WithPagination(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test namespaces
-	testutils.CreateNamespace(t, db, "namespace1")
-	testutils.CreateNamespace(t, db, "namespace2")
+	testutils.CreateNamespace(t, db, "namespace1", nil)
+	testutils.CreateNamespace(t, db, "namespace2", nil)
 
 	// Create handler
 	handler := testutils.CreateNamespaceHandler(t, db)
@@ -98,14 +120,19 @@ func TestNamespaceHandler_HandleNamespaceList_WithPagination(t *testing.T) {
 }
 
 // TestNamespaceHandler_HandleNamespaceList_MultipleNamespaces tests with multiple namespaces
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_namespace_list.py - test_with_namespaces_present
 func TestNamespaceHandler_HandleNamespaceList_MultipleNamespaces(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	// Create multiple namespaces
-	for i := 1; i <= 5; i++ {
-		testutils.CreateNamespace(t, db, "namespace"+string(rune('0'+i)))
-	}
+	// Create multiple namespaces with display names
+	displayName1 := "Test Namespace One"
+	displayName3 := "Test Namespace Three"
+	testutils.CreateNamespace(t, db, "namespace1", &displayName1)
+	testutils.CreateNamespace(t, db, "namespace2", nil)
+	testutils.CreateNamespace(t, db, "namespace3", &displayName3)
+	testutils.CreateNamespace(t, db, "namespace4", nil)
+	testutils.CreateNamespace(t, db, "namespace5", nil)
 
 	handler := testutils.CreateNamespaceHandler(t, db)
 
@@ -121,6 +148,45 @@ func TestNamespaceHandler_HandleNamespaceList_MultipleNamespaces(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err, "Response should be valid JSON array")
 	assert.Len(t, response, 5)
+
+	// Validate namespace names and fields (Python validates exact field values)
+	// Python reference: assert res.json == [{'name': 'testnamespace', 'view_href': '/modules/testnamespace', 'display_name': None}, ...]
+	expectedNamespaces := map[string]string{
+		"namespace1": "Test Namespace One",
+		"namespace2": "",
+		"namespace3": "Test Namespace Three",
+		"namespace4": "",
+		"namespace5": "",
+	}
+
+	// Build a map of namespace names found in response
+	foundNamespaces := make(map[string]map[string]interface{})
+	for _, ns := range response {
+		namespace := ns.(map[string]interface{})
+		name := namespace["name"].(string)
+		foundNamespaces[name] = namespace
+
+		// Validate all required fields exist
+		assert.Contains(t, namespace, "name")
+		assert.NotEmpty(t, namespace["name"])
+
+		assert.Contains(t, namespace, "view_href")
+		assert.NotEmpty(t, namespace["view_href"])
+		assert.Contains(t, namespace["view_href"], "/modules/")
+
+		// Validate display_name
+		assert.Contains(t, namespace, "display_name")
+	}
+
+	// Verify expected namespaces are present with correct display names
+	for expectedName, expectedDisplayName := range expectedNamespaces {
+		namespace, found := foundNamespaces[expectedName]
+		assert.True(t, found, "Expected namespace '%s' not found in response", expectedName)
+
+		if expectedDisplayName != "" {
+			assert.Equal(t, expectedDisplayName, namespace["display_name"])
+		}
+	}
 }
 
 // TestNamespaceHandler_HandleNamespaceDetails_Success tests successful namespace details retrieval
@@ -129,7 +195,7 @@ func TestNamespaceHandler_HandleNamespaceDetails_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test namespace
-	testutils.CreateNamespace(t, db, "test-namespace")
+	testutils.CreateNamespace(t, db, "test-namespace", nil)
 
 	// Create handler
 	handler := testutils.CreateNamespaceHandler(t, db)
@@ -243,7 +309,7 @@ func TestNamespaceHandler_HandleNamespaceDelete_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace to delete
-	_ = testutils.CreateNamespace(t, db, "delete-me")
+	_ = testutils.CreateNamespace(t, db, "delete-me", nil)
 
 	// Create handler
 	handler := testutils.CreateNamespaceHandler(t, db)
@@ -292,7 +358,7 @@ func TestNamespaceHandler_HandleNamespaceUpdate_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace
-	testutils.CreateNamespace(t, db, "update-namespace")
+	testutils.CreateNamespace(t, db, "update-namespace", nil)
 
 	// Create handler
 	handler := testutils.CreateNamespaceHandler(t, db)

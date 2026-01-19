@@ -115,7 +115,7 @@ func TestProviderSourceRefreshNamespace_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "refresh-namespace")
+	_ = testutils.CreateNamespace(t, db, "refresh-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -166,7 +166,7 @@ func TestProviderSourcePublishProvider_Authentication(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "publish-provider-namespace")
+	_ = testutils.CreateNamespace(t, db, "publish-provider-namespace", nil)
 
 	tests := []struct {
 		name           string

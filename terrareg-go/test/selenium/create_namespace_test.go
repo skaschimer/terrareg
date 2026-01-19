@@ -170,7 +170,7 @@ func testCreateNamespaceDuplicate(t *testing.T) {
 	// Python: pre_existing_namespace = Namespace.create('duplicate-namespace-create')
 	// In Go, we create the namespace via the test database
 	db := st.server.GetDB()
-	_ = integrationTestUtils.CreateNamespace(t, db, "duplicate-namespace-create")
+	_ = integrationTestUtils.CreateNamespace(t, db, "duplicate-namespace-create", nil)
 
 	performAdminAuthentication(st, "test-admin-token")
 

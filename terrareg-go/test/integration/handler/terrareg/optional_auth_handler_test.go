@@ -161,7 +161,7 @@ func TestModuleList_AllAuthMethods(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test namespace
-	_ = testutils.CreateNamespace(t, db, "module-list-namespace")
+	_ = testutils.CreateNamespace(t, db, "module-list-namespace", nil)
 
 	tests := []struct {
 		name           string
@@ -212,7 +212,7 @@ func TestModuleVersions_AllAuthMethods(t *testing.T) {
 	router := cont.Server.Router()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "version-list-namespace")
+	namespace := testutils.CreateNamespace(t, db, "version-list-namespace", nil)
 	_ = testutils.CreateModuleProvider(t, db, namespace.ID, "testmod", "testprovider")
 
 	tests := []struct {

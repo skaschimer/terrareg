@@ -25,7 +25,7 @@ func TestExampleHandler_HandleExampleDetails_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - examples are stored as submodules
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Create example as a submodule (examples are just submodules in the database)
@@ -128,7 +128,7 @@ func TestExampleHandler_HandleExampleDetails_NotFound(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Don't create an example
@@ -172,7 +172,7 @@ func TestExampleHandler_HandleExampleReadmeHTML_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Create example as a submodule
@@ -265,7 +265,7 @@ func TestExampleHandler_HandleExampleFileList_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Create example as a submodule
@@ -362,7 +362,7 @@ func TestExampleHandler_HandleExampleFile_Success(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Create example as a submodule
@@ -480,7 +480,7 @@ func TestExampleHandler_HandleExampleDetails_HTTPSWithNonStandardPort(t *testing
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create test data - examples are stored as submodules
-	namespace := testutils.CreateNamespace(t, db, "test-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 	// Create example as a submodule (examples are just submodules in the database)

@@ -52,7 +52,7 @@ func TestGlobalStatsQuery_SingleModule(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-ns")
+	namespace := testutils.CreateNamespace(t, db, "test-ns", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	version := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -91,7 +91,7 @@ func TestGlobalStatsQuery_MultipleVersionsPerModule(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with 5 versions
-	namespace := testutils.CreateNamespace(t, db, "multi-version-ns")
+	namespace := testutils.CreateNamespace(t, db, "multi-version-ns", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "multi-version-module", "aws")
 
 	versions := []string{"1.0.0", "1.1.0", "1.2.0", "2.0.0", "2.1.0"}
@@ -128,7 +128,7 @@ func TestGlobalStatsQuery_DownloadAggregation(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with 3 modules
-	namespace := testutils.CreateNamespace(t, db, "aggregate-ns")
+	namespace := testutils.CreateNamespace(t, db, "aggregate-ns", nil)
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "module2", "aws")
 	provider3 := testutils.CreateModuleProvider(t, db, namespace.ID, "module3", "aws")
@@ -183,7 +183,7 @@ func TestGlobalStatsQuery_MultipleNamespaces(t *testing.T) {
 
 	for i := 1; i <= 5; i++ {
 		namespaceName := fmt.Sprintf("multi-ns-%d", i)
-		namespace := testutils.CreateNamespace(t, db, namespaceName)
+		namespace := testutils.CreateNamespace(t, db, namespaceName, nil)
 
 		for j := 1; j <= 2; j++ {
 			moduleName := fmt.Sprintf("multi-module-%d-%d", i, j)
@@ -234,7 +234,7 @@ func TestGlobalStatsQuery_LargeScale(t *testing.T) {
 
 	for i := 1; i <= 10; i++ {
 		namespaceName := fmt.Sprintf("scale-ns-%d", i)
-		namespace := testutils.CreateNamespace(t, db, namespaceName)
+		namespace := testutils.CreateNamespace(t, db, namespaceName, nil)
 
 		for j := 1; j <= 5; j++ {
 			moduleName := fmt.Sprintf("scale-module-%d-%d", i, j)
@@ -285,7 +285,7 @@ func TestGlobalStatsQuery_OnlyPublishedVersions(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with published and unpublished versions
-	namespace := testutils.CreateNamespace(t, db, "published-ns")
+	namespace := testutils.CreateNamespace(t, db, "published-ns", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create 3 published versions
@@ -327,7 +327,7 @@ func TestGlobalStatsQuery_BetaAndInternalVersions(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with beta and internal versions
-	namespace := testutils.CreateNamespace(t, db, "beta-ns")
+	namespace := testutils.CreateNamespace(t, db, "beta-ns", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create published version

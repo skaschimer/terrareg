@@ -59,8 +59,8 @@ func TestGetGlobalModuleUsage_ExcludingNoEnvironment(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with unique names to avoid conflicts
-	namespace1 := testutils.CreateNamespace(t, db, "testnamespace-exclude")
-	namespace2 := testutils.CreateNamespace(t, db, "secondnamespace-exclude")
+	namespace1 := testutils.CreateNamespace(t, db, "testnamespace-exclude", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "secondnamespace-exclude", nil)
 
 	provider1 := testutils.CreateModuleProvider(t, db, namespace1.ID, "publishedmodule", "testprovider")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace1.ID, "publishedmodule", "secondprovider")
@@ -170,7 +170,7 @@ func TestGetGlobalModuleUsage_IncludingEmptyAuthToken(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data with unique names to avoid conflicts
-	namespace := testutils.CreateNamespace(t, db, "testnamespace-emptytoken")
+	namespace := testutils.CreateNamespace(t, db, "testnamespace-emptytoken", nil)
 
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "publishedmodule", "testprovider")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "noanalyticstoken", "testprovider")
@@ -241,7 +241,7 @@ func TestRecordModuleDownload_BasicUse(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "test-download-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-download-namespace", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -291,7 +291,7 @@ func TestRecordModuleDownload_InvalidModuleVersion(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data but no version
-	namespace := testutils.CreateNamespace(t, db, "test-download-namespace")
+	namespace := testutils.CreateNamespace(t, db, "test-download-namespace", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
 
 	// Create repositories and command
@@ -335,7 +335,7 @@ func TestGetDownloadStats(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "teststats")
+	namespace := testutils.CreateNamespace(t, db, "teststats", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "statsmodule", "statsprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
@@ -395,7 +395,7 @@ func TestGetDownloadsByVersionID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "testversionid")
+	namespace := testutils.CreateNamespace(t, db, "testversionid", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "vermodule", "verprovider")
 	version1 := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 	version2 := testutils.CreateModuleVersion(t, db, provider.ID, "2.0.0")
@@ -454,7 +454,7 @@ func TestGetMostDownloadedThisWeek(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "testweek")
+	namespace := testutils.CreateNamespace(t, db, "testweek", nil)
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "weekmodule1", "weekprovider")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "weekmodule2", "weekprovider")
 
@@ -537,7 +537,7 @@ func TestGetModuleProviderID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "testmpid")
+	namespace := testutils.CreateNamespace(t, db, "testmpid", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "mpidmodule", "mpidprovider")
 
 	// Create analytics repository

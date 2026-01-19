@@ -50,7 +50,7 @@ func TestProvider_Create(t *testing.T) {
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
 	// Create namespace
-	namespace := testutils.CreateNamespace(t, db, "test-create-provider")
+	namespace := testutils.CreateNamespace(t, db, "test-create-provider", nil)
 
 	// Create provider category
 	category := testutils.CreateProviderCategory(t, db, "Test Category", "test-category", true)
@@ -116,7 +116,7 @@ func TestProvider_FindByID(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-find-by-id")
+	namespace := testutils.CreateNamespace(t, db, "test-find-by-id", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("Find existing provider by ID", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestProvider_FindByNamespaceAndName(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-namespace-name")
+	namespace := testutils.CreateNamespace(t, db, "test-namespace-name", nil)
 	testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("Find existing provider by namespace and name", func(t *testing.T) {
@@ -169,7 +169,7 @@ func TestProvider_Properties(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-props")
+	namespace := testutils.CreateNamespace(t, db, "test-props", nil)
 	description := "Test provider description"
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "unittest-create-provider-name", &description, sqldb.ProviderTierCommunity, nil)
 
@@ -211,7 +211,7 @@ func TestProvider_UpdateDescription(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-update")
+	namespace := testutils.CreateNamespace(t, db, "test-update", nil)
 	oldDescription := "Old description"
 	newDescription := "New description"
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", &oldDescription, sqldb.ProviderTierCommunity, nil)
@@ -240,7 +240,7 @@ func TestProvider_UpdateTier(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-tier-update")
+	namespace := testutils.CreateNamespace(t, db, "test-tier-update", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	// Get the provider
@@ -268,7 +268,7 @@ func TestProvider_GetLatestVersion(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-latest-version")
+	namespace := testutils.CreateNamespace(t, db, "test-latest-version", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("No versions returns nil", func(t *testing.T) {
@@ -333,7 +333,7 @@ func TestProvider_GetAllVersions(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-all-versions")
+	namespace := testutils.CreateNamespace(t, db, "test-all-versions", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("No versions returns empty list", func(t *testing.T) {
@@ -405,7 +405,7 @@ func TestProvider_FindVersionByProviderAndVersion(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-find-version")
+	namespace := testutils.CreateNamespace(t, db, "test-find-version", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	gpgKey := testutils.CreateGPGKey(t, db, "key1", providerDB.ID, "KEY12345")
@@ -442,7 +442,7 @@ func TestProvider_SetLatestVersion(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-set-latest")
+	namespace := testutils.CreateNamespace(t, db, "test-set-latest", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	gpgKey := testutils.CreateGPGKey(t, db, "key1", providerDB.ID, "KEY12345")
@@ -480,7 +480,7 @@ func TestProvider_FindAll(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-findall")
+	namespace := testutils.CreateNamespace(t, db, "test-findall", nil)
 
 	t.Run("Empty database returns empty list", func(t *testing.T) {
 		providers, namespaceNames, versionData, count, err := providerRepo.FindAll(ctx, 0, 10)
@@ -541,7 +541,7 @@ func TestProvider_Search(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-search")
+	namespace := testutils.CreateNamespace(t, db, "test-search", nil)
 	description1 := "AWS provider for Terraform"
 	description2 := "GCP provider for Terraform"
 	description3 := "Azure provider for Terraform"
@@ -647,7 +647,7 @@ func TestProvider_Delete(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-delete")
+	namespace := testutils.CreateNamespace(t, db, "test-delete", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("Delete existing provider", func(t *testing.T) {
@@ -679,7 +679,7 @@ func TestProvider_DeleteVersion(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-delete-version")
+	namespace := testutils.CreateNamespace(t, db, "test-delete-version", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	gpgKey := testutils.CreateGPGKey(t, db, "key1", providerDB.ID, "KEY12345")
@@ -712,7 +712,7 @@ func TestProvider_BinaryOperations(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-binaries")
+	namespace := testutils.CreateNamespace(t, db, "test-binaries", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	gpgKey := testutils.CreateGPGKey(t, db, "key1", providerDB.ID, "KEY12345")
@@ -782,7 +782,7 @@ func TestProvider_GetProviderVersionCount(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-version-count")
+	namespace := testutils.CreateNamespace(t, db, "test-version-count", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	gpgKey := testutils.CreateGPGKey(t, db, "key1", providerDB.ID, "KEY12345")
@@ -815,7 +815,7 @@ func TestProvider_UseProviderSourceAuth(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-auth-flag")
+	namespace := testutils.CreateNamespace(t, db, "test-auth-flag", nil)
 
 	t.Run("Provider with use_default_provider_source_auth true", func(t *testing.T) {
 		prov := provider.NewProvider(
@@ -867,7 +867,7 @@ func TestProvider_CategoryAssociation(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-category")
+	namespace := testutils.CreateNamespace(t, db, "test-category", nil)
 	category := testutils.CreateProviderCategory(t, db, "Cloud Providers", "cloud", true)
 
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, &category.ID)
@@ -889,7 +889,7 @@ func TestProvider_DifferentTiers(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-tiers")
+	namespace := testutils.CreateNamespace(t, db, "test-tiers", nil)
 
 	testCases := []struct {
 		tier           sqldb.ProviderTier
@@ -920,7 +920,7 @@ func TestProvider_GPGKeyOperations(t *testing.T) {
 	ctx := context.Background()
 	providerRepo := providerprepo.NewProviderRepository(db.DB)
 
-	namespace := testutils.CreateNamespace(t, db, "test-gpg")
+	namespace := testutils.CreateNamespace(t, db, "test-gpg", nil)
 	providerDB := testutils.CreateProvider(t, db, namespace.ID, "testprovider", nil, sqldb.ProviderTierCommunity, nil)
 
 	t.Run("Find GPG keys by provider", func(t *testing.T) {

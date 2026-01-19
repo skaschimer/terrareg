@@ -21,7 +21,7 @@ func TestTerraregModuleProviderVersions_Success_ReturnsAllVersions(t *testing.T)
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-versions")
+	namespace := testutils.CreateNamespace(t, db, "test-versions", nil)
 
 	// Create test module provider
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
@@ -72,7 +72,7 @@ func TestTerraregModuleProviderVersions_Success_EmptyVersionsList(t *testing.T) 
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-empty")
+	namespace := testutils.CreateNamespace(t, db, "test-empty", nil)
 
 	// Create test module provider without versions
 	_ = testutils.CreateModuleProvider(t, db, namespace.ID, "empty-module", "aws")
@@ -96,7 +96,7 @@ func TestTerraregModuleProviderVersions_Success_SingleVersion(t *testing.T) {
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-single")
+	namespace := testutils.CreateNamespace(t, db, "test-single", nil)
 
 	// Create test module provider
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "single-module", "aws")
@@ -125,7 +125,7 @@ func TestTerraregModuleProviderVersions_Success_OrdersVersionsCorrectly(t *testi
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-order")
+	namespace := testutils.CreateNamespace(t, db, "test-order", nil)
 
 	// Create test module provider
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "order-module", "aws")
@@ -165,7 +165,7 @@ func TestTerraregModuleProviderVersions_Success_MultipleProviders(t *testing.T) 
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-multi")
+	namespace := testutils.CreateNamespace(t, db, "test-multi", nil)
 
 	// Create multiple module providers
 	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "multi-module", "aws")
@@ -197,7 +197,7 @@ func TestTerraregModuleProviderVersions_Success_VersionObjectsHaveCorrectPropert
 	require.NotNil(t, query)
 
 	// Create test namespace
-	namespace := testutils.CreateNamespace(t, db, "test-props")
+	namespace := testutils.CreateNamespace(t, db, "test-props", nil)
 
 	// Create test module provider
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "props-module", "aws")

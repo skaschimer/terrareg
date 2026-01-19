@@ -845,6 +845,31 @@ os.Setenv("TERRAFORM_LOCK_TIMEOUT_SECONDS", "15")  // 15 seconds for testing
 
 ## Testing Patterns
 
+### Comprehensive Validation Standards
+
+**CRITICAL**: Go tests must validate **"does it respond correctly?"** not just **"does it respond?"**
+
+- ✅ Validate complete response structure
+- ✅ Validate all nested objects and fields
+- ✅ Validate exact field values match expectations
+- ✅ Validate data types (boolean vs string, null handling)
+- ✅ Validate error messages, not just status codes
+- ❌ Only validate status code
+- ❌ Only check that a field exists, not its value
+
+**See**: [`TESTING_STANDARDS.md`](./TESTING_STANDARDS.md) for complete testing guidelines, examples, and checklists.
+
+### Feature Parity Testing
+
+**Reference**: [`TEST_PARITY_ANALYSIS.md`](./TEST_PARITY_ANALYSIS.md) - Detailed comparison of Python vs Go test coverage
+
+When writing tests:
+1. Find the corresponding Python test
+2. Match the validation depth of the Python test
+3. Ensure all assertions from Python are represented in Go
+4. Add Python reference comments
+5. Document any parity gaps
+
 ### Test Organization
 
 ```
@@ -860,9 +885,24 @@ Integration Tests (separate directory)
 └── test/integration/complete_workflow_test.go    # E2E workflows
 
 Test Utilities
-├── test/testutils/database.go                    # DB setup helpers
-├── test/testutils/auth_mocks.go                  # Mock OIDC/SAML servers
+├── test/integration/testutils/database.go         # DB setup helpers
+├── test/integration/testutils/python_test_data.go # Python test data mirroring
 └── test/testutils/mocks/                         # Repository mocks
+```
+
+### Test Data Standards
+
+Use comprehensive test data helpers that mirror Python's `test_data.py`:
+
+```go
+// For modules - use fully populated test data
+_, moduleProvider, _ := testutils.SetupFullyPopulatedModule(t, db)
+
+// For providers - include repository information
+provider, repository, version := testutils.CreateProviderVersionWithRepository(
+    t, db, namespaceID, "test-provider", "1.0.0", "v1.0.0",
+    &description, sqldb.ProviderTierCommunity, gpgKeyID, nil,
+)
 ```
 
 ### Table-Driven Tests (Primary Pattern)
@@ -1432,6 +1472,8 @@ r.With(auth.RequireUploadPermission("{namespace}")).Post("/modules/{namespace}/u
 
 #### Key Documentation Files
 
+- `TESTING_STANDARDS.md` - Comprehensive testing guidelines, standards, and examples
+- `TEST_PARITY_ANALYSIS.md` - Python vs Go test parity analysis and gap documentation
 - `GOLANG_DEVELOPMENT_PATTERNS.md` - Development patterns and anti-patterns
 - `AUTHENTICATION_ARCHITECTURE.md` - Authentication system details
 - `CONFIG_ARCHITECTURE.md` - Configuration management patterns

@@ -29,8 +29,8 @@ func TestProviderSearch_BasicSearch(t *testing.T) {
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
 	// Create test namespaces
-	namespace1 := testutils.CreateNamespace(t, db, "provider-ns1")
-	namespace2 := testutils.CreateNamespace(t, db, "provider-ns2")
+	namespace1 := testutils.CreateNamespace(t, db, "provider-ns1", nil)
+	namespace2 := testutils.CreateNamespace(t, db, "provider-ns2", nil)
 
 	// Create providers with different names
 	description1 := "Test provider for AWS"
@@ -113,7 +113,7 @@ func TestProviderSearch_SearchInDescription(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "search-desc-ns")
+	namespace := testutils.CreateNamespace(t, db, "search-desc-ns", nil)
 
 	// Create provider with unique description
 	description := "DESCRIPTION-Search unique term in description"
@@ -149,7 +149,7 @@ func TestProviderSearch_CaseInsensitiveSearch(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "case-ns")
+	namespace := testutils.CreateNamespace(t, db, "case-ns", nil)
 
 	description := "Test provider"
 	provider := testutils.CreateProvider(t, db, namespace.ID, "MixedCaseProvider", &description, sqldb.ProviderTierCommunity, nil)
@@ -198,7 +198,7 @@ func TestProviderSearch_OffsetAndLimit(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "pagination-ns")
+	namespace := testutils.CreateNamespace(t, db, "pagination-ns", nil)
 
 	// Create multiple providers
 	for i := 1; i <= 5; i++ {
@@ -255,7 +255,7 @@ func TestProviderSearch_ExcludeProvidersWithoutLatestVersion(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "latest-version-ns")
+	namespace := testutils.CreateNamespace(t, db, "latest-version-ns", nil)
 
 	// Create a provider with a published version (has latest)
 	description1 := "Provider with latest"
@@ -295,7 +295,7 @@ func TestProviderSearch_MultipleProvidersSameNamespace(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "multi-ns")
+	namespace := testutils.CreateNamespace(t, db, "multi-ns", nil)
 
 	// Create multiple providers with similar names
 	description := "Test provider"
@@ -334,7 +334,7 @@ func TestProviderSearch_BetaVersionProviders(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "beta-ns")
+	namespace := testutils.CreateNamespace(t, db, "beta-ns", nil)
 
 	description := "Beta provider"
 	provider := testutils.CreateProvider(t, db, namespace.ID, "beta-provider", &description, sqldb.ProviderTierCommunity, nil)
@@ -368,7 +368,7 @@ func TestProviderSearch_WithProviderCategory(t *testing.T) {
 	providerRepo := sqldbprovider.NewProviderRepository(db.DB)
 	searchQuery := providerquery.NewSearchProvidersQuery(providerRepo)
 
-	namespace := testutils.CreateNamespace(t, db, "category-ns")
+	namespace := testutils.CreateNamespace(t, db, "category-ns", nil)
 
 	// Create provider category
 	categoryName := "Cloud Providers"
@@ -451,7 +451,7 @@ func TestProviderSearchFilters_ContributedProviderOneVersion(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category := testutils.CreateProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 
 	description := "Test provider"
@@ -493,7 +493,7 @@ func TestProviderSearchFilters_ContributedProviderMultiVersion(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category := testutils.CreateProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
 	description := "Test provider"
@@ -537,7 +537,7 @@ func TestProviderSearchFilters_ContributedMultipleCategories(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category1 := testutils.CreateProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	category2 := testutils.CreateProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
@@ -584,7 +584,7 @@ func TestProviderSearchFilters_NoProviderVersion(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create provider WITHOUT any versions
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	description := "Empty provider"
 	_ = testutils.CreateProvider(t, db, namespace.ID, "empty-provider-publish", &description, sqldb.ProviderTierCommunity, nil)
 
@@ -620,7 +620,7 @@ func TestProviderSearchFilters_TrustedProviderOneVersion(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category := testutils.CreateProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 
 	description := "Test provider"
@@ -662,7 +662,7 @@ func TestProviderSearchFilters_TrustedProviderMultiVersion(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category := testutils.CreateProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
 	description := "Test provider"
@@ -705,7 +705,7 @@ func TestProviderSearchFilters_TrustedMultipleProviders(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create test data
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category1 := testutils.CreateProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	category2 := testutils.CreateProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
@@ -752,7 +752,7 @@ func TestProviderSearchFilters_TrustedNoVersionProvider(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create provider WITHOUT any versions
-	namespace := testutils.CreateNamespace(t, db, "providersearch")
+	namespace := testutils.CreateNamespace(t, db, "providersearch", nil)
 	description := "Empty provider"
 	_ = testutils.CreateProvider(t, db, namespace.ID, "contributedprovider-unpublished", &description, sqldb.ProviderTierCommunity, nil)
 
@@ -787,7 +787,7 @@ func TestProviderSearchFilters_MixedResults(t *testing.T) {
 	searchFiltersQuery := providerquery.NewSearchFiltersQuery(providerRepo, namespaceRepo, domainConfig)
 
 	// Create trusted namespace providers
-	namespaceTrusted := testutils.CreateNamespace(t, db, "providersearch")
+	namespaceTrusted := testutils.CreateNamespace(t, db, "providersearch", nil)
 	category1 := testutils.CreateProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	category2 := testutils.CreateProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
@@ -796,7 +796,7 @@ func TestProviderSearchFilters_MixedResults(t *testing.T) {
 	provider2 := testutils.CreateProvider(t, db, namespaceTrusted.ID, "providersearch-two", &description, sqldb.ProviderTierCommunity, &category2.ID)
 
 	// Create contributed namespace providers
-	namespaceContributed := testutils.CreateNamespace(t, db, "contributed-providersearch")
+	namespaceContributed := testutils.CreateNamespace(t, db, "contributed-providersearch", nil)
 	provider3 := testutils.CreateProvider(t, db, namespaceContributed.ID, "providersearch-three", &description, sqldb.ProviderTierCommunity, &category1.ID)
 	provider4 := testutils.CreateProvider(t, db, namespaceContributed.ID, "providersearch-four", &description, sqldb.ProviderTierCommunity, &category1.ID)
 

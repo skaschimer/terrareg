@@ -55,8 +55,8 @@ func newCreateModuleProviderTest(t *testing.T) *SeleniumTest {
 	// Setup test data - create namespaces that exist in Python's integration_test_data
 	// Python reference: /app/test/selenium/test_data.py - integration_test_data
 	db := st.server.GetDB()
-	_ = integrationTestUtils.CreateNamespace(t, db, "testmodulecreation")
-	_ = integrationTestUtils.CreateNamespace(t, db, "moduledetails")
+	_ = integrationTestUtils.CreateNamespace(t, db, "testmodulecreation", nil)
+	_ = integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
 
 	// Create namespace with display name (for test_create_against_namespace_with_display_name)
 	// Python: 'withdisplayname': {'display_name': 'A Display Name'}

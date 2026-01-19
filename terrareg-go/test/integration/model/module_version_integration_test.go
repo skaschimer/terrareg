@@ -18,7 +18,7 @@ func TestModuleVersion_IntegrationWithDetails(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Create namespace and module provider
-	namespace := testutils.CreateNamespace(t, db, "testnamespace")
+	namespace := testutils.CreateNamespace(t, db, "testnamespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create module details
@@ -54,7 +54,7 @@ func TestModuleVersion_IntegrationWithSubmodules(t *testing.T) {
 	defer testutils.CleanupTestDatabase(t, db)
 
 	// Setup: Create namespace, module provider, and version
-	namespace := testutils.CreateNamespace(t, db, "testsubmodules")
+	namespace := testutils.CreateNamespace(t, db, "testsubmodules", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
@@ -92,7 +92,7 @@ func TestModuleVersion_PublishWorkflow(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testpublish")
+	namespace := testutils.CreateNamespace(t, db, "testpublish", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create unpublished version
@@ -124,7 +124,7 @@ func TestModuleVersion_BetaDetection(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testbeta")
+	namespace := testutils.CreateNamespace(t, db, "testbeta", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create various versions and test beta detection
@@ -162,7 +162,7 @@ func TestModuleVersion_VersionOrdering(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testordering")
+	namespace := testutils.CreateNamespace(t, db, "testordering", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create multiple versions in non-sequential order
@@ -205,7 +205,7 @@ func TestModuleVersion_CascadeDelete(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
 
-	namespace := testutils.CreateNamespace(t, db, "testcascade")
+	namespace := testutils.CreateNamespace(t, db, "testcascade", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create module version with submodules
