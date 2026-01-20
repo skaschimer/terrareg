@@ -2,7 +2,6 @@ package terrareg_test
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,9 +11,11 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
-	terrareg "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	modulemodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	terrareg "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 )
 
 // MockModuleProviderRepository is a minimal mock for testing
@@ -31,15 +32,25 @@ func (m *MockModuleProviderRepository) FindByNamespaceModuleProvider(ctx context
 }
 
 // Implement other required interface methods minimally
-func (m *MockModuleProviderRepository) Save(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error { return nil }
-func (m *MockModuleProviderRepository) Create(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error { return nil }
+func (m *MockModuleProviderRepository) Save(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error {
+	return nil
+}
+func (m *MockModuleProviderRepository) Create(ctx context.Context, moduleProvider *modulemodel.ModuleProvider) error {
+	return nil
+}
 func (m *MockModuleProviderRepository) Delete(ctx context.Context, id int) error { return nil }
-func (m *MockModuleProviderRepository) FindByID(ctx context.Context, id int) (*modulemodel.ModuleProvider, error) { return nil, nil }
-func (m *MockModuleProviderRepository) FindByNamespace(ctx context.Context, namespace string) ([]*modulemodel.ModuleProvider, error) { return nil, nil }
+func (m *MockModuleProviderRepository) FindByID(ctx context.Context, id int) (*modulemodel.ModuleProvider, error) {
+	return nil, nil
+}
+func (m *MockModuleProviderRepository) FindByNamespace(ctx context.Context, namespace string) ([]*modulemodel.ModuleProvider, error) {
+	return nil, nil
+}
 func (m *MockModuleProviderRepository) Search(ctx context.Context, query repository.ModuleSearchQuery) (*repository.ModuleSearchResult, error) {
 	return nil, nil
 }
-func (m *MockModuleProviderRepository) Exists(ctx context.Context, namespace, moduleName, provider string) (bool, error) { return false, nil }
+func (m *MockModuleProviderRepository) Exists(ctx context.Context, namespace, moduleName, provider string) (bool, error) {
+	return false, nil
+}
 
 // MockModuleVersionRepository is a minimal mock for testing
 type MockModuleVersionRepository struct {
@@ -87,8 +98,9 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 			url:            "/modules/test/mod/provider/1.0.0/submodules/details/submod",
 			expectedStatus: http.StatusNotFound,
 			setupMocks: func(mockProviderRepo *MockModuleProviderRepository, mockVersionRepo *MockModuleVersionRepository) {
+				// Return (nil, nil) - query will convert to ErrModuleProviderNotFound
 				mockProviderRepo.On("FindByNamespaceModuleProvider", mock.Anything, "test", "mod", "provider").
-					Return(nil, errors.New("module provider not found")).
+					Return(nil, nil).
 					Once()
 			},
 			expectedBodyContains: "module provider not found",
@@ -105,8 +117,12 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 					Return(moduleProvider, nil).
 					Once()
 
-				// Create a minimal module version mock
-				moduleVersion := &modulemodel.ModuleVersion{}
+				// Create a published module version with a submodule
+				moduleVersion, _ := modulemodel.NewModuleVersion("1.0.0", nil, false)
+				moduleVersion.Publish()
+				// Add submodule with nil details (will return empty specs)
+				submodule := modulemodel.NewSubmodule("submod", nil, nil, nil)
+				moduleVersion.AddSubmodule(submodule)
 				mockVersionRepo.On("FindByModuleProviderAndVersion", mock.Anything, mock.AnythingOfType("int"), "1.0.0").
 					Return(moduleVersion, nil).
 					Once()
@@ -120,8 +136,11 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 			mockProviderRepo := &MockModuleProviderRepository{}
 			mockVersionRepo := &MockModuleVersionRepository{}
 			tt.setupMocks(mockProviderRepo, mockVersionRepo)
+			urlService := service.NewURLService(&config.InfrastructureConfig{
+				PublicURL: "http://localhost:5000",
+			})
 
-			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo)
+			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo, urlService)
 			readmeQuery := module.NewGetSubmoduleReadmeHTMLQuery(mockProviderRepo, mockVersionRepo)
 			handler := terrareg.NewSubmoduleHandler(detailsQuery, readmeQuery)
 
@@ -134,7 +153,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails(t *testing.T) {
 			rctx.URLParams.Add("name", "mod")
 			rctx.URLParams.Add("provider", "provider")
 			rctx.URLParams.Add("version", "1.0.0")
-			rctx.URLParams.Add("submodule", "submod")
+			rctx.URLParams.Add("*", "submod")
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			// Create response recorder
@@ -179,7 +198,12 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 				mockProviderRepo.On("FindByNamespaceModuleProvider", mock.Anything, "test", "mod", "provider").
 					Return(moduleProvider, nil).
 					Once()
-				moduleVersion := &modulemodel.ModuleVersion{}
+				// Create a published module version with a submodule
+				moduleVersion, _ := modulemodel.NewModuleVersion("1.0.0", nil, false)
+				moduleVersion.Publish()
+				// Add submodule with nil details (will return empty specs)
+				submodule := modulemodel.NewSubmodule("submod", nil, nil, nil)
+				moduleVersion.AddSubmodule(submodule)
 				mockVersionRepo.On("FindByModuleProviderAndVersion", mock.Anything, mock.AnythingOfType("int"), "1.0.0").
 					Return(moduleVersion, nil).
 					Once()
@@ -194,8 +218,11 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 			mockProviderRepo := &MockModuleProviderRepository{}
 			mockVersionRepo := &MockModuleVersionRepository{}
 			tt.setupMocks(mockProviderRepo, mockVersionRepo)
+			urlService := service.NewURLService(&config.InfrastructureConfig{
+				PublicURL: "http://localhost:5000",
+			})
 
-			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo)
+			detailsQuery := module.NewGetSubmoduleDetailsQuery(mockProviderRepo, mockVersionRepo, urlService)
 			readmeQuery := module.NewGetSubmoduleReadmeHTMLQuery(mockProviderRepo, mockVersionRepo)
 			handler := terrareg.NewSubmoduleHandler(detailsQuery, readmeQuery)
 
@@ -208,7 +235,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML(t *testing.T) {
 			rctx.URLParams.Add("name", "mod")
 			rctx.URLParams.Add("provider", "provider")
 			rctx.URLParams.Add("version", "1.0.0")
-			rctx.URLParams.Add("submodule", "submod")
+			rctx.URLParams.Add("*", "submod")
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			// Create response recorder
