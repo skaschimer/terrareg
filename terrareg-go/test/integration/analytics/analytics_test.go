@@ -339,6 +339,9 @@ func TestGetDownloadStats(t *testing.T) {
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "statsmodule", "statsprovider")
 	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
 
+	otherProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "othermodle", "statsprovider")
+	otherVersion := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
+
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
 	domainConfig := testutils.CreateTestDomainConfig(t)
@@ -347,34 +350,43 @@ func TestGetDownloadStats(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now()
+	eightDaysAgo := now.AddDate(0, 0, -8)
 	thirtyOneDaysAgo := now.AddDate(0, 0, -31)
+	fourHundredDaysAgo := now.AddDate(0, 0, -400)
 
-	// Record some recent analytics (within 30 days)
-	for i := 0; i < 5; i++ {
-		token := "token"
-		err := analyticsRepo.RecordDownload(ctx, analyticsCmd.AnalyticsEvent{
-			ParentModuleVersionID: version.ID,
-			Timestamp:             &now,
-			AnalyticsToken:        &token,
-			NamespaceName:         &namespace.Namespace,
-			ModuleName:            &provider.Module,
-			ProviderName:          &provider.Provider,
-		})
-		require.NoError(t, err)
-	}
+	token := "token"
 
-	// Record some old analytics (more than 30 days ago)
-	for i := 0; i < 3; i++ {
-		token := "token"
-		err := analyticsRepo.RecordDownload(ctx, analyticsCmd.AnalyticsEvent{
-			ParentModuleVersionID: version.ID,
-			Timestamp:             &thirtyOneDaysAgo,
-			AnalyticsToken:        &token,
-			NamespaceName:         &namespace.Namespace,
-			ModuleName:            &provider.Module,
-			ProviderName:          &provider.Provider,
-		})
-		require.NoError(t, err)
+	err = analyticsRepo.RecordDownload(ctx, analyticsCmd.AnalyticsEvent{
+		ParentModuleVersionID: otherVersion.ID,
+		Timestamp:             &now,
+		AnalyticsToken:        &token,
+		NamespaceName:         &namespace.Namespace,
+		ModuleName:            &otherProvider.Module,
+		ProviderName:          &otherProvider.Provider,
+	})
+	require.NoError(t, err)
+
+	// Record some recent analytics
+	for _, testData := range []struct {
+		count int
+		date  time.Time
+	}{
+		{date: now, count: 5},
+		{date: eightDaysAgo, count: 9},
+		{date: thirtyOneDaysAgo, count: 18},
+		{date: fourHundredDaysAgo, count: 25},
+	} {
+		for i := 0; i < testData.count; i++ {
+			err := analyticsRepo.RecordDownload(ctx, analyticsCmd.AnalyticsEvent{
+				ParentModuleVersionID: version.ID,
+				Timestamp:             &testData.date,
+				AnalyticsToken:        &token,
+				NamespaceName:         &namespace.Namespace,
+				ModuleName:            &provider.Module,
+				ProviderName:          &provider.Provider,
+			})
+			require.NoError(t, err)
+		}
 	}
 
 	// Get stats
@@ -382,9 +394,11 @@ func TestGetDownloadStats(t *testing.T) {
 	require.NoError(t, err)
 
 	// Should have 8 total downloads
-	assert.Equal(t, 8, stats.TotalDownloads)
+	assert.Equal(t, 57, stats.TotalDownloads)
 	// Should have 5 recent downloads (within 30 days)
-	assert.Equal(t, 5, stats.RecentDownloads)
+	assert.Equal(t, 5, stats.Week)
+	assert.Equal(t, 14, stats.Month)
+	assert.Equal(t, 32, stats.Year)
 }
 
 // TestGetDownloadsByVersionID tests getting download count by version ID
