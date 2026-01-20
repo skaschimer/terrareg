@@ -453,71 +453,57 @@ func convertModulesToDependencies(modules []Module) []Dependency {
 	return dependencies
 }
 
+// buildSpecsFromDetails builds ModuleSpecs from ModuleDetails and a path.
+// This is a shared helper used by GetRootModuleSpecs, convertSubmoduleToSpecs, and convertExampleToSpecs.
+func (mv *ModuleVersion) buildSpecsFromDetails(details *ModuleDetails, path string) *ModuleSpecs {
+	// Start with default empty values
+	specs := &ModuleSpecs{
+		Path:                 path,
+		Readme:               "",
+		Empty:                true,
+		Inputs:               []Input{},
+		Outputs:              []Output{},
+		Dependencies:         []Dependency{},
+		ProviderDependencies: []ProviderDependency{},
+		Resources:            []Resource{},
+		Modules:              []Module{},
+	}
+
+	// Early return if no details
+	if details == nil {
+		return specs
+	}
+
+	// Update with readme content
+	specs.Readme = string(details.ReadmeContent())
+	specs.Empty = !details.HasReadme()
+
+	// Early return if no terraform docs
+	if !details.HasTerraformDocs() {
+		return specs
+	}
+
+	terraformDocsJSON := details.TerraformDocs()
+	if len(terraformDocsJSON) == 0 {
+		return specs
+	}
+
+	// Parse terraform docs and update specs
+	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
+	specs.Inputs = inputs
+	specs.Outputs = outputs
+	specs.Dependencies = convertModulesToDependencies(modules)
+	specs.ProviderDependencies = providerDeps
+	specs.Resources = resources
+	specs.Modules = modules
+	specs.Empty = !details.HasReadme() && len(terraformDocsJSON) == 0
+
+	return specs
+}
+
 // GetRootModuleSpecs returns the module specifications for the root module
 func (mv *ModuleVersion) GetRootModuleSpecs() *ModuleSpecs {
-	if mv.details == nil {
-		return &ModuleSpecs{
-			Path:                 "",
-			Readme:               "",
-			Empty:                true,
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Get terraform docs from module details (stored as JSON during indexing)
-	if !mv.details.HasTerraformDocs() {
-		return &ModuleSpecs{
-			Path:                 "",
-			Readme:               string(mv.details.ReadmeContent()),
-			Empty:                !mv.details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Parse terraform docs JSON from stored data
-	terraformDocsJSON := mv.details.TerraformDocs()
-	if len(terraformDocsJSON) == 0 {
-		return &ModuleSpecs{
-			Path:                 "",
-			Readme:               string(mv.details.ReadmeContent()),
-			Empty:                !mv.details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Use the helper method to parse terraform docs JSON
-	inputs, outputs, providerDependencies, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
-
-	// Dependencies are derived from modules (filtering out local references)
-	// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_dependencies()
-	dependencies := convertModulesToDependencies(modules)
-
-	return &ModuleSpecs{
-		Path:                 "",
-		Readme:               string(mv.details.ReadmeContent()),
-		Empty:                !mv.details.HasReadme() && len(terraformDocsJSON) == 0,
-		Inputs:               inputs,
-		Outputs:              outputs,
-		Dependencies:         dependencies,
-		ProviderDependencies: providerDependencies,
-		Resources:            resources,
-		Modules:              modules,
-	}
+	return mv.buildSpecsFromDetails(mv.details, "")
 }
 
 // GetSubmodules returns module specifications for all submodules
@@ -531,67 +517,7 @@ func (mv *ModuleVersion) GetSubmodules() []*ModuleSpecs {
 
 // convertSubmoduleToSpecs converts a submodule to ModuleSpecs by deserializing stored data
 func (mv *ModuleVersion) convertSubmoduleToSpecs(submodule *Submodule) *ModuleSpecs {
-	// Get module details for submodule (stored during indexing)
-	details := submodule.Details()
-	if details == nil {
-		// Return empty specs if no details available
-		return &ModuleSpecs{
-			Path:                 submodule.Path(),
-			Readme:               "",
-			Empty:                true,
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Deserialize terraform-docs JSON if available
-	if !details.HasTerraformDocs() {
-		return &ModuleSpecs{
-			Path:                 submodule.Path(),
-			Readme:               string(details.ReadmeContent()),
-			Empty:                !details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	terraformDocsJSON := details.TerraformDocs()
-	if len(terraformDocsJSON) == 0 {
-		return &ModuleSpecs{
-			Path:                 submodule.Path(),
-			Readme:               string(details.ReadmeContent()),
-			Empty:                !details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Reuse the same terraform-docs parsing logic as GetRootModuleSpecs
-	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
-
-	return &ModuleSpecs{
-		Path:                 submodule.Path(),
-		Readme:               string(details.ReadmeContent()),
-		Empty:                !details.HasReadme() && len(terraformDocsJSON) == 0,
-		Inputs:               inputs,
-		Outputs:              outputs,
-		Dependencies:         convertModulesToDependencies(modules),
-		ProviderDependencies: providerDeps,
-		Resources:            resources,
-		Modules:              modules,
-	}
+	return mv.buildSpecsFromDetails(submodule.Details(), submodule.Path())
 }
 
 // GetExamples returns module specifications for all examples
@@ -625,67 +551,7 @@ func (mv *ModuleVersion) GetExampleByPath(path string) *Example {
 
 // convertExampleToSpecs converts an example to ModuleSpecs by deserializing stored data
 func (mv *ModuleVersion) convertExampleToSpecs(example *Example) *ModuleSpecs {
-	// Get module details for example (stored during indexing)
-	details := example.Details()
-	if details == nil {
-		// Return empty specs if no details available
-		return &ModuleSpecs{
-			Path:                 example.Path(),
-			Readme:               "",
-			Empty:                true,
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Deserialize terraform-docs JSON if available
-	if !details.HasTerraformDocs() {
-		return &ModuleSpecs{
-			Path:                 example.Path(),
-			Readme:               string(details.ReadmeContent()),
-			Empty:                !details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	terraformDocsJSON := details.TerraformDocs()
-	if len(terraformDocsJSON) == 0 {
-		return &ModuleSpecs{
-			Path:                 example.Path(),
-			Readme:               string(details.ReadmeContent()),
-			Empty:                !details.HasReadme(),
-			Inputs:               []Input{},
-			Outputs:              []Output{},
-			Dependencies:         []Dependency{},
-			ProviderDependencies: []ProviderDependency{},
-			Resources:            []Resource{},
-			Modules:              []Module{},
-		}
-	}
-
-	// Reuse the same terraform-docs parsing logic as GetRootModuleSpecs
-	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
-
-	return &ModuleSpecs{
-		Path:                 example.Path(),
-		Readme:               string(details.ReadmeContent()),
-		Empty:                !details.HasReadme() && len(terraformDocsJSON) == 0,
-		Inputs:               inputs,
-		Outputs:              outputs,
-		Dependencies:         convertModulesToDependencies(modules),
-		ProviderDependencies: providerDeps,
-		Resources:            resources,
-		Modules:              modules,
-	}
+	return mv.buildSpecsFromDetails(example.Details(), example.Path())
 }
 
 // GetProviderDependencies returns provider dependencies for this module version
