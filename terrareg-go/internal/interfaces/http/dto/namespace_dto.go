@@ -4,7 +4,8 @@ package dto
 type NamespaceResponse struct {
 	Name        string  `json:"name"`
 	DisplayName *string `json:"display_name,omitempty"`
-	Type        string  `json:"type"`
+	Type        string  `json:"type,omitempty"`
+	ViewHref    string  `json:"view_href,omitempty"`
 }
 
 // NamespaceListResponse represents a list of namespaces

@@ -10,6 +10,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/presenter"
 )
@@ -69,6 +70,28 @@ func NewNamespaceHandler(
 func (h *NamespaceHandler) HandleNamespaceList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// Parse resource type from query parameter - defaults to "module"
+	// Python reference: terrareg/server/api/terrareg_namespaces.py:37
+	resourceTypeStr := r.URL.Query().Get("type")
+	if resourceTypeStr == "" {
+		resourceTypeStr = "module" // Python default
+	}
+
+	var resourceType sqldb.RegistryResourceType
+	switch resourceTypeStr {
+	case "module":
+		resourceType = sqldb.RegistryResourceTypeModule
+	case "provider":
+		resourceType = sqldb.RegistryResourceTypeProvider
+	default:
+		// For invalid type, Python returns 400 with "Invalid type argument"
+		// Python reference: terrareg/server/api/terrareg_namespaces.py:66
+		RespondJSON(w, http.StatusBadRequest, map[string][]string{
+			"errors": {"Invalid type argument"},
+		})
+		return
+	}
+
 	// Execute query
 	namespaces, err := h.listNamespacesQuery.Execute(ctx)
 	if err != nil {
@@ -82,11 +105,11 @@ func (h *NamespaceHandler) HandleNamespaceList(w http.ResponseWriter, r *http.Re
 
 	if limit == "" && offset == "" {
 		// No pagination - return plain array to match Python behavior (legacy format)
-		response := h.presenter.ToListArray(namespaces)
+		response := h.presenter.ToListArrayWithResourceType(namespaces, resourceType)
 		RespondJSON(w, http.StatusOK, response)
 	} else {
 		// With pagination - return wrapped object
-		response := h.presenter.ToListDTO(namespaces)
+		response := h.presenter.ToListDTOWithResourceType(namespaces, resourceType)
 		RespondJSON(w, http.StatusOK, response)
 	}
 }
