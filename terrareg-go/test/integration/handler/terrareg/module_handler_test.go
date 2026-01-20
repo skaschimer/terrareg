@@ -51,6 +51,7 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 		nil, // get provider not used
 		nil, // list providers not used
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -107,6 +108,7 @@ func TestModuleHandler_HandleModuleList_Empty(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -157,6 +159,7 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -209,6 +212,7 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -262,6 +266,7 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 		nil, // get provider not used
 		listModuleProvidersQuery,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -347,23 +352,8 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "consul", "aws")
 	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
 
-	// Create handler
-	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
-	domainConfig := testutils.CreateTestDomainConfig(t)
-	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
-	require.NoError(t, err)
-	getModuleProviderQuery := moduleQuery.NewGetModuleProviderQuery(moduleProviderRepository)
-	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
-	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
-	require.NoError(t, err)
-
-	handler := terrareg.NewModuleReadHandlerForTesting(
-		nil,
-		nil,
-		getModuleProviderQuery,
-		nil,
-		analyticsRepository,
-	)
+	// Create handler - use CreateTerraregModuleDetailsHandler for full response with internal, root, etc.
+	handler := testutils.CreateTerraregModuleDetailsHandler(t, db)
 
 	// Create request with chi context
 	req := httptest.NewRequest("GET", "/v1/modules/hashicorp/consul/aws", nil)
@@ -375,15 +365,15 @@ func TestModuleHandler_HandleModuleProviderDetails_Success(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	// Act
-	handler.HandleModuleProviderDetails(w, req)
+	// Act - Use HandleTerraregModuleProviderDetails for full response with internal, root, etc.
+	handler.HandleTerraregModuleProviderDetails(w, req)
 
 	// Assert - Comprehensive validation matching Python pattern
 	// Python reference: assert res.json == {'id': 'testnamespace/lonelymodule/testprovider/1.0.0', 'owner': 'Mock Owner', ...}
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	// Validate all required top-level fields (Python validates complete response)
@@ -522,6 +512,7 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 		getModuleProviderQuery,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -579,6 +570,7 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with query parameters
@@ -654,7 +646,8 @@ func TestModuleHandler_HandleModuleSearch_WithFilters(t *testing.T) {
 				nil,
 				nil,
 				analyticsRepository,
-			)
+			nil, // versionPresenter not needed
+	)
 
 			// Create request with query parameters
 			req := httptest.NewRequest("GET", "/v1/modules/search"+tt.queryString, nil)
@@ -698,6 +691,7 @@ func TestModuleHandler_HandleModuleSearch_EmptyResults(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -748,6 +742,7 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 		getModuleProviderQuery,
 		nil,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -773,6 +768,98 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 	assert.Equal(t, "versionns/versionmodule/aws", response["id"])
 	// Should contain version information
 	assert.Contains(t, response, "published_at")
+}
+
+// TestModuleHandler_HandleModuleVersionDetails_UnverifiedModuleVersion tests unverified module version
+// Python reference: /app/test/unit/terrareg/server/test_api_module_version_details.py:test_unverified_module_version
+func TestModuleHandler_HandleModuleVersionDetails_UnverifiedModuleVersion(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data with unverified module (verified not set to true)
+	namespace := testutils.CreateNamespace(t, db, "testnamespace", nil)
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "unverifiedmodule", "testprovider")
+	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.2.3")
+	// Update version to published (but not verified)
+	published := true
+	moduleVersion.Published = &published
+	db.DB.Save(&moduleVersion)
+
+	// Create handler using helper
+	handler := testutils.CreateModuleVersionDetailsHandler(t, db)
+
+	// Create request with chi context - note: using version-specific URL
+	req := httptest.NewRequest("GET", "/v1/modules/testnamespace/unverifiedmodule/testprovider/1.2.3", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "testnamespace")
+	rctx.URLParams.Add("name", "unverifiedmodule")
+	rctx.URLParams.Add("provider", "testprovider")
+	rctx.URLParams.Add("version", "1.2.3")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleModuleVersionDetails(w, req)
+
+	// Assert - Python expects 200 with verified=False
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Python: assert res.json == {..., 'verified': False, ...}
+	assert.Equal(t, false, response["verified"])
+	assert.Equal(t, "1.2.3", response["version"])
+	assert.Equal(t, "testnamespace/unverifiedmodule/testprovider/1.2.3", response["id"])
+}
+
+// TestModuleHandler_HandleModuleVersionDetails_InternalModuleVersion tests internal module version
+// Python reference: /app/test/unit/terrareg/server/test_api_module_version_details.py:test_internal_module_version
+func TestModuleHandler_HandleModuleVersionDetails_InternalModuleVersion(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data with internal module version
+	namespace := testutils.CreateNamespace(t, db, "testnamespace", nil)
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "internalmodule", "testprovider")
+	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "5.2.0")
+	// Update version to published and internal
+	published := true
+	moduleVersion.Published = &published
+	internal := true
+	moduleVersion.Internal = internal
+	db.DB.Save(&moduleVersion)
+
+	// Create handler using helper
+	handler := testutils.CreateModuleVersionDetailsHandler(t, db)
+
+	// Create request with chi context
+	req := httptest.NewRequest("GET", "/v1/modules/testnamespace/internalmodule/testprovider/5.2.0", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "testnamespace")
+	rctx.URLParams.Add("name", "internalmodule")
+	rctx.URLParams.Add("provider", "testprovider")
+	rctx.URLParams.Add("version", "5.2.0")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleModuleVersionDetails(w, req)
+
+	// Assert - Python expects 200 with internal=True
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Python: assert res.json == {..., 'internal': True, ...}
+	assert.Equal(t, true, response["internal"])
+	assert.Equal(t, "5.2.0", response["version"])
+	assert.Equal(t, "testnamespace/internalmodule/testprovider/5.2.0", response["id"])
 }
 
 // TestModuleHandler_MultipleProviders tests handler with multiple providers for the same module
@@ -802,6 +889,7 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 		nil,
 		listModuleProvidersQuery,
 		analyticsRepository,
+			nil, // versionPresenter not needed
 	)
 
 	// Create request

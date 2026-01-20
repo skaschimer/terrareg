@@ -830,3 +830,16 @@ func createVersionWithTfsec(t *testing.T, db *sqldb.Database, moduleProviderID i
 	require.NoError(t, err)
 }
 
+// CreateModuleVersionWithSecurityIssues creates a module version with tfsec security data.
+// Returns the created module version for use in tests.
+func CreateModuleVersionWithSecurityIssues(t *testing.T, db *sqldb.Database, moduleProviderID int, version string, published *bool) sqldb.ModuleVersionDB {
+	t.Helper()
+	createVersionWithTfsec(t, db, moduleProviderID, version, published, nil, "", "")
+
+	// Find and return the created module version
+	var moduleVersion sqldb.ModuleVersionDB
+	err := db.DB.Where("module_provider_id = ? AND version = ?", moduleProviderID, version).First(&moduleVersion).Error
+	require.NoError(t, err, "Failed to find created module version")
+	return moduleVersion
+}
+

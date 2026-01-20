@@ -132,6 +132,12 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 		Versions: moduleProvider.GetVersionsList(),
 	}
 
+	// Set default git tag format if not configured (matching Python behavior: {version})
+	if response.GitTagFormat == nil {
+		defaultFormat := "{version}"
+		response.GitTagFormat = &defaultFormat
+	}
+
 	// Start with base response structure
 	if mv == nil {
 		return response
@@ -259,6 +265,10 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 			Resources:            resources,
 			Modules:              modules,
 		})
+	}
+	// Ensure submodules is never nil (empty array instead of null)
+	if submoduleSpecs == nil {
+		submoduleSpecs = []terrareg.TerraregModuleSpecs{}
 	}
 	response.Submodules = submoduleSpecs
 

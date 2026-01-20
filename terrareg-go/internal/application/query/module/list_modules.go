@@ -19,18 +19,41 @@ func NewListModulesQuery(moduleProviderRepo repository.ModuleProviderRepository)
 	}
 }
 
-// Execute executes the query to list all module providers
-func (q *ListModulesQuery) Execute(ctx context.Context, namespace ...string) ([]*model.ModuleProvider, error) {
-	// For simplicity, this lists all module providers.
-	// In a real scenario, this might take filters or pagination.
-	// The repository.ModuleSearchQuery could be used here.
-	searchQuery := repository.ModuleSearchQuery{}
-	if len(namespace) > 0 && namespace[0] != "" {
-		searchQuery.Namespaces = []string{namespace[0]}
+// ListModulesInput represents input parameters for listing modules
+type ListModulesInput struct {
+	Offset      int
+	Limit       int
+	Providers   []string
+	Verified    *bool
+	IncludeCount bool
+}
+
+// Execute executes the query to list all module providers with optional filters
+// Python reference: /app/test/unit/terrareg/server/test_api_module_list.py
+func (q *ListModulesQuery) Execute(ctx context.Context, input ListModulesInput) ([]*model.ModuleProvider, int, error) {
+	searchQuery := repository.ModuleSearchQuery{
+		Offset:   input.Offset,
+		Limit:    input.Limit,
+		Providers: input.Providers,
+		Verified: input.Verified,
 	}
+
+	// Default limit to 10 if not specified (matching Python behavior)
+	if searchQuery.Limit == 0 {
+		searchQuery.Limit = 10
+	}
+
+	// Execute search
 	result, err := q.moduleProviderRepo.Search(ctx, searchQuery)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return result.Modules, nil
+
+	// Return count if requested
+	count := 0
+	if input.IncludeCount {
+		count = result.TotalCount
+	}
+
+	return result.Modules, count, nil
 }

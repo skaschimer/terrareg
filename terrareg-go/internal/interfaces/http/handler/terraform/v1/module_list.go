@@ -24,10 +24,41 @@ func NewModuleListHandler(listModulesQuery *module.ListModulesQuery) *ModuleList
 }
 
 // HandleListModules executes the query and returns the list of modules
+// Python reference: /app/test/unit/terrareg/server/test_api_module_list.py
 func (h *ModuleListHandler) HandleListModules(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	moduleProviders, err := h.listModulesQuery.Execute(ctx)
+	// Parse query parameters matching Python's test_api_module_list.py
+	queryParams := r.URL.Query()
+
+	// Parse providers (support multiple values, like Python)
+	var providers []string
+	if p := queryParams["provider"]; len(p) > 0 {
+		for _, prov := range p {
+			if prov != "" {
+				providers = append(providers, prov)
+			}
+		}
+	}
+
+	// Parse verified parameter
+	verified := parseBoolPtr(queryParams.Get("verified"))
+
+	// Parse pagination parameters
+	offset := parseInt(queryParams.Get("offset"), 0)
+	limit := parseInt(queryParams.Get("limit"), 10)
+
+	// Build input for query
+	input := module.ListModulesInput{
+		Offset:        offset,
+		Limit:         limit,
+		Providers:     providers,
+		Verified:      verified,
+		IncludeCount:  true, // Always include count to determine if more results exist
+	}
+
+	// Execute query
+	moduleProviders, totalCount, err := h.listModulesQuery.Execute(ctx, input)
 	if err != nil {
 		terrareg.RespondInternalServerError(w, err, "Failed to list modules")
 		return
@@ -39,8 +70,30 @@ func (h *ModuleListHandler) HandleListModules(w http.ResponseWriter, r *http.Req
 		moduleDTOs[i] = convertModuleProviderToListResponse(mp)
 	}
 
-	// For the /v1/modules endpoint, the response wraps the modules in a "modules" field
-	response := map[string][]moduledto.ModuleProviderResponse{
+	// Build response with pagination meta (matching Python format)
+	// Python: {'meta': {'current_offset': 0, 'limit': 10}, 'modules': [...]}
+	meta := map[string]interface{}{
+		"current_offset": offset,
+		"limit":          limit,
+	}
+
+	// Add prev_offset if current offset > 0 (matching Python)
+	if offset > 0 {
+		prevOffset := offset - limit
+		if prevOffset < 0 {
+			prevOffset = 0
+		}
+		meta["prev_offset"] = prevOffset
+	}
+
+	// Add next_offset if there are more results (matching Python)
+	if totalCount > offset+limit {
+		nextOffset := offset + limit
+		meta["next_offset"] = nextOffset
+	}
+
+	response := map[string]interface{}{
+		"meta":    meta,
 		"modules": moduleDTOs,
 	}
 

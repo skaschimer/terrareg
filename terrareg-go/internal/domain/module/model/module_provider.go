@@ -355,7 +355,8 @@ func (mp *ModuleProvider) UpdatedAt() time.Time {
 // GetVersionsList returns a limited list of versions for the provider
 // TODO: Implement version filtering and limiting logic
 func (mp *ModuleProvider) GetVersionsList() []string {
-	var versions []string
+	// Return empty slice instead of nil when there are no versions (matches Python behavior)
+	versions := []string{}
 	for _, version := range mp.versions {
 		versions = append(versions, version.Version().String())
 	}

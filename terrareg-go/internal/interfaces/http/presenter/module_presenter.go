@@ -80,8 +80,53 @@ func (p *ModulePresenter) ToListDTO(ctx context.Context, modules []*model.Module
 		dtos[i] = p.ToDTO(ctx, mp)
 	}
 
+	// Include default pagination meta (matching Python behavior)
+	meta := &dto.PaginationMeta{
+		Limit:         len(modules), // Return actual count as limit
+		CurrentOffset: 0,
+	}
+
 	return moduledto.ModuleListResponse{
 		Modules: dtos,
+		Meta:    meta,
+	}
+}
+
+// ToListDTOWithMeta converts a list of module providers to a list DTO with full pagination metadata
+// Python reference: /app/test/unit/terrareg/server/test_api_module_list.py
+// Supports offset, limit, next_offset, prev_offset matching Python behavior
+func (p *ModulePresenter) ToListDTOWithMeta(ctx context.Context, modules []*model.ModuleProvider, offset, limit, totalCount int) map[string]interface{} {
+	dtos := make([]moduledto.ModuleProviderResponse, len(modules))
+	for i, mp := range modules {
+		dtos[i] = p.ToDTO(ctx, mp)
+	}
+
+	// Build pagination meta matching Python ResultData.meta
+	meta := map[string]interface{}{
+		"current_offset": offset,
+		"limit":          limit,
+	}
+
+	// Add prev_offset if current offset > 0 (matching Python)
+	if offset > 0 {
+		prevOffset := offset - limit
+		if prevOffset < 0 {
+			prevOffset = 0
+		}
+		meta["prev_offset"] = prevOffset
+	}
+
+	// Add next_offset if there are more results (matching Python)
+	if totalCount > offset+limit {
+		nextOffset := offset + limit
+		meta["next_offset"] = nextOffset
+	}
+
+	// Build response with meta (matching Python format)
+	// Python: {'meta': {...}, 'modules': [...]}
+	return map[string]interface{}{
+		"meta":    meta,
+		"modules": dtos,
 	}
 }
 

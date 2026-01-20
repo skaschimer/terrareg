@@ -429,7 +429,7 @@ func TestExampleHandler_HandleExampleFile_MissingFileParam(t *testing.T) {
 
 	// Assert - Enhanced error validation - validate specific error message
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	testutils.AssertErrorContains(t, w, "Invalid file path format")
+	testutils.AssertErrorContains(t, w, "Missing required path parameters")
 }
 
 // TestExampleHandler_HandleExampleFile_MissingOtherParameters tests missing other required parameters

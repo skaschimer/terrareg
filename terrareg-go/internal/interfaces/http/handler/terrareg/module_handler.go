@@ -15,6 +15,7 @@ import (
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
+	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
@@ -209,6 +210,9 @@ func NewModuleHandler(
 // Only the dependencies needed for read operations are required.
 // All command and write-operation dependencies are left nil.
 //
+// The versionPresenter parameter is optional - pass nil for basic tests that
+// don't need Terrareg-specific endpoints (like HandleTerraregModuleProviderDetails).
+//
 // This is intended for testing purposes where the full 29-parameter constructor
 // would be impractical. Read operations (HandleModuleList, HandleNamespaceModules,
 // HandleModuleDetails, HandleModuleProviderDetails, HandleModuleSearch) only use
@@ -219,6 +223,7 @@ func NewModuleReadHandlerForTesting(
 	getModuleProviderQuery *moduleQuery.GetModuleProviderQuery,
 	listModuleProvidersQuery *moduleQuery.ListModuleProvidersQuery,
 	analyticsRepo analyticsCmd.AnalyticsRepository,
+	versionPresenter *presenter.ModuleVersionPresenter,
 ) *ModuleHandler {
 	return &ModuleHandler{
 		listModulesQuery:         listModulesQuery,
@@ -226,24 +231,72 @@ func NewModuleReadHandlerForTesting(
 		getModuleProviderQuery:   getModuleProviderQuery,
 		listModuleProvidersQuery: listModuleProvidersQuery,
 		presenter:                presenter.NewModulePresenter(analyticsRepo),
-		analyticsRepo:           analyticsRepo,
+		versionPresenter:         versionPresenter,
+		analyticsRepo:            analyticsRepo,
 		// All other fields remain nil - not used by read operations
 	}
 }
 
+// NewModuleVersionDetailsHandlerForTesting creates a handler with getModuleVersionQuery for testing version details endpoints
+func NewModuleVersionDetailsHandlerForTesting(
+	getModuleVersionQuery *moduleQuery.GetModuleVersionQuery,
+	getModuleProviderQuery *moduleQuery.GetModuleProviderQuery,
+	analyticsRepo analyticsCmd.AnalyticsRepository,
+	versionPresenter *presenter.ModuleVersionPresenter,
+) *ModuleHandler {
+	return &ModuleHandler{
+		getModuleVersionQuery:  getModuleVersionQuery,
+		getModuleProviderQuery: getModuleProviderQuery,
+		presenter:              presenter.NewModulePresenter(analyticsRepo),
+		versionPresenter:       versionPresenter,
+		analyticsRepo:          analyticsRepo,
+		// All other fields remain nil - not used by version details operations
+	}
+}
+
 // HandleModuleList handles GET /v1/modules
+// Python reference: /app/test/unit/terrareg/server/test_api_module_list.py
 func (h *ModuleHandler) HandleModuleList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// Parse query parameters matching Python's test_api_module_list.py
+	queryParams := r.URL.Query()
+
+	// Parse providers (support multiple values, like Python)
+	var providers []string
+	if p := queryParams["provider"]; len(p) > 0 {
+		for _, prov := range p {
+			if prov != "" {
+				providers = append(providers, prov)
+			}
+		}
+	}
+
+	// Parse verified parameter
+	verified := parseBoolPtr(queryParams.Get("verified"))
+
+	// Parse pagination parameters
+	offset := parseInt(queryParams.Get("offset"), 0)
+	limit := parseInt(queryParams.Get("limit"), 10)
+
+	// Build input for query
+	input := moduleQuery.ListModulesInput{
+		Offset:      offset,
+		Limit:       limit,
+		Providers:   providers,
+		Verified:    verified,
+		IncludeCount: true, // Always include count to determine if more results exist
+	}
+
 	// Execute query
-	modules, err := h.listModulesQuery.Execute(ctx)
+	modules, totalCount, err := h.listModulesQuery.Execute(ctx, input)
 	if err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Convert to DTO
-	response := h.presenter.ToListDTO(ctx, modules)
+	response := h.presenter.ToListDTOWithMeta(ctx, modules, offset, limit, totalCount)
 
 	// Send response
 	RespondJSON(w, http.StatusOK, response)
@@ -347,15 +400,33 @@ func (h *ModuleHandler) HandleNamespaceModules(w http.ResponseWriter, r *http.Re
 	ctx := r.Context()
 	namespace := chi.URLParam(r, "namespace")
 
-	// Execute query
-	modules, err := h.listModulesQuery.Execute(ctx, namespace)
+	// Build input for query with namespace filter
+	input := moduleQuery.ListModulesInput{
+		Offset:        0,
+		Limit:         0, // No limit for namespace modules
+		Verified:      nil,
+		IncludeCount:  false,
+	}
+
+	// Execute query with namespace filter
+	// Note: The current implementation doesn't support namespace filtering in ListModulesQuery
+	// We need to use the repository search with namespace filter
+	modules, _, err := h.listModulesQuery.Execute(ctx, input)
 	if err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	// Filter by namespace in memory (temporary until proper query support)
+	filteredModules := make([]*moduleModel.ModuleProvider, 0)
+	for _, mp := range modules {
+		if mp.Namespace().Name() == namespace {
+			filteredModules = append(filteredModules, mp)
+		}
+	}
+
 	// Convert to DTO
-	response := h.presenter.ToListDTO(ctx, modules)
+	response := h.presenter.ToListDTO(ctx, filteredModules)
 
 	// Send response
 	RespondJSON(w, http.StatusOK, response)
@@ -437,6 +508,8 @@ func (h *ModuleHandler) HandleModuleProviderDetails(w http.ResponseWriter, r *ht
 }
 
 // HandleModuleVersions handles GET /v1/modules/{namespace}/{name}/{provider}/versions
+// Returns detailed version information matching Python's ApiModuleVersions format
+// Python reference: /app/test/unit/terrareg/server/test_api_module_versions.py
 func (h *ModuleHandler) HandleModuleVersions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -445,28 +518,118 @@ func (h *ModuleHandler) HandleModuleVersions(w http.ResponseWriter, r *http.Requ
 	name := chi.URLParam(r, "name")
 	provider := chi.URLParam(r, "provider")
 
-	// Get the module provider first
-	moduleProvider, err := h.getModuleProviderQuery.Execute(ctx, namespace, name, provider)
+	// Handle analytics token conversion (strip token from namespace if present)
+	// Python converts "test_token-name__testnamespace" to "testnamespace"
+	cleanNamespace := namespace
+	if strings.Contains(namespace, "__") {
+		parts := strings.SplitN(namespace, "__", 2)
+		if len(parts) == 2 {
+			cleanNamespace = parts[1]
+		}
+	}
+
+	// Get the module provider first (use cleaned namespace for lookup)
+	moduleProvider, err := h.getModuleProviderQuery.Execute(ctx, cleanNamespace, name, provider)
 	if err != nil {
-		RespondError(w, http.StatusNotFound, err.Error())
+		RespondError(w, http.StatusNotFound, "Not Found")
 		return
 	}
 
 	// Get versions from the module provider
 	versions := moduleProvider.GetAllVersions()
 
-	// Convert to version DTOs
+	// Convert to version DTOs matching Python format:
+	// {'root': {'dependencies': [], 'providers': []}, 'submodules': [], 'version': '1.2.0'}
 	versionDTOs := make([]map[string]interface{}, len(versions))
 	for i, version := range versions {
+		// Get module specs for this version
+		rootSpecs := version.GetRootModuleSpecs()
+
+		// Build root with dependencies and providers arrays
+		root := map[string]interface{}{
+			"dependencies": []interface{}{},
+			"providers":    []interface{}{},
+		}
+
+		// Add dependencies if present
+		if len(rootSpecs.Dependencies) > 0 {
+			deps := make([]map[string]interface{}, len(rootSpecs.Dependencies))
+			for j, dep := range rootSpecs.Dependencies {
+				deps[j] = map[string]interface{}{
+					"module":  dep.Module,
+					"source":  dep.Source,
+					"version": dep.Version,
+				}
+			}
+			root["dependencies"] = deps
+		}
+
+		// Add providers if present
+		if len(rootSpecs.ProviderDependencies) > 0 {
+			provDeps := make([]map[string]interface{}, len(rootSpecs.ProviderDependencies))
+			for j, provDep := range rootSpecs.ProviderDependencies {
+				provDeps[j] = map[string]interface{}{
+					"name":    provDep.Provider,
+					"source":  provDep.Source,
+					"version": provDep.Version,
+				}
+			}
+			root["providers"] = provDeps
+		}
+
+		// Build submodules array (always present, may be empty)
+		submodules := make([]map[string]interface{}, 0)
+		for _, subSpec := range version.GetSubmodules() {
+			submoduleRoot := map[string]interface{}{
+				"dependencies": []interface{}{},
+				"providers":    []interface{}{},
+			}
+
+			// Add submodule dependencies if present
+			if len(subSpec.Dependencies) > 0 {
+				deps := make([]map[string]interface{}, len(subSpec.Dependencies))
+				for j, dep := range subSpec.Dependencies {
+					deps[j] = map[string]interface{}{
+						"module":  dep.Module,
+						"source":  dep.Source,
+						"version": dep.Version,
+					}
+				}
+				submoduleRoot["dependencies"] = deps
+			}
+
+			// Add submodule providers if present
+			if len(subSpec.ProviderDependencies) > 0 {
+				provDeps := make([]map[string]interface{}, len(subSpec.ProviderDependencies))
+				for j, provDep := range subSpec.ProviderDependencies {
+					provDeps[j] = map[string]interface{}{
+						"name":    provDep.Provider,
+						"source":  provDep.Source,
+						"version": provDep.Version,
+					}
+				}
+				submoduleRoot["providers"] = provDeps
+			}
+
+			submodules = append(submodules, map[string]interface{}{
+				"path":       subSpec.Path,
+				"submodules": []interface{}{},
+			})
+		}
+
 		versionDTOs[i] = map[string]interface{}{
-			"version": version.Version().String(),
+			"root":       root,
+			"submodules": submodules,
+			"version":    version.Version().String(),
 		}
 	}
 
-	// Build response matching Terraform Registry API format
+	// Build response matching Python format:
+	// {'modules': [{'source': 'ns/module/provider', 'versions': [...]}]}
 	response := map[string]interface{}{
 		"modules": []map[string]interface{}{
 			{
+				"source":   fmt.Sprintf("%s/%s/%s", cleanNamespace, name, provider),
 				"versions": versionDTOs,
 			},
 		},
@@ -1388,4 +1551,33 @@ func (h *ModuleHandler) HandleModuleProviderRedirectDelete(w http.ResponseWriter
 
 	// Return 204 No Content on successful deletion
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// Helper functions for parsing query parameters
+// These functions handle parsing of optional query parameters matching Python behavior
+
+// parseBoolPtr parses a string to a bool pointer
+// Returns nil if the string is empty or invalid
+func parseBoolPtr(s string) *bool {
+	if s == "" {
+		return nil
+	}
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return nil
+	}
+	return &b
+}
+
+// parseInt parses a string to an int with a default value
+// Returns defaultValue if the string is empty or invalid
+func parseInt(s string, defaultValue int) int {
+	if s == "" {
+		return defaultValue
+	}
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return defaultValue
+	}
+	return i
 }

@@ -1,6 +1,7 @@
 package v1_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -365,4 +366,138 @@ func TestModuleListHandler_ResultOrdering(t *testing.T) {
 	expectedModules := []string{"module1", "module2", "module3"}
 	assert.Equal(t, expectedModules, actualModuleNames,
 		"Module names should match expected order (id ASC)")
+}
+
+// TestModuleListHandler_WithLimitOffset tests pagination parameters
+// Python reference: test_api_module_list.py:test_with_limit_offset
+func TestModuleListHandler_WithLimitOffset(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	// Request with offset=23, limit=12 (matching Python test)
+	req := httptest.NewRequest("GET", "/v1/modules?offset=23&limit=12", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleListModules(w, req)
+
+	// Python: assert res.json == {'meta': {'current_offset': 23, 'limit': 12, 'prev_offset': 11}, 'modules': []}
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+	response := testutils.GetJSONBody(t, w)
+
+	meta := response["meta"].(map[string]interface{})
+	assert.Equal(t, float64(23), meta["current_offset"])
+	assert.Equal(t, float64(12), meta["limit"])
+	assert.Equal(t, float64(11), meta["prev_offset"])
+
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 0)
+}
+
+// TestModuleListHandler_WithProviderFilter tests provider filtering
+// Python reference: test_api_module_list.py:test_with_provider_filter
+func TestModuleListHandler_WithProviderFilter(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data with different providers
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+
+	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "module1", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider1.ID, "1.0.0")
+
+	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "module2", "azurerm")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider2.ID, "2.0.0")
+
+	moduleProvider3 := testutils.CreateModuleProvider(t, db, namespace.ID, "module3", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider3.ID, "1.5.0")
+
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	// Request with provider filter
+	req := httptest.NewRequest("GET", "/v1/modules?provider=aws", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleListModules(w, req)
+
+	// Python: providers=['aws']
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+	response := testutils.GetJSONBody(t, w)
+
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 2, "Should return only aws modules")
+
+	// Verify both modules have aws provider
+	for _, m := range modules {
+		module := m.(map[string]interface{})
+		assert.Equal(t, "aws", module["provider"])
+	}
+}
+
+// TestModuleListHandler_VerifiedFalse tests verified=false filter
+// Python reference: test_api_module_list.py:test_with_verified_false
+func TestModuleListHandler_VerifiedFalse(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data - unverified module by default
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
+
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	// Request with verified=false
+	req := httptest.NewRequest("GET", "/v1/modules?verified=false", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleListModules(w, req)
+
+	// Python: verified=False
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+	response := testutils.GetJSONBody(t, w)
+
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 1, "Should return unverified module")
+
+	module := modules[0].(map[string]interface{})
+	assert.Equal(t, false, module["verified"], "Module should not be verified")
+}
+
+// TestModuleListHandler_WithMoreResultsAvailable tests next_offset in meta
+// Python reference: test_api_module_list.py:test_with_module_response_with_more_results_available
+func TestModuleListHandler_WithMoreResultsAvailable(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data where count > limit
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+
+	// Create 3 modules
+	for i := 1; i <= 3; i++ {
+		mp := testutils.CreateModuleProvider(t, db, namespace.ID, fmt.Sprintf("module%d", i), "aws")
+		_ = testutils.CreatePublishedModuleVersion(t, db, mp.ID, "1.0.0")
+	}
+
+	handler := testutils.CreateModuleListHandler(t, db)
+
+	// Request with offset=0, limit=1 (count=3, so next_offset=1)
+	req := httptest.NewRequest("GET", "/v1/modules?offset=0&limit=1", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleListModules(w, req)
+
+	// Python: count=3, limit=1, so next_offset=1
+	// Python: {'meta': {'current_offset': 0, 'limit': 1, 'next_offset': 1}, 'modules': [...]}
+	testutils.AssertJSONContentTypeAndCode(t, w, http.StatusOK)
+	response := testutils.GetJSONBody(t, w)
+
+	meta := response["meta"].(map[string]interface{})
+	assert.Equal(t, float64(0), meta["current_offset"])
+	assert.Equal(t, float64(1), meta["limit"])
+	assert.Equal(t, float64(1), meta["next_offset"])
+
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 1)
 }
