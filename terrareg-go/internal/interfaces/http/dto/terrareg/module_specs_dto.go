@@ -12,6 +12,7 @@ type TerraregModuleSpecs struct {
 	ProviderDependencies []TerraregProviderDep `json:"provider_dependencies"`
 	Resources            []TerraregResource    `json:"resources"`
 	Modules              []TerraregModule      `json:"modules"` // Additional terrareg field (not in standard API)
+	Requirements         []TerraregRequirement `json:"requirements"`
 }
 
 // TerraregInput represents a Terraform input variable with additional terrareg fields.
@@ -41,10 +42,12 @@ type TerraregDependency struct {
 }
 
 // TerraregProviderDep represents a Terraform provider dependency.
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_provider_dependencies()
 type TerraregProviderDep struct {
-	Provider string `json:"provider"`
-	Source   string `json:"source"`
-	Version  string `json:"version"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Source    string `json:"source"`
+	Version   string `json:"version"`
 }
 
 // TerraregResource represents a Terraform resource.
@@ -61,4 +64,11 @@ type TerraregModule struct {
 	Version   string   `json:"version"`
 	Key       string   `json:"key"`       // Terrareg-specific field
 	Providers []string `json:"providers"` // Terrareg-specific field
+}
+
+// TerraregRequirement represents a terraform module requirement (e.g., terraform version constraint)
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_version_constraints()
+type TerraregRequirement struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }

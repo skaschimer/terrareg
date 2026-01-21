@@ -3,9 +3,9 @@ package dto
 // NamespaceResponse represents a namespace in API responses
 type NamespaceResponse struct {
 	Name        string  `json:"name"`
-	DisplayName *string `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name"`
 	Type        string  `json:"type,omitempty"`
-	ViewHref    string  `json:"view_href,omitempty"`
+	ViewHref    string  `json:"view_href"`
 }
 
 // NamespaceListResponse represents a list of namespaces

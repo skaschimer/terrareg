@@ -569,9 +569,10 @@ func (h *ModuleHandler) HandleModuleVersions(w http.ResponseWriter, r *http.Requ
 			provDeps := make([]map[string]interface{}, len(rootSpecs.ProviderDependencies))
 			for j, provDep := range rootSpecs.ProviderDependencies {
 				provDeps[j] = map[string]interface{}{
-					"name":    provDep.Provider,
-					"source":  provDep.Source,
-					"version": provDep.Version,
+					"name":      provDep.Name,
+					"namespace": provDep.Namespace,
+					"source":    provDep.Source,
+					"version":   provDep.Version,
 				}
 			}
 			root["providers"] = provDeps
@@ -603,9 +604,10 @@ func (h *ModuleHandler) HandleModuleVersions(w http.ResponseWriter, r *http.Requ
 				provDeps := make([]map[string]interface{}, len(subSpec.ProviderDependencies))
 				for j, provDep := range subSpec.ProviderDependencies {
 					provDeps[j] = map[string]interface{}{
-						"name":    provDep.Provider,
-						"source":  provDep.Source,
-						"version": provDep.Version,
+						"name":      provDep.Name,
+						"namespace": provDep.Namespace,
+						"source":    provDep.Source,
+						"version":   provDep.Version,
 					}
 				}
 				submoduleRoot["providers"] = provDeps

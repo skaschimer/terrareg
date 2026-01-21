@@ -345,8 +345,26 @@ func (mv *ModuleVersion) GetDownloads() int {
 	return 0
 }
 
+// parseProviderName splits provider name into namespace and name
+// e.g., "hashicorp/aws" -> ("aws", "hashicorp")
+// e.g., "aws" -> ("aws", "hashicorp")
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_provider_dependencies()
+func parseProviderName(providerName string) (name, namespace string) {
+	parts := strings.Split(providerName, "/")
+	if len(parts) > 1 {
+		// Has namespace - e.g., "hashicorp/aws"
+		namespace = parts[0]
+		name = strings.Join(parts[1:], "/")
+	} else {
+		// No namespace - default to hashicorp
+		name = providerName
+		namespace = "hashicorp"
+	}
+	return name, namespace
+}
+
 // parseTerraformDocs is a helper method to parse terraform-docs JSON into domain models
-func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, []Output, []ProviderDependency, []Resource, []Module) {
+func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, []Output, []ProviderDependency, []Resource, []Module, []Requirement) {
 	// Define struct for unmarshaling terraform-docs JSON
 	type TerraformDocsJSON struct {
 		Inputs []struct {
@@ -373,12 +391,16 @@ func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, 
 			Source  string `json:"source"`
 			Version string `json:"version,omitempty"`
 		} `json:"modules"`
+		Requirements []struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		} `json:"requirements"`
 	}
 
 	var terraformDocs TerraformDocsJSON
 	if err := json.Unmarshal(terraformDocsJSON, &terraformDocs); err != nil {
 		// If unmarshaling fails, return empty slices
-		return []Input{}, []Output{}, []ProviderDependency{}, []Resource{}, []Module{}
+		return []Input{}, []Output{}, []ProviderDependency{}, []Resource{}, []Module{}, []Requirement{}
 	}
 
 	// Convert terraform docs to domain models
@@ -406,9 +428,12 @@ func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, 
 
 	providerDependencies := make([]ProviderDependency, len(terraformDocs.Providers))
 	for i, tfProvider := range terraformDocs.Providers {
+		name, namespace := parseProviderName(tfProvider.Name)
 		providerDependencies[i] = ProviderDependency{
-			Provider: tfProvider.Name,
-			Version:  tfProvider.Version,
+			Name:      name,
+			Namespace: namespace,
+			Source:    "",
+			Version:   tfProvider.Version,
 		}
 	}
 
@@ -429,7 +454,15 @@ func (mv *ModuleVersion) parseTerraformDocs(terraformDocsJSON []byte) ([]Input, 
 		}
 	}
 
-	return inputs, outputs, providerDependencies, resources, modules
+	requirements := make([]Requirement, len(terraformDocs.Requirements))
+	for i, tfRequirement := range terraformDocs.Requirements {
+		requirements[i] = Requirement{
+			Name:    tfRequirement.Name,
+			Version: tfRequirement.Version,
+		}
+	}
+
+	return inputs, outputs, providerDependencies, resources, modules, requirements
 }
 
 // convertModulesToDependencies converts modules to dependencies, filtering out local references
@@ -467,6 +500,7 @@ func (mv *ModuleVersion) buildSpecsFromDetails(details *ModuleDetails, path stri
 		ProviderDependencies: []ProviderDependency{},
 		Resources:            []Resource{},
 		Modules:              []Module{},
+		Requirements:         []Requirement{},
 	}
 
 	// Early return if no details
@@ -489,13 +523,14 @@ func (mv *ModuleVersion) buildSpecsFromDetails(details *ModuleDetails, path stri
 	}
 
 	// Parse terraform docs and update specs
-	inputs, outputs, providerDeps, resources, modules := mv.parseTerraformDocs(terraformDocsJSON)
+	inputs, outputs, providerDeps, resources, modules, requirements := mv.parseTerraformDocs(terraformDocsJSON)
 	specs.Inputs = inputs
 	specs.Outputs = outputs
 	specs.Dependencies = convertModulesToDependencies(modules)
 	specs.ProviderDependencies = providerDeps
 	specs.Resources = resources
 	specs.Modules = modules
+	specs.Requirements = requirements
 	specs.Empty = !details.HasReadme() && len(terraformDocsJSON) == 0
 
 	return specs
@@ -558,6 +593,18 @@ func (mv *ModuleVersion) convertExampleToSpecs(example *Example) *ModuleSpecs {
 func (mv *ModuleVersion) GetProviderDependencies() []ProviderDependency {
 	// TODO: Parse from terraform docs
 	return []ProviderDependency{}
+}
+
+// GetTerraformVersionConstraints returns the terraform version constraint if present
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_version_constraints()
+func (mv *ModuleVersion) GetTerraformVersionConstraints() *string {
+	specs := mv.GetRootModuleSpecs()
+	for _, req := range specs.Requirements {
+		if req.Name == "terraform" {
+			return &req.Version
+		}
+	}
+	return nil
 }
 
 // GetTerraformModules returns terraform module dependencies (modules field)
@@ -1059,6 +1106,7 @@ type ModuleSpecs struct {
 	ProviderDependencies []ProviderDependency `json:"provider_dependencies"`
 	Resources            []Resource           `json:"resources"`
 	Modules              []Module             `json:"modules"`
+	Requirements         []Requirement        `json:"requirements"`
 }
 
 // Input represents a terraform input variable
@@ -1088,10 +1136,12 @@ type Dependency struct {
 }
 
 // ProviderDependency represents a terraform provider dependency
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_provider_dependencies()
 type ProviderDependency struct {
-	Provider string `json:"provider"`
-	Source   string `json:"source,omitempty"`
-	Version  string `json:"version,omitempty"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Source    string `json:"source,omitempty"`
+	Version   string `json:"version,omitempty"`
 }
 
 // Resource represents a terraform resource
@@ -1107,6 +1157,13 @@ type Module struct {
 	Version   string   `json:"version"`
 	Key       string   `json:"key"`
 	Providers []string `json:"providers"`
+}
+
+// Requirement represents a terraform module requirement (e.g., terraform version constraint)
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_version_constraints()
+type Requirement struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 // SecurityResult represents a security scan result

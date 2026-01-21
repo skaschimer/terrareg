@@ -190,6 +190,7 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 	providerDeps := convertProviderDepsToTerrareg(rootSpecs.ProviderDependencies)
 	resources := convertResourcesToTerrareg(rootSpecs.Resources)
 	modules := convertModulesToTerrareg(rootSpecs.Modules)
+	requirements := convertRequirementsToTerrareg(rootSpecs.Requirements)
 
 	// Ensure all slices are initialized (never nil) to prevent JSON null values
 	if inputs == nil {
@@ -210,6 +211,9 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 	if modules == nil {
 		modules = []terrareg.TerraregModule{}
 	}
+	if requirements == nil {
+		requirements = []terrareg.TerraregRequirement{}
+	}
 
 	response.Root = terrareg.TerraregModuleSpecs{
 		Path:                 rootSpecs.Path,
@@ -221,6 +225,7 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 		ProviderDependencies: providerDeps,
 		Resources:            resources,
 		Modules:              modules,
+		Requirements:         requirements,
 	}
 
 	// Convert submodules
@@ -233,6 +238,7 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 		providerDeps := convertProviderDepsToTerrareg(subSpec.ProviderDependencies)
 		resources := convertResourcesToTerrareg(subSpec.Resources)
 		modules := convertModulesToTerrareg(subSpec.Modules)
+		requirements := convertRequirementsToTerrareg(subSpec.Requirements)
 
 		// Ensure all slices are initialized (never nil) to prevent JSON null values
 		if inputs == nil {
@@ -253,6 +259,9 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 		if modules == nil {
 			modules = []terrareg.TerraregModule{}
 		}
+		if requirements == nil {
+			requirements = []terrareg.TerraregRequirement{}
+		}
 
 		submoduleSpecs = append(submoduleSpecs, terrareg.TerraregModuleSpecs{
 			Path:                 subSpec.Path,
@@ -264,6 +273,7 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 			ProviderDependencies: providerDeps,
 			Resources:            resources,
 			Modules:              modules,
+			Requirements:         requirements,
 		})
 	}
 	// Ensure submodules is never nil (empty array instead of null)
@@ -340,8 +350,9 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 	}
 
 	response.TerraformExampleVersionComment = mv.GetTerraformExampleVersionComment()
-	// TODO: Get version constraint from module version details
-	response.TerraformVersionConstraint = nil
+	// Get version constraint from module version details
+	// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_version_constraints()
+	response.TerraformVersionConstraint = mv.GetTerraformVersionConstraints()
 	response.ModuleExtractionUpToDate = mv.GetModuleExtractionUpToDate()
 
 	return response
@@ -394,9 +405,21 @@ func convertProviderDepsToTerrareg(providerDeps []model.ProviderDependency) []te
 	var result []terrareg.TerraregProviderDep
 	for _, dep := range providerDeps {
 		result = append(result, terrareg.TerraregProviderDep{
-			Provider: dep.Provider,
-			Source:   dep.Source,
-			Version:  dep.Version,
+			Name:      dep.Name,
+			Namespace: dep.Namespace,
+			Source:    dep.Source,
+			Version:   dep.Version,
+		})
+	}
+	return result
+}
+
+func convertRequirementsToTerrareg(requirements []model.Requirement) []terrareg.TerraregRequirement {
+	var result []terrareg.TerraregRequirement
+	for _, req := range requirements {
+		result = append(result, terrareg.TerraregRequirement{
+			Name:    req.Name,
+			Version: req.Version,
 		})
 	}
 	return result

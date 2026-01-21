@@ -78,10 +78,12 @@ type Dependency struct {
 }
 
 // ProviderDependency represents a terraform provider dependency
+// Python reference: /app/terrareg/models.py BaseSubmodule.get_terraform_provider_dependencies()
 type ProviderDependency struct {
-	Provider string `json:"provider"`
-	Source   string `json:"source,omitempty"`
-	Version  string `json:"version,omitempty"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Source    string `json:"source,omitempty"`
+	Version   string `json:"version,omitempty"`
 }
 
 // Resource represents a terraform resource
@@ -339,9 +341,10 @@ func convertProviderDependencies(providerDeps []model.ProviderDependency) []Prov
 	result := make([]ProviderDependency, 0, len(providerDeps))
 	for _, dep := range providerDeps {
 		result = append(result, ProviderDependency{
-			Provider: dep.Provider,
-			Source:   dep.Source,
-			Version:  dep.Version,
+			Name:      dep.Name,
+			Namespace: dep.Namespace,
+			Source:    dep.Source,
+			Version:   dep.Version,
 		})
 	}
 	return result
