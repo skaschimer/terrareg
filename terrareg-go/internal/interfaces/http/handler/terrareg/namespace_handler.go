@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
@@ -92,24 +94,53 @@ func (h *NamespaceHandler) HandleNamespaceList(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Execute query
-	namespaces, err := h.listNamespacesQuery.Execute(ctx)
+	// Parse pagination parameters
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	var listOpts *query.ListOptions
+	if limitStr != "" || offsetStr != "" {
+		listOpts = &query.ListOptions{}
+		if offsetStr != "" {
+			if offset, err := strconv.Atoi(offsetStr); err == nil {
+				listOpts.Offset = offset
+			}
+		}
+		if limitStr != "" {
+			if limit, err := strconv.Atoi(limitStr); err == nil {
+				listOpts.Limit = limit
+			}
+		}
+	}
+
+	// Execute query with pagination options
+	namespaces, totalCount, err := h.listNamespacesQuery.Execute(ctx, listOpts)
 	if err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	// Check if limit/offset pagination params are provided
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-
-	if limit == "" && offset == "" {
+	// Check if pagination params were provided
+	if limitStr == "" && offsetStr == "" {
 		// No pagination - return plain array to match Python behavior (legacy format)
 		response := h.presenter.ToListArrayWithResourceType(namespaces, resourceType)
 		RespondJSON(w, http.StatusOK, response)
 	} else {
-		// With pagination - return wrapped object
-		response := h.presenter.ToListDTOWithResourceType(namespaces, resourceType)
+		// With pagination - return wrapped object with meta
+		// Python reference: terrareg/server/api/terrareg_namespaces.py:82-86
+		dtos := h.presenter.ToListArrayWithResourceType(namespaces, resourceType)
+
+		// Build meta object (Python reference: ResultData.meta)
+		meta := map[string]interface{}{
+			"current_offset": listOpts.Offset,
+			"limit":          listOpts.Limit,
+			"total_count":    totalCount,
+		}
+
+		response := map[string]interface{}{
+			"meta":      meta,
+			"namespaces": dtos,
+		}
 		RespondJSON(w, http.StatusOK, response)
 	}
 }

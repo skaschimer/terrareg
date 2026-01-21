@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 )
 
@@ -17,8 +18,10 @@ type NamespaceRepository interface {
 	// FindByName retrieves a namespace by name
 	FindByName(ctx context.Context, name string) (*model.Namespace, error)
 
-	// List retrieves all namespaces
-	List(ctx context.Context) ([]*model.Namespace, error)
+	// List retrieves namespaces with optional pagination
+	// If opts is nil or opts.Limit is 0, returns all namespaces
+	// Returns: namespaces, total count (for pagination meta), error
+	List(ctx context.Context, opts *query.ListOptions) ([]*model.Namespace, int, error)
 
 	// Delete removes a namespace
 	Delete(ctx context.Context, id int) error

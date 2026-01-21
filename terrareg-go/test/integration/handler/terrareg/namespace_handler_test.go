@@ -327,7 +327,7 @@ func TestNamespaceHandler_HandleNamespaceDelete_Success(t *testing.T) {
 
 	// Verify namespace was deleted
 	repos := testutils.CreateTestRepositories(t, db)
-	namespaces, err := repos.Namespace.List(requireContext(t))
+	namespaces, _, err := repos.Namespace.List(requireContext(t), nil)
 	require.NoError(t, err)
 	assert.Empty(t, namespaces)
 }
@@ -430,6 +430,144 @@ func TestNamespaceHandler_HandleNamespaceUpdate_InvalidJSON(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	response := testutils.GetJSONBody(t, w)
 	assert.Contains(t, response, "error")
+}
+
+// TestNamespaceHandler_HandleNamespaceList_ResourceType_NoTypeParam tests with no type parameter (defaults to module)
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_namespace_list.py - test_with_namespaces_present
+func TestNamespaceHandler_HandleNamespaceList_ResourceType_NoTypeParam(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test namespaces
+	testutils.CreateNamespace(t, db, "test-ns", nil)
+
+	handler := testutils.CreateNamespaceHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleNamespaceList(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response []interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Should default to module type view_href
+	ns := response[0].(map[string]interface{})
+	assert.Equal(t, "/modules/test-ns", ns["view_href"])
+}
+
+// TestNamespaceHandler_HandleNamespaceList_ResourceType_Module tests with type=module
+func TestNamespaceHandler_HandleNamespaceList_ResourceType_Module(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test namespaces
+	testutils.CreateNamespace(t, db, "module-ns", nil)
+
+	handler := testutils.CreateNamespaceHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces?type=module", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleNamespaceList(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response []interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Should use module type view_href
+	ns := response[0].(map[string]interface{})
+	assert.Equal(t, "/modules/module-ns", ns["view_href"])
+}
+
+// TestNamespaceHandler_HandleNamespaceList_ResourceType_Provider tests with type=provider
+func TestNamespaceHandler_HandleNamespaceList_ResourceType_Provider(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test namespaces
+	testutils.CreateNamespace(t, db, "provider-ns", nil)
+
+	handler := testutils.CreateNamespaceHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces?type=provider", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleNamespaceList(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response []interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Should use provider type view_href
+	ns := response[0].(map[string]interface{})
+	assert.Equal(t, "/providers/provider-ns", ns["view_href"])
+}
+
+// TestNamespaceHandler_HandleNamespaceList_ResourceType_Invalid tests with invalid type parameter
+func TestNamespaceHandler_HandleNamespaceList_ResourceType_Invalid(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test namespaces
+	testutils.CreateNamespace(t, db, "test-ns", nil)
+
+	handler := testutils.CreateNamespaceHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces?type=invalid", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleNamespaceList(w, req)
+
+	// Should return 400 for invalid type (matching Python behavior)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	response := testutils.GetJSONBody(t, w)
+	assert.Contains(t, response, "errors")
+
+	errors := response["errors"].([]interface{})
+	assert.Contains(t, errors, "Invalid type argument")
+}
+
+// TestNamespaceHandler_HandleNamespaceList_ResourceType_WithPagination tests resource type with pagination
+func TestNamespaceHandler_HandleNamespaceList_ResourceType_WithPagination(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test namespaces
+	testutils.CreateNamespace(t, db, "provider-ns-1", nil)
+	testutils.CreateNamespace(t, db, "provider-ns-2", nil)
+
+	handler := testutils.CreateNamespaceHandler(t, db)
+
+	req := httptest.NewRequest("GET", "/v1/terrareg/namespaces?type=provider&limit=10&offset=0", nil)
+	w := httptest.NewRecorder()
+
+	handler.HandleNamespaceList(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	response := testutils.GetJSONBody(t, w)
+
+	// With pagination, should return wrapped object
+	assert.Contains(t, response, "namespaces")
+	assert.Contains(t, response, "meta")
+
+	namespaces := response["namespaces"].([]interface{})
+	assert.Len(t, namespaces, 2)
+
+	// Verify provider view_href
+	for _, ns := range namespaces {
+		namespace := ns.(map[string]interface{})
+		viewHref := namespace["view_href"].(string)
+		assert.Contains(t, viewHref, "/providers/")
+	}
 }
 
 func requireContext(t *testing.T) context.Context {

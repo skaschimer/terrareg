@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 )
@@ -45,13 +46,13 @@ func (m *MockNamespaceRepository) FindByName(ctx context.Context, name string) (
 	return args.Get(0).(*model.Namespace), args.Error(1)
 }
 
-// List mocks listing all namespaces
-func (m *MockNamespaceRepository) List(ctx context.Context) ([]*model.Namespace, error) {
-	args := m.Called(ctx)
+// List mocks listing namespaces with optional pagination
+func (m *MockNamespaceRepository) List(ctx context.Context, opts *query.ListOptions) ([]*model.Namespace, int, error) {
+	args := m.Called(ctx, opts)
 	if args.Get(0) == nil {
-		return []*model.Namespace{}, args.Error(1)
+		return []*model.Namespace{}, 0, args.Error(1)
 	}
-	return args.Get(0).([]*model.Namespace), args.Error(1)
+	return args.Get(0).([]*model.Namespace), args.Int(1), args.Error(2)
 }
 
 // Delete mocks deleting a namespace

@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 )
@@ -19,7 +20,8 @@ func NewListNamespacesQuery(namespaceRepo repository.NamespaceRepository) *ListN
 	}
 }
 
-// Execute executes the query
-func (q *ListNamespacesQuery) Execute(ctx context.Context) ([]*model.Namespace, error) {
-	return q.namespaceRepo.List(ctx)
+// Execute executes the query with optional pagination
+// Returns: namespaces, total count (for pagination meta), error
+func (q *ListNamespacesQuery) Execute(ctx context.Context, opts *query.ListOptions) ([]*model.Namespace, int, error) {
+	return q.namespaceRepo.List(ctx, opts)
 }

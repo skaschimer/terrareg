@@ -37,8 +37,8 @@ type GlobalStats struct {
 
 // Execute executes the query
 func (q *GlobalStatsQuery) Execute(ctx context.Context) (*GlobalStats, error) {
-	// Get namespace count
-	namespaces, err := q.namespaceRepo.List(ctx)
+	// Get namespace count (no pagination needed)
+	namespaces, _, err := q.namespaceRepo.List(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

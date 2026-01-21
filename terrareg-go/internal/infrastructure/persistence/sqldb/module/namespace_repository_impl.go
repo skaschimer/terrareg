@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
@@ -78,13 +79,27 @@ func (r *NamespaceRepositoryImpl) FindByName(ctx context.Context, name string) (
 	return fromDBNamespace(&dbModel), nil
 }
 
-// List retrieves all namespaces
-func (r *NamespaceRepositoryImpl) List(ctx context.Context) ([]*model.Namespace, error) {
+// List retrieves namespaces with optional pagination
+// If opts is nil or opts.Limit is 0, returns all namespaces
+// Returns: namespaces, total count (for pagination meta), error
+func (r *NamespaceRepositoryImpl) List(ctx context.Context, opts *query.ListOptions) ([]*model.Namespace, int, error) {
 	var dbModels []sqldb.NamespaceDB
+	query := r.db.WithContext(ctx).Order("namespace ASC")
 
-	err := r.db.WithContext(ctx).Order("namespace ASC").Find(&dbModels).Error
+	// Get total count first (needed for pagination meta)
+	var totalCount int64
+	if err := query.Model(&sqldb.NamespaceDB{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count namespaces: %w", err)
+	}
+
+	// Apply pagination if provided
+	if opts != nil && opts.Limit > 0 {
+		query = query.Offset(opts.Offset).Limit(opts.Limit)
+	}
+
+	err := query.Find(&dbModels).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to list namespaces: %w", err)
+		return nil, 0, fmt.Errorf("failed to list namespaces: %w", err)
 	}
 
 	namespaces := make([]*model.Namespace, len(dbModels))
@@ -92,7 +107,7 @@ func (r *NamespaceRepositoryImpl) List(ctx context.Context) ([]*model.Namespace,
 		namespaces[i] = fromDBNamespace(&dbModel)
 	}
 
-	return namespaces, nil
+	return namespaces, int(totalCount), nil
 }
 
 // Delete removes a namespace

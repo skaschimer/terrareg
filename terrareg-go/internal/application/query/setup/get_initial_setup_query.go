@@ -55,7 +55,7 @@ func (q *GetInitialSetupQuery) Execute(ctx context.Context) (*InitialSetupRespon
 	response := &InitialSetupResponse{}
 
 	// 1. Check for namespaces (get first namespace if exists)
-	namespaces, err := q.namespaceRepo.List(ctx)
+	namespaces, _, err := q.namespaceRepo.List(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check for namespaces: %w", err)
 	}
