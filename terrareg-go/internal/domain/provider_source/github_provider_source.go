@@ -1306,3 +1306,170 @@ func (g *GithubProviderSource) GetNewReleases(
 
 	return releases, nil
 }
+
+// GetUserOrganizationsList returns organizations with full details for authenticated user
+// Python reference: github_organisations.py::GithubOrganisations
+func (g *GithubProviderSource) GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*provider_source_model.Organization, error) {
+	accessToken, err := g.getDefaultAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if accessToken == "" {
+		return []*provider_source_model.Organization{}, nil
+	}
+
+	apiURL, err := g.apiURL(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get user's organizations
+	orgsURL := fmt.Sprintf("%s/user/orgs?per_page=100", apiURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", orgsURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return []*provider_source_model.Organization{}, nil
+	}
+
+	var githubOrgs []struct {
+		Login string `json:"login"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&githubOrgs); err != nil {
+		return nil, err
+	}
+
+	// Get user info for user organization
+	user, err := g.GetUsername(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build organizations list
+	var organizations []*provider_source_model.Organization
+
+	// Add user's personal account as an organization
+	if user != "" {
+		organizations = append(organizations, provider_source_model.NewOrganization(user, "user", true))
+	}
+
+	// Add organizations user is admin of
+	for _, org := range githubOrgs {
+		organizations = append(organizations, provider_source_model.NewOrganization(org.Login, "organization", true))
+	}
+
+	return organizations, nil
+}
+
+// GetUserRepositories returns repositories for the authenticated user
+// Python reference: github_repositories.py::GithubRepositories
+func (g *GithubProviderSource) GetUserRepositories(ctx context.Context, sessionID string) ([]*provider_source_model.Repository, error) {
+	accessToken, err := g.getDefaultAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if accessToken == "" {
+		return []*provider_source_model.Repository{}, nil
+	}
+
+	// Get organizations to fetch repos for
+	organizations, err := g.GetUserOrganizationsList(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var repositories []*provider_source_model.Repository
+	apiURL, err := g.apiURL(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch repositories for each organization
+	for _, org := range organizations {
+		var url string
+		if org.GetType() == "organization" {
+			url = fmt.Sprintf("%s/orgs/%s/repos?per_page=100", apiURL, org.GetName())
+		} else {
+			url = fmt.Sprintf("%s/users/%s/repos?per_page=100", apiURL, org.GetName())
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+
+		resp, err := g.httpClient.Do(req)
+		if err != nil {
+			continue
+		}
+
+		if resp.StatusCode != 200 {
+			resp.Body.Close()
+			continue
+		}
+
+		var repos []struct {
+			ID          *int64   `json:"id"`
+			FullName    string  `json:"full_name"`
+			Owner       struct {
+				Login string `json:"login"`
+				Type  string `json:"type"`
+			} `json:"owner"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
+			resp.Body.Close()
+			continue
+		}
+		resp.Body.Close()
+
+		// Process each repository
+		for _, repo := range repos {
+			if repo.ID == nil {
+				continue
+			}
+
+			repoID := fmt.Sprintf("%d", *repo.ID)
+			var publishedID *string
+			// TODO: Check if repository has been published
+
+			repositories = append(repositories, provider_source_model.NewRepository(
+				repoID,
+				repo.FullName,
+				repo.Owner.Login,
+				repo.Owner.Type,
+				"repository_kind_value",
+				publishedID,
+			))
+		}
+	}
+
+	return repositories, nil
+}
+
+// PublishProviderFromRepository publishes a provider from a repository
+// Python reference: github_repository_publish_provider.py::GithubRepositoryPublishProvider
+func (g *GithubProviderSource) PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*service.PublishProviderResult, error) {
+	// TODO: Implement full provider publishing logic
+	// This requires:
+	// 1. Validate category exists
+	// 2. Get repository from GitHub API
+	// 3. Create provider in database
+	// 4. Attempt to refresh versions (limit 1)
+	// 5. Validate at least one valid version exists
+
+	return nil, fmt.Errorf("publish provider from repository not yet implemented")
+}

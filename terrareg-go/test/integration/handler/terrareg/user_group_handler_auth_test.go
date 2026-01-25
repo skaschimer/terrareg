@@ -1,7 +1,9 @@
 package terrareg_test
 
 import (
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -90,9 +92,12 @@ func TestUserGroupCreate_Authentication(t *testing.T) {
 			name: "admin user can create user groups",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/user-groups")
+				// Add request body for user group creation
+				req.Body = io.NopCloser(strings.NewReader(`{"name":"test-admin-group","site_admin":false}`))
+				req.Header.Set("Content-Type", "application/json")
 				return req
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 	}
 
@@ -195,9 +200,12 @@ func TestUserGroupNamespacePermissionsCreate_Authentication(t *testing.T) {
 			name: "admin user can create namespace permissions",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/user-groups/perm-test-group/permissions/perm-test-namespace")
+				// Add request body for namespace permission creation
+				req.Body = io.NopCloser(strings.NewReader(`{"permission_type":"FULL","csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return testutils.AddChiContext(t, req, map[string]string{"group": "perm-test-group", "namespace": "perm-test-namespace"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 	}
 

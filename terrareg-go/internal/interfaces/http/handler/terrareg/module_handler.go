@@ -1237,10 +1237,8 @@ func (h *ModuleHandler) HandleModuleVersionDelete(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Send success response
-	RespondJSON(w, http.StatusOK, map[string]interface{}{
-		"message": "Module version deleted successfully",
-	})
+	// Send success response - 204 No Content for successful deletion
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // HandleModuleVersionReadmeHTML handles GET /modules/{namespace}/{name}/{provider}/{version}/readme_html

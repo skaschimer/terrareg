@@ -88,13 +88,21 @@ func BuildAuthenticatedRequestWithNamespacePermission(
 	sessionID := CreateTestSession(t, db, username, false)
 
 	// Update session with user group info
-	var providerData map[string]interface{}
-	err = json.Unmarshal(
-		[]byte(`{"user_groups":["`+groupName+`"],"site_admin":false}`),
-		&providerData,
-	)
+	// First, get the existing session data to preserve username, auth_type, etc.
+	var existingSession sqldb.SessionDB
+	err = db.DB.Where("id = ?", sessionID).First(&existingSession).Error
 	require.NoError(t, err)
 
+	// Decode existing provider_source_auth
+	var providerData map[string]interface{}
+	err = json.Unmarshal(existingSession.ProviderSourceAuth, &providerData)
+	require.NoError(t, err)
+
+	// Add/update user groups and site_admin fields
+	providerData["user_groups"] = []string{groupName}
+	providerData["site_admin"] = false
+
+	// Encode and update
 	encodedData := sqldb.EncodeBlob(providerData)
 	err = db.DB.Model(&sqldb.SessionDB{}).
 		Where("id = ?", sessionID).

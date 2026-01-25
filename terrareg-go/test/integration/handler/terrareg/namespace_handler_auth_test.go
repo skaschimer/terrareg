@@ -1,7 +1,9 @@
 package terrareg_test
 
 import (
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +36,9 @@ func TestNamespaceCreate_Authentication(t *testing.T) {
 			name: "authenticated regular user can create namespace",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "POST", "/v1/terrareg/namespaces", "regular-user", false)
+				// Add request body for namespace creation
+				req.Body = io.NopCloser(strings.NewReader(`{"name":"test-namespace-auth","type":"NONE"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return req
 			},
 			expectedStatus: http.StatusOK,
@@ -42,6 +47,9 @@ func TestNamespaceCreate_Authentication(t *testing.T) {
 			name: "authenticated admin user can create namespace",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/namespaces")
+				// Add request body for namespace creation
+				req.Body = io.NopCloser(strings.NewReader(`{"name":"admin-test-namespace","type":"NONE"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return req
 			},
 			expectedStatus: http.StatusOK,
@@ -88,7 +96,11 @@ func TestNamespaceUpdate_Authentication(t *testing.T) {
 					t, db, "POST", "/v1/terrareg/namespaces/test-namespace",
 					"readonly-user", "test-namespace", sqldb.PermissionTypeRead,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				req = testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				// Add request body for namespace update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
+				return req
 			},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -99,7 +111,11 @@ func TestNamespaceUpdate_Authentication(t *testing.T) {
 					t, db, "POST", "/v1/terrareg/namespaces/test-namespace",
 					"modify-user", "test-namespace", sqldb.PermissionTypeModify,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				req = testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				// Add request body for namespace update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
+				return req
 			},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -110,7 +126,11 @@ func TestNamespaceUpdate_Authentication(t *testing.T) {
 					t, db, "POST", "/v1/terrareg/namespaces/test-namespace",
 					"full-user", "test-namespace", sqldb.PermissionTypeFull,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				req = testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				// Add request body for namespace update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -118,7 +138,11 @@ func TestNamespaceUpdate_Authentication(t *testing.T) {
 			name: "admin user can update any namespace",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/namespaces/test-namespace")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				req = testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace"})
+				// Add request body for namespace update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
+				return req
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -193,6 +217,8 @@ func TestNamespaceDelete_Authentication(t *testing.T) {
 		{
 			name: "admin user can delete any namespace",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				// Recreate namespace since it may have been deleted by previous test
+				_ = testutils.CreateNamespace(t, db, "delete-test-namespace", nil)
 				req, _ := testutils.BuildAdminRequest(t, db, "DELETE", "/v1/terrareg/namespaces/delete-test-namespace")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-test-namespace"})
 			},

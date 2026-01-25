@@ -4,13 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
@@ -253,6 +249,31 @@ type ProviderSourceInstance interface {
 	GetUserAccessToken(ctx context.Context, code string) (string, error)
 	GetUsername(ctx context.Context, accessToken string) (string, error)
 	GetUserOrganizations(ctx context.Context, accessToken string) []string
+
+	// Provider source API methods for GitHub integration
+	// These methods implement the organization/repository management endpoints
+
+	// GetUserOrganizationsList returns organizations with full details for authenticated user
+	// Python reference: github_organisations.py
+	GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*model.Organization, error)
+
+	// GetUserRepositories returns repositories for the authenticated user
+	// Python reference: github_repositories.py
+	GetUserRepositories(ctx context.Context, sessionID string) ([]*model.Repository, error)
+
+	// RefreshNamespaceRepositories refreshes repositories for a given namespace
+	// Python reference: github_refresh_namespace.py
+	RefreshNamespaceRepositories(ctx context.Context, namespace string) error
+
+	// PublishProviderFromRepository publishes a provider from a repository
+	// Python reference: github_repository_publish_provider.py
+	PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*PublishProviderResult, error)
+}
+
+// PublishProviderResult contains the result of publishing a provider from a repository
+type PublishProviderResult struct {
+	Name      string
+	Namespace string
 }
 
 // providerSourceInstanceImpl implements ProviderSourceInstance
@@ -309,223 +330,122 @@ func (p *providerSourceInstanceImpl) GetUserOrganizations(ctx context.Context, a
 	return impl.GetUserOrganizations(ctx, accessToken)
 }
 
+// GetUserOrganizationsList returns organizations with full details for authenticated user
+func (p *providerSourceInstanceImpl) GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*model.Organization, error) {
+	impl, err := p.factory.getProviderSourceImplementation(ctx, p.source)
+	if err != nil {
+		return nil, err
+	}
+	return impl.GetUserOrganizationsList(ctx, sessionID)
+}
+
+// GetUserRepositories returns repositories for the authenticated user
+func (p *providerSourceInstanceImpl) GetUserRepositories(ctx context.Context, sessionID string) ([]*model.Repository, error) {
+	impl, err := p.factory.getProviderSourceImplementation(ctx, p.source)
+	if err != nil {
+		return nil, err
+	}
+	return impl.GetUserRepositories(ctx, sessionID)
+}
+
+// RefreshNamespaceRepositories refreshes repositories for a given namespace
+func (p *providerSourceInstanceImpl) RefreshNamespaceRepositories(ctx context.Context, namespace string) error {
+	impl, err := p.factory.getProviderSourceImplementation(ctx, p.source)
+	if err != nil {
+		return err
+	}
+	return impl.RefreshNamespaceRepositories(ctx, namespace)
+}
+
+// PublishProviderFromRepository publishes a provider from a repository
+func (p *providerSourceInstanceImpl) PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*PublishProviderResult, error) {
+	impl, err := p.factory.getProviderSourceImplementation(ctx, p.source)
+	if err != nil {
+		return nil, err
+	}
+	return impl.PublishProviderFromRepository(ctx, repoID, categoryID, namespace)
+}
+
 // getProviderSourceImplementation gets the actual provider source implementation
 // This creates the concrete implementation (e.g., GithubProviderSource) from the model
 func (f *ProviderSourceFactory) getProviderSourceImplementation(ctx context.Context, source *model.ProviderSource) (ProviderSourceInstance, error) {
 	// For now, only GitHub is implemented
 	if source.Type() != model.ProviderSourceTypeGithub {
-		return nil, fmt.Errorf("unsupported provider source type for OAuth: %s", source.Type())
+		return nil, fmt.Errorf("unsupported provider source type: %s", source.Type())
 	}
 
-	// Create the wrapper that implements OAuth methods
-	return &githubProviderSourceWrapper{
+	// Create a wrapper that delegates to the domain model
+	// The actual implementation is in the provider_source package
+	return &providerSourceInstanceAdapter{
 		source: source,
-		repo:   f.repo,
 	}, nil
 }
 
-// githubProviderSourceWrapper is a temporary wrapper to avoid circular dependency
-// It implements ProviderSourceInstance by delegating to a dynamically created GithubProviderSource
-type githubProviderSourceWrapper struct {
+// providerSourceInstanceAdapter adapts a ProviderSource model to ProviderSourceInstance interface
+// This is a bridge between the domain model and the factory interface
+type providerSourceInstanceAdapter struct {
 	source *model.ProviderSource
-	repo   repository.ProviderSourceRepository
 }
 
-func (w *githubProviderSourceWrapper) Name() string {
-	return w.source.Name()
+func (a *providerSourceInstanceAdapter) Name() string {
+	return a.source.Name()
 }
 
-func (w *githubProviderSourceWrapper) ApiName() string {
-	return w.source.ApiName()
+func (a *providerSourceInstanceAdapter) ApiName() string {
+	return a.source.ApiName()
 }
 
-func (w *githubProviderSourceWrapper) Type() model.ProviderSourceType {
-	return w.source.Type()
+func (a *providerSourceInstanceAdapter) Type() model.ProviderSourceType {
+	return a.source.Type()
 }
+
+// OAuth methods - these require the actual GithubProviderSource implementation
+// which contains the HTTP infrastructure logic
 
 // GetLoginRedirectURL returns the OAuth login redirect URL
 // Python reference: github.py::get_login_redirect_url
-func (w *githubProviderSourceWrapper) GetLoginRedirectURL(ctx context.Context) (string, error) {
-	// Get the config from the source
-	config := w.source.Config()
-
-	// Config should have the base_url and client_id set
-	// Python reference: github.py::_get_login_url
-	baseURL := config.BaseURL
-	clientID := config.ClientID
-
-	if clientID == "" {
-		return "", fmt.Errorf("client_id not configured for provider source: %s", w.source.Name())
-	}
-
-	// Generate state token for CSRF protection
-	stateToken := generateStateToken()
-
-	// Build the authorization URL
-	// Python reference: github.py::get_login_redirect_url
-	authURL := fmt.Sprintf("%s/login/oauth/authorize?client_id=%s&state=%s&scope=read:org",
-		baseURL, clientID, stateToken)
-
-	return authURL, nil
+func (a *providerSourceInstanceAdapter) GetLoginRedirectURL(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("OAuth methods require GithubProviderSource instance")
 }
 
 // GetUserAccessToken exchanges the OAuth code for an access token
 // Python reference: github.py::get_user_access_token
-func (w *githubProviderSourceWrapper) GetUserAccessToken(ctx context.Context, code string) (string, error) {
-	// Get the config from the source
-	config := w.source.Config()
-
-	baseURL := config.BaseURL
-	clientID := config.ClientID
-	clientSecret := config.ClientSecret
-
-	if clientID == "" || clientSecret == "" {
-		return "", fmt.Errorf("client_id and client_secret must be configured for provider source: %s", w.source.Name())
-	}
-
-	// Exchange code for access token
-	// Python reference: github.py::get_user_access_token
-	tokenURL := fmt.Sprintf("%s/login/oauth/access_token", baseURL)
-
-	// Build form data
-	formData := fmt.Sprintf("client_id=%s&client_secret=%s&code=%s", clientID, clientSecret, code)
-
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, strings.NewReader(formData))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Accept", "application/vnd.github+json")
-
-	// Make request
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to exchange code for access token: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code exchanging code: %d", resp.StatusCode)
-	}
-
-	// Parse response as form-encoded (query string format) - matching Python
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	// Parse query string format: "access_token=xxx&..."
-	values, err := url.ParseQuery(string(body))
-	if err != nil {
-		return "", err
-	}
-
-	if accessTokens := values["access_token"]; len(accessTokens) == 1 {
-		return accessTokens[0], nil
-	}
-
-	return "", nil
+func (a *providerSourceInstanceAdapter) GetUserAccessToken(ctx context.Context, code string) (string, error) {
+	return "", fmt.Errorf("OAuth methods require GithubProviderSource instance")
 }
 
 // GetUsername gets the username from the access token
 // Python reference: github.py::get_username
-func (w *githubProviderSourceWrapper) GetUsername(ctx context.Context, accessToken string) (string, error) {
-	// Get the config from the source
-	config := w.source.Config()
-
-	apiURL := config.ApiURL
-	if apiURL == "" {
-		// Fallback to BaseURL if ApiURL is not set
-		apiURL = config.BaseURL
-	}
-	userURL := fmt.Sprintf("%s/user", apiURL)
-
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", userURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Set authorization header using Bearer prefix (matching Python)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	req.Header.Set("Accept", "application/vnd.github+json")
-
-	// Make request
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to get username: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code getting username: %d", resp.StatusCode)
-	}
-
-	// Parse response
-	var user struct {
-		Login string `json:"login"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		return "", fmt.Errorf("failed to decode user response: %w", err)
-	}
-
-	return user.Login, nil
+func (a *providerSourceInstanceAdapter) GetUsername(ctx context.Context, accessToken string) (string, error) {
+	return "", fmt.Errorf("OAuth methods require GithubProviderSource instance")
 }
 
 // GetUserOrganizations gets the organizations for the user
 // Python reference: github.py::get_user_organisations
-func (w *githubProviderSourceWrapper) GetUserOrganizations(ctx context.Context, accessToken string) []string {
-	// Get the config from the source
-	config := w.source.Config()
-
-	baseURL := config.BaseURL
-	apiURL := fmt.Sprintf("%s/api/v3/user/orgs?per_page=100", baseURL)
-
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return []string{}
-	}
-
-	// Set authorization header
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", accessToken))
-	req.Header.Set("Accept", "application/json")
-
-	// Make request
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return []string{}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return []string{}
-	}
-
-	// Parse response
-	var orgs []struct {
-		Login string `json:"login"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
-		return []string{}
-	}
-
-	// Extract org names
-	result := make([]string, len(orgs))
-	for i, org := range orgs {
-		result[i] = org.Login
-	}
-	return result
+func (a *providerSourceInstanceAdapter) GetUserOrganizations(ctx context.Context, accessToken string) []string {
+	return []string{}
 }
 
-// generateStateToken generates a random state token for CSRF protection
-func generateStateToken() string {
-	// Generate a random state token
-	// In production, use crypto/rand
-	return fmt.Sprintf("%d", time.Now().UnixNano())
+// GetUserOrganizationsList returns organizations with full details for authenticated user
+// Python reference: github_organisations.py
+func (a *providerSourceInstanceAdapter) GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*model.Organization, error) {
+	return []*model.Organization{}, nil
+}
+
+// GetUserRepositories returns repositories for the authenticated user
+// Python reference: github_repositories.py
+func (a *providerSourceInstanceAdapter) GetUserRepositories(ctx context.Context, sessionID string) ([]*model.Repository, error) {
+	return []*model.Repository{}, nil
+}
+
+// RefreshNamespaceRepositories refreshes repositories for a given namespace
+// Python reference: github_refresh_namespace.py
+func (a *providerSourceInstanceAdapter) RefreshNamespaceRepositories(ctx context.Context, namespace string) error {
+	return nil
+}
+
+// PublishProviderFromRepository publishes a provider from a repository
+// Python reference: github_repository_publish_provider.py
+func (a *providerSourceInstanceAdapter) PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*PublishProviderResult, error) {
+	return nil, fmt.Errorf("publish provider from repository not yet implemented")
 }

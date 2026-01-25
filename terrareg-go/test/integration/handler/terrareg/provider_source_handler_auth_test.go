@@ -157,7 +157,8 @@ func TestProviderSourceRefreshNamespace_Authentication(t *testing.T) {
 	}
 }
 
-// TestProviderSourcePublishProvider_Authentication tests provider source publish provider endpoint with RequireAuth middleware
+// TestProviderSourcePublishProvider_Authentication tests provider source publish provider endpoint
+// Python reference: github_repository_publish_provider.py - requires GitHub auth OR admin
 func TestProviderSourcePublishProvider_Authentication(t *testing.T) {
 	db := testutils.SetupTestDatabase(t)
 	defer testutils.CleanupTestDatabase(t, db)
@@ -182,12 +183,12 @@ func TestProviderSourcePublishProvider_Authentication(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "authenticated user can publish provider",
+			name: "non-admin session password user returns 403 (requires GitHub auth or admin)",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "POST", "/github/repositories/123/publish-provider", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github", "repo_id": "123"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "admin user can publish provider",
@@ -195,7 +196,7 @@ func TestProviderSourcePublishProvider_Authentication(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/github/repositories/123/publish-provider")
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github", "repo_id": "123"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound, // 404 because repository doesn't exist (checked before form data)
 		},
 	}
 

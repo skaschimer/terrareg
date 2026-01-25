@@ -17,6 +17,7 @@ import (
 	moduleCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
 	providerCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider"
+	providerSourceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider_source"
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
@@ -25,6 +26,7 @@ import (
 	gpgkeyQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/gpgkey"
 	graphQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/graph"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	providerSourceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider_source"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
 	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
@@ -46,6 +48,7 @@ import (
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service" // Alias for the new module service
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
+	repositoryRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/repository"
 	sharedService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
 	storageModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/model"
 	storageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
@@ -70,6 +73,7 @@ import (
 	modulePersistence "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	sqldbprovider "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider"
 	sqldbProviderSource "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider_source"
+	sqldbRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/repository"
 	providerLogoRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/provider_logo"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http"
 	terraformHandler "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform"
@@ -126,7 +130,18 @@ type Container struct {
 	GitProviderFactory *gitService.GitProviderFactory
 
 	// Provider Sources
-	ProviderSourceFactory *providerSourceService.ProviderSourceFactory
+	ProviderSourceFactory       *providerSourceService.ProviderSourceFactory
+
+	// Provider Source API Queries
+	GetOrganizationsQuery       *providerSourceQuery.GetOrganizationsQuery
+	GetRepositoriesQuery        *providerSourceQuery.GetRepositoriesQuery
+
+	// Provider Source API Commands
+	RefreshNamespaceCommand     *providerSourceCmd.RefreshNamespaceCommand
+	publishProviderCommand      *providerSourceCmd.PublishProviderCommand
+
+	// Repository
+	RepositoryRepo repositoryRepo.RepositoryRepository
 
 	// Infrastructure Services
 	GitClient              gitService.GitClient
@@ -286,6 +301,7 @@ type Container struct {
 	GraphHandler               *terrareg.GraphHandler
 	ModuleWebhookHandler       *webhook.ModuleWebhookHandler
 	ProviderSourceHandler      *terrareg.ProviderSourceHandler
+	ProviderSourceAPIHandler   *terrareg.ProviderSourceAPIHandler
 	TerraformV1ModuleHandler   *v1.TerraformV1ModuleHandler // New V1 Terraform Module Handler
 	TerraformV2ProviderHandler *v2.TerraformV2ProviderHandler
 	TerraformV2CategoryHandler *v2.TerraformV2CategoryHandler
@@ -701,7 +717,7 @@ func NewContainer(
 	c.SAMLService, _ = authservice.NewSAMLService(infraConfig)
 
 	// Initialize AuthFactory after all services are created
-	c.AuthFactory = authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, c.CookieService, &c.Logger)
+	c.AuthFactory = authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, c.NamespaceRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, c.CookieService, &c.Logger)
 
 	// Initialize StateStorageService
 	c.StateStorageService = authservice.NewStateStorageService(c.SessionService)
@@ -924,6 +940,40 @@ func NewContainer(
 		c.DeleteUserGroupNamespacePermissionCmd,
 	)
 	c.ProviderSourceHandler = terrareg.NewProviderSourceHandler(c.ProviderSourceFactory, c.AuthenticationService)
+
+	// Initialize provider source API queries and commands
+	c.GetOrganizationsQuery, err = providerSourceQuery.NewGetOrganizationsQuery(c.ProviderSourceFactory, c.SessionRepo)
+	if err != nil {
+		return nil, err
+	}
+	c.GetRepositoriesQuery, err = providerSourceQuery.NewGetRepositoriesQuery(c.ProviderSourceFactory, c.SessionRepo, c.NamespaceRepo)
+	if err != nil {
+		return nil, err
+	}
+	c.RefreshNamespaceCommand, err = providerSourceCmd.NewRefreshNamespaceCommand(c.ProviderSourceFactory, c.NamespaceRepo)
+	if err != nil {
+		return nil, err
+	}
+	c.publishProviderCommand, err = providerSourceCmd.NewPublishProviderCommand(c.ProviderSourceFactory, c.ProviderRepo, c.NamespaceRepo, c.ProviderCategoryRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize repository
+	c.RepositoryRepo = sqldbRepository.NewRepositoryRepository(c.DB.DB)
+
+	// Initialize provider source API handler
+	c.ProviderSourceAPIHandler, err = terrareg.NewProviderSourceAPIHandler(
+		c.GetOrganizationsQuery,
+		c.GetRepositoriesQuery,
+		c.RefreshNamespaceCommand,
+		c.publishProviderCommand,
+		c.RepositoryRepo,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	c.AuditHandler = terrareg.NewAuditHandler(c.GetAuditHistoryQuery)
 	c.GraphHandler = terrareg.NewGraphHandler(c.GetModuleDependencyGraphQuery, c.GraphService)
 
@@ -1005,6 +1055,7 @@ func NewContainer(
 		c.ModuleWebhookHandler, // Add webhook handler
 		c.GraphHandler,
 		c.ProviderSourceHandler,
+		c.ProviderSourceAPIHandler,
 	)
 
 	return c, nil

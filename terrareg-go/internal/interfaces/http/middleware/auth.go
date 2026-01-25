@@ -279,10 +279,14 @@ func (m *AuthMiddleware) RequireUploadPermission(namespaceParam string) func(htt
 			}
 
 			// Check if the authenticated user can upload to this namespace
-			// Use the authResponse from the authentication check above
-			if !authResponse.CanUpload {
-				http.Error(w, "Insufficient upload permissions", http.StatusForbidden)
-				return
+			// Admin users can upload to any namespace
+			if !authResponse.IsAdmin {
+				// For non-admin users, check namespace-specific permissions
+				permission, hasPermission := authResponse.Permissions[namespaceName]
+				if !hasPermission || (permission != "FULL" && permission != "MODIFY") {
+					http.Error(w, "Insufficient upload permissions", http.StatusForbidden)
+					return
+				}
 			}
 
 			// Create and set auth context

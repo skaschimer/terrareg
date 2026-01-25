@@ -7,22 +7,26 @@ import (
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 )
 
 // AdminSessionAuthMethod implements immutable authentication for admin users via session cookies
 type AdminSessionAuthMethod struct {
-	sessionRepo   repository.SessionRepository
-	userGroupRepo repository.UserGroupRepository
+	sessionRepo     repository.SessionRepository
+	userGroupRepo   repository.UserGroupRepository
+	namespaceRepo   moduleRepo.NamespaceRepository
 }
 
 // NewAdminSessionAuthMethod creates a new immutable admin session authentication method
 func NewAdminSessionAuthMethod(
 	sessionRepo repository.SessionRepository,
 	userGroupRepo repository.UserGroupRepository,
+	namespaceRepo moduleRepo.NamespaceRepository,
 ) *AdminSessionAuthMethod {
 	return &AdminSessionAuthMethod{
 		sessionRepo:   sessionRepo,
 		userGroupRepo: userGroupRepo,
+		namespaceRepo: namespaceRepo,
 	}
 }
 
@@ -72,13 +76,13 @@ func (a *AdminSessionAuthMethod) Authenticate(ctx context.Context, sessionData m
 	userID := 0 // TODO: Convert userInfo.UserID from string to int when user ID system is defined
 	authContext := auth.NewAdminSessionAuthContext(ctx, userID, userInfo.Username, userInfo.Email, sessionID)
 
-	// Admin sessions are always admin (matching Python's BaseAdminAuthMethod)
-	// In Python, AdminSessionAuthMethod inherits from both BaseAdminAuthMethod AND BaseSessionAuthMethod
-	// BaseAdminAuthMethod always returns is_admin=True
-	authContext.SetAdmin(true)
+	// Set admin status based on site_admin or is_admin flag from session
+	// Support both field names for backward compatibility
+	isAdmin := userInfo.SiteAdmin || userInfo.IsAdmin
+	authContext.SetAdmin(isAdmin)
 
-	// Get user permissions
-	permissions, err := a.getUserPermissions(ctx, userInfo.UserID)
+	// Get user permissions from user groups
+	permissions, err := a.getUserPermissions(ctx, userInfo.UserGroups)
 	if err == nil && permissions != nil {
 		for namespace, permission := range permissions {
 			authContext.SetPermission(namespace, permission)
@@ -112,14 +116,68 @@ func (a *AdminSessionAuthMethod) parseProviderSourceAuth(providerSourceAuth []by
 }
 
 // getUserPermissions gets the user's permissions across all namespaces
-// @TODO Can these be removed? The auth Method shouldn't need these, since everything uses AuthContext
-func (a *AdminSessionAuthMethod) getUserPermissions(ctx context.Context, userID string) (map[string]string, error) {
+// Returns a map of namespace name -> permission type string
+func (a *AdminSessionAuthMethod) getUserPermissions(ctx context.Context, userGroups []string) (map[string]string, error) {
 	permissions := make(map[string]string)
 
-	// In a real implementation, query the database for user permissions
-	// For now, return empty permissions - actual permissions would be set by user groups
+	// Query the database for user group permissions
+	for _, groupName := range userGroups {
+		group, err := a.userGroupRepo.FindByName(ctx, groupName)
+		if err != nil || group == nil {
+			continue
+		}
+
+		// Get namespace permissions for this user group from repository
+		groupPermissions, err := a.userGroupRepo.GetNamespacePermissions(ctx, group.GetID())
+		if err != nil {
+			continue
+		}
+
+		// Convert namespace permissions to string map
+		for _, perm := range groupPermissions {
+			namespaceName := a.getNamespaceName(ctx, perm.GetNamespaceID())
+			if namespaceName == "" {
+				continue
+			}
+			permissionType := string(perm.GetPermissionType())
+
+			// Keep the highest permission level (READ < MODIFY < FULL)
+			existingPermission, exists := permissions[namespaceName]
+			if !exists || a.isHigherPermission(permissionType, existingPermission) {
+				permissions[namespaceName] = permissionType
+			}
+		}
+	}
 
 	return permissions, nil
+}
+
+// getNamespaceName gets namespace name from ID using a lookup
+func (a *AdminSessionAuthMethod) getNamespaceName(ctx context.Context, namespaceID int) string {
+	if a.namespaceRepo == nil {
+		return ""
+	}
+
+	namespace, err := a.namespaceRepo.FindByID(ctx, namespaceID)
+	if err != nil || namespace == nil {
+		return ""
+	}
+
+	return namespace.Name()
+}
+
+// isHigherPermission returns true if newPermission is higher than existingPermission
+func (a *AdminSessionAuthMethod) isHigherPermission(newPermission, existingPermission string) bool {
+	permissionOrder := map[string]int{
+		"READ":   1,
+		"MODIFY": 2,
+		"FULL":   3,
+	}
+
+	newLevel := permissionOrder[newPermission]
+	existingLevel := permissionOrder[existingPermission]
+
+	return newLevel > existingLevel
 }
 
 // AuthMethod interface implementation for the base AdminSessionAuthMethod
@@ -147,7 +205,12 @@ func (a *AdminSessionAuthMethod) GetProviderData() map[string]interface{} {
 
 // UserInfo represents user information extracted from session
 type UserInfo struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	UserID     string   `json:"user_id"`
+	Username   string   `json:"username"`
+	Email      string   `json:"email"`
+	UserGroups []string `json:"user_groups"`
+	SiteAdmin  bool     `json:"site_admin"`
+	// IsAdmin is an alias for SiteAdmin to support both JSON field names
+	// Some code uses "is_admin" while other uses "site_admin"
+	IsAdmin bool `json:"is_admin"`
 }

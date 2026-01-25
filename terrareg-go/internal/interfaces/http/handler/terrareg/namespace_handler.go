@@ -172,8 +172,8 @@ func (h *NamespaceHandler) HandleNamespaceCreate(w http.ResponseWriter, r *http.
 	// Convert to DTO
 	response := h.presenter.ToDTO(ns)
 
-	// Send response
-	RespondJSON(w, http.StatusCreated, response)
+	// Send response - Python returns 200, not 201
+	RespondJSON(w, http.StatusOK, response)
 }
 
 // HandleNamespaceDetails handles GET /v1/terrareg/namespaces/{namespace}

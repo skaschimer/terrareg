@@ -57,6 +57,7 @@ type Server struct {
 	GraphHandler                *terrareg.GraphHandler
 	RateLimiter                 *http_middleware.RateLimiterMiddleware
 	ProviderSourceHandler       *terrareg.ProviderSourceHandler
+	ProviderSourceAPIHandler    *terrareg.ProviderSourceAPIHandler
 }
 
 // NewServer creates a new HTTP server
@@ -90,6 +91,7 @@ func NewServer(
 	moduleWebhookHandler *webhook.ModuleWebhookHandler,
 	graphHandler *terrareg.GraphHandler,
 	providerSourceHandler *terrareg.ProviderSourceHandler,
+	providerSourceAPIHandler *terrareg.ProviderSourceAPIHandler,
 ) *Server {
 	s := &Server{
 		router:                      chi.NewRouter(),
@@ -122,6 +124,7 @@ func NewServer(
 		ModuleWebhookHandler:        moduleWebhookHandler,
 		GraphHandler:                graphHandler,
 		ProviderSourceHandler:       providerSourceHandler,
+		ProviderSourceAPIHandler:    providerSourceAPIHandler,
 	}
 
 	s.setupMiddleware()
@@ -361,9 +364,13 @@ func (s *Server) setupRoutes() {
 	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/login", s.handleProviderSourceLogin)
 	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/callback", s.handleProviderSourceCallback)
 	s.router.With(s.AuthMiddleware.OptionalAuth).Get("/{provider_source}/auth/status", s.handleProviderSourceAuthStatus)
+	// Organizations endpoint - requires authentication
 	s.router.With(s.AuthMiddleware.RequireAuth).Get("/{provider_source}/organizations", s.handleProviderSourceOrganizations)
+	// Repositories endpoint - requires authentication
 	s.router.With(s.AuthMiddleware.RequireAuth).Get("/{provider_source}/repositories", s.handleProviderSourceRepositories)
-	s.router.With(s.AuthMiddleware.RequireAuth).Post("/{provider_source}/refresh-namespace", s.handleProviderSourceRefreshNamespace)
+	// Refresh namespace endpoint - requires admin
+	s.router.With(s.AuthMiddleware.RequireAdmin).Post("/{provider_source}/refresh-namespace", s.handleProviderSourceRefreshNamespace)
+	// Publish provider endpoint - requires authentication with FULL namespace permission on derived namespace
 	s.router.With(s.AuthMiddleware.RequireAuth).Post("/{provider_source}/repositories/{repo_id}/publish-provider", s.handleProviderSourcePublishProvider)
 
 	// Webhooks with extended timeout
@@ -910,28 +917,16 @@ func (s *Server) handleProviderSourceAuthStatus(w http.ResponseWriter, r *http.R
 	s.ProviderSourceHandler.HandleAuthStatus(w, r)
 }
 func (s *Server) handleProviderSourceOrganizations(w http.ResponseWriter, r *http.Request) {
-	// Provider source organizations not yet implemented
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "Provider source organizations not yet implemented",
-	})
+	s.ProviderSourceAPIHandler.HandleGetOrganizations(w, r)
 }
 func (s *Server) handleProviderSourceRepositories(w http.ResponseWriter, r *http.Request) {
-	// Provider source repositories not yet implemented
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "Provider source repositories not yet implemented",
-	})
+	s.ProviderSourceAPIHandler.HandleGetRepositories(w, r)
 }
 func (s *Server) handleProviderSourceRefreshNamespace(w http.ResponseWriter, r *http.Request) {
-	// Provider source refresh namespace not yet implemented
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "Provider source refresh namespace not yet implemented",
-	})
+	s.ProviderSourceAPIHandler.HandleRefreshNamespace(w, r)
 }
 func (s *Server) handleProviderSourcePublishProvider(w http.ResponseWriter, r *http.Request) {
-	// Provider source publish provider not yet implemented
-	respondJSON(w, http.StatusNotImplemented, map[string]interface{}{
-		"message": "Provider source publish provider not yet implemented",
-	})
+	s.ProviderSourceAPIHandler.HandlePublishProvider(w, r)
 }
 func (s *Server) handleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	s.ModuleWebhookHandler.HandleModuleWebhook("github").ServeHTTP(w, r)

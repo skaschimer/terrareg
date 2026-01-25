@@ -37,7 +37,8 @@ func (p *PublishApiKeyAuthMethod) Authenticate(ctx context.Context, headers, for
 		return nil, nil // Let other auth methods try
 	}
 
-	// Extract API key from X-Terrareg-ApiKey header (NOT Authorization header)
+	// Extract API key from X-Terrareg-ApiKey header
+	// Note: Python uses the same header for all API key types
 	apiKey, exists := headers["X-Terrareg-ApiKey"]
 	if !exists {
 		return nil, nil // Let other auth methods try

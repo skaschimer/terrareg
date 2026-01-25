@@ -9,6 +9,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	infraAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/auth"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
@@ -22,6 +23,7 @@ type AuthFactory struct {
 	mutex                  sync.RWMutex
 	sessionRepo            repository.SessionRepository
 	userGroupRepo          repository.UserGroupRepository
+	namespaceRepo          moduleRepo.NamespaceRepository
 	config                 *infraConfig.InfrastructureConfig
 	logger                 *zerolog.Logger
 	providerSourceFactory  *provider_source_service.ProviderSourceFactory
@@ -32,6 +34,7 @@ type AuthFactory struct {
 func NewAuthFactory(
 	sessionRepo repository.SessionRepository,
 	userGroupRepo repository.UserGroupRepository,
+	namespaceRepo moduleRepo.NamespaceRepository,
 	config *infraConfig.InfrastructureConfig,
 	terraformIdpService *TerraformIdpService,
 	oidcService *OIDCService,
@@ -43,6 +46,7 @@ func NewAuthFactory(
 		authMethods:           make([]auth.AuthMethod, 0),
 		sessionRepo:           sessionRepo,
 		userGroupRepo:         userGroupRepo,
+		namespaceRepo:         namespaceRepo,
 		config:                config,
 		logger:                logger,
 		providerSourceFactory: providerSourceFactory,
@@ -79,6 +83,7 @@ func (af *AuthFactory) initializeAuthMethods(terraformIdpService *TerraformIdpSe
 	adminSessionAuthMethod := infraAuth.NewAdminSessionAuthMethod(
 		af.sessionRepo,
 		af.userGroupRepo,
+		af.namespaceRepo,
 	)
 	af.RegisterAuthMethod(adminSessionAuthMethod)
 

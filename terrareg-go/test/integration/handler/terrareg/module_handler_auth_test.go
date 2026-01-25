@@ -1,7 +1,9 @@
 package terrareg_test
 
 import (
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,20 +62,20 @@ func TestModuleProviderCreate_Authentication(t *testing.T) {
 			name: "user with FULL permission can create module provider",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
-					t, db, "POST", "/v1/terrareg/modules/test-namespace/testmod/testprovider/create",
+					t, db, "POST", "/v1/terrareg/modules/test-namespace/testmod-full/testprovider/create",
 					"full-user", "test-namespace", sqldb.PermissionTypeFull,
 				)
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace", "name": "testmod", "provider": "testprovider"})
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace", "name": "testmod-full", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name: "admin user can create any module provider",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
-				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/test-namespace/testmod/testprovider/create")
-				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace", "name": "testmod", "provider": "testprovider"})
+				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/test-namespace/testmod-admin/testprovider/create")
+				return testutils.AddChiContext(t, req, map[string]string{"namespace": "test-namespace", "name": "testmod-admin", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 	}
 
@@ -142,15 +144,21 @@ func TestModuleProviderDelete_Authentication(t *testing.T) {
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name: "admin user can delete any module provider",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				// Recreate module provider since it was deleted by previous test
+				var namespaceDB sqldb.NamespaceDB
+				err := db.DB.Where("namespace = ?", "delete-namespace").First(&namespaceDB).Error
+				if err == nil {
+					testutils.CreateModuleProvider(t, db, namespaceDB.ID, "testmod", "testprovider")
+				}
 				req, _ := testutils.BuildAdminRequest(t, db, "DELETE", "/v1/terrareg/modules/delete-namespace/testmod/testprovider/delete")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "delete-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 	}
 
@@ -206,6 +214,9 @@ func TestModuleProviderSettingsUpdate_Authentication(t *testing.T) {
 					t, db, "POST", "/v1/terrareg/modules/settings-namespace/testmod/testprovider/settings",
 					"modify-user", "settings-namespace", sqldb.PermissionTypeModify,
 				)
+				// Add request body for settings update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "settings-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK,
@@ -217,6 +228,9 @@ func TestModuleProviderSettingsUpdate_Authentication(t *testing.T) {
 					t, db, "POST", "/v1/terrareg/modules/settings-namespace/testmod/testprovider/settings",
 					"full-user", "settings-namespace", sqldb.PermissionTypeFull,
 				)
+				// Add request body for settings update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "settings-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK,
@@ -225,6 +239,9 @@ func TestModuleProviderSettingsUpdate_Authentication(t *testing.T) {
 			name: "admin user can update any module settings",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/settings-namespace/testmod/testprovider/settings")
+				// Add request body for settings update
+				req.Body = io.NopCloser(strings.NewReader(`{"csrf_token":"test-token"}`))
+				req.Header.Set("Content-Type", "application/json")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "settings-namespace", "name": "testmod", "provider": "testprovider"})
 			},
 			expectedStatus: http.StatusOK,
@@ -292,21 +309,46 @@ func TestModuleVersionDelete_Authentication(t *testing.T) {
 		{
 			name: "user with FULL permission can delete module version",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				// Ensure module version exists before attempting delete
+				var namespaceDB sqldb.NamespaceDB
+				err := db.DB.Where("namespace = ?", "version-delete-namespace").First(&namespaceDB).Error
+				if err == nil {
+					var moduleProviderDB sqldb.ModuleProviderDB
+					err = db.DB.Where("namespace_id = ? AND module = ? AND provider = ?", namespaceDB.ID, "testmodulename", "testprovider").First(&moduleProviderDB).Error
+					if err == nil {
+						// Check if version already exists, if not create it
+						var versionCount int64
+						db.DB.Model(&sqldb.ModuleVersionDB{}).Where("module_provider_id = ? AND version = ?", moduleProviderDB.ID, "2.4.1").Count(&versionCount)
+						if versionCount == 0 {
+							testutils.CreateModuleVersion(t, db, moduleProviderDB.ID, "2.4.1")
+						}
+					}
+				}
 				req, _ := testutils.BuildAuthenticatedRequestWithNamespacePermission(
 					t, db, "DELETE", "/v1/terrareg/modules/version-delete-namespace/testmodulename/testprovider/2.4.1/delete",
 					"full-user", "version-delete-namespace", sqldb.PermissionTypeFull,
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "version-delete-namespace", "name": "testmodulename", "provider": "testprovider", "version": "2.4.1"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name: "admin user can delete any module version",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				// Recreate module version since it was deleted by previous test
+				var namespaceDB sqldb.NamespaceDB
+				err := db.DB.Where("namespace = ?", "version-delete-namespace").First(&namespaceDB).Error
+				if err == nil {
+					var moduleProviderDB sqldb.ModuleProviderDB
+					err = db.DB.Where("namespace_id = ? AND module = ? AND provider = ?", namespaceDB.ID, "testmodulename", "testprovider").First(&moduleProviderDB).Error
+					if err == nil {
+						testutils.CreateModuleVersion(t, db, moduleProviderDB.ID, "2.4.1")
+					}
+				}
 				req, _ := testutils.BuildAdminRequest(t, db, "DELETE", "/v1/terrareg/modules/version-delete-namespace/testmodulename/testprovider/2.4.1/delete")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "version-delete-namespace", "name": "testmodulename", "provider": "testprovider", "version": "2.4.1"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 	}
 
@@ -351,7 +393,7 @@ func TestModuleVersionPublish_Authentication(t *testing.T) {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "POST", "/v1/terrareg/modules/publish-namespace/testmod/testprovider/1.0.0/publish", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "publish-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name: "admin user can publish module version",
@@ -359,7 +401,7 @@ func TestModuleVersionPublish_Authentication(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/publish-namespace/testmod/testprovider/1.0.0/publish")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "publish-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 		},
 	}
 
@@ -396,7 +438,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req := testutils.BuildUnauthenticatedRequest(t, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name: "authenticated regular user returns 200",
@@ -404,7 +446,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name: "authenticated admin user returns 200",
@@ -412,7 +454,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 	}
 

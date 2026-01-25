@@ -54,7 +54,7 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing file
 		},
 		{
 			name: "user with FULL permission can upload",
@@ -65,7 +65,7 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing file
 		},
 		{
 			name: "admin user can upload to any namespace",
@@ -73,7 +73,7 @@ func TestModuleVersionUpload_Authentication(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/upload-namespace/testmod/testprovider/1.0.0/upload")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "upload-namespace", "name": "testmod", "provider": "testprovider", "version": "1.0.0"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing file
 		},
 	}
 
@@ -130,7 +130,7 @@ func TestModuleImport_Authentication(t *testing.T) {
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing data
 		},
 		{
 			name: "user with FULL permission can import",
@@ -141,7 +141,7 @@ func TestModuleImport_Authentication(t *testing.T) {
 				)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing data
 		},
 		{
 			name: "admin user can import to any namespace",
@@ -149,7 +149,7 @@ func TestModuleImport_Authentication(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/v1/terrareg/modules/import-namespace/testmod/testprovider/import")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "import-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusOK, // Will fail processing but auth passes
+			expectedStatus: http.StatusBadRequest, // Auth passes but handler returns 400 due to missing data
 		},
 	}
 
