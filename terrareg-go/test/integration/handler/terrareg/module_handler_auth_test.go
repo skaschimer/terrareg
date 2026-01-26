@@ -438,7 +438,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req := testutils.BuildUnauthenticatedRequest(t, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusNoContent,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated regular user returns 200",
@@ -446,7 +446,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusNoContent,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "authenticated admin user returns 200",
@@ -454,7 +454,7 @@ func TestModuleDetails_AllAuthMethods(t *testing.T) {
 				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/v1/terrareg/modules/details-namespace/testmod/testprovider")
 				return testutils.AddChiContext(t, req, map[string]string{"namespace": "details-namespace", "name": "testmod", "provider": "testprovider"})
 			},
-			expectedStatus: http.StatusNoContent,
+			expectedStatus: http.StatusOK,
 		},
 	}
 

@@ -1,9 +1,11 @@
-package service
+package provider_source
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
 )
 
 // GithubProviderSourceClass implements ProviderSourceClass for GitHub

@@ -98,26 +98,32 @@ func TestModuleListAPI_ResponseStructure(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// Verify response structure
-	var response map[string][]moduleDto.ModuleProviderResponse
+	// Verify response structure - parse as map[string]interface{}
+	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
+
+	// Verify top-level structure
+	assert.Contains(t, response, "meta")
 	assert.Contains(t, response, "modules")
-	assert.Len(t, response["modules"], 2)
+
+	// Access modules array
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 2)
 
 	// Verify first module
-	firstModule := response["modules"][0]
-	assert.Equal(t, "example", firstModule.Namespace)
-	assert.Equal(t, "test-module", firstModule.Name)
-	assert.Equal(t, "aws", firstModule.Provider)
-	assert.True(t, firstModule.Verified)
+	firstModule := modules[0].(map[string]interface{})
+	assert.Equal(t, "example", firstModule["namespace"])
+	assert.Equal(t, "test-module", firstModule["name"])
+	assert.Equal(t, "aws", firstModule["provider"])
+	assert.Equal(t, true, firstModule["verified"])
 
 	// Verify second module
-	secondModule := response["modules"][1]
-	assert.Equal(t, "test", secondModule.Namespace)
-	assert.Equal(t, "another", secondModule.Name)
-	assert.Equal(t, "gcp", secondModule.Provider)
-	assert.False(t, secondModule.Verified)
+	secondModule := modules[1].(map[string]interface{})
+	assert.Equal(t, "test", secondModule["namespace"])
+	assert.Equal(t, "another", secondModule["name"])
+	assert.Equal(t, "gcp", secondModule["provider"])
+	assert.Equal(t, false, secondModule["verified"])
 }
 
 func TestModuleListAPI_EmptyResponse(t *testing.T) {
@@ -137,12 +143,18 @@ func TestModuleListAPI_EmptyResponse(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// Verify empty response
-	var response map[string][]moduleDto.ModuleProviderResponse
+	// Verify empty response - parse as map[string]interface{}
+	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
+
+	// Verify top-level structure
+	assert.Contains(t, response, "meta")
 	assert.Contains(t, response, "modules")
-	assert.Empty(t, response["modules"])
+
+	// Access and verify empty modules array
+	modules := response["modules"].([]interface{})
+	assert.Empty(t, modules)
 }
 
 func TestModuleListAPI_ErrorResponse(t *testing.T) {

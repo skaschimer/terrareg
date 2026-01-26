@@ -445,6 +445,10 @@ func NewContainer(
 	// Initialize provider source factory
 	c.ProviderSourceFactory = providerSourceService.NewProviderSourceFactory(c.ProviderSourceRepo)
 
+	// Register provider source classes
+	githubClass := providerSourceService.NewGithubProviderSourceClass()
+	c.ProviderSourceFactory.RegisterProviderSourceClass(githubClass)
+
 	c.URLService = urlservice.NewURLService(infraConfig)
 
 	// Initialize infrastructure services

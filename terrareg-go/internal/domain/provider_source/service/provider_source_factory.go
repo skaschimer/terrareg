@@ -21,6 +21,9 @@ type ProviderSourceClass interface {
 	// GenerateDBConfigFromSourceConfig validates and converts user config to DB config
 	// Python reference: github.py::generate_db_config_from_source_config()
 	GenerateDBConfigFromSourceConfig(sourceConfig map[string]interface{}) (*model.ProviderSourceConfig, error)
+
+	// CreateInstance creates a provider source instance with the given name
+	CreateInstance(name string, repo repository.ProviderSourceRepository) (ProviderSourceInstance, error)
 }
 
 // ProviderSourceFactory manages provider sources
@@ -374,11 +377,27 @@ func (f *ProviderSourceFactory) getProviderSourceImplementation(ctx context.Cont
 		return nil, fmt.Errorf("unsupported provider source type: %s", source.Type())
 	}
 
-	// Create a wrapper that delegates to the domain model
-	// The actual implementation is in the provider_source package
-	return &providerSourceInstanceAdapter{
-		source: source,
-	}, nil
+	// Get the GitHub provider source class from factory
+	sourceClass := f.GetProviderSourceClassByType(source.Type())
+	if sourceClass == nil {
+		return nil, fmt.Errorf("GitHub provider source class not registered")
+	}
+
+	// Create the actual GithubProviderSource instance
+	githubClass, ok := sourceClass.(*GithubProviderSourceClass)
+	if !ok {
+		return nil, fmt.Errorf("invalid GitHub provider source class type")
+	}
+
+	// Create the actual GithubProviderSource instance
+	// This creates the actual implementation with OAuth methods
+	githubProviderSource := NewGithubProviderSource(
+		source.Name(),
+		f.repo,
+		githubClass,
+	)
+
+	return githubProviderSource, nil
 }
 
 // providerSourceInstanceAdapter adapts a ProviderSource model to ProviderSourceInstance interface

@@ -3,6 +3,7 @@ package terrareg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider_source"
 	provider_source_query "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider_source"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	terrareg_middleware "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
 )
@@ -75,6 +77,11 @@ func (h *ProviderSourceAPIHandler) HandleGetOrganizations(w http.ResponseWriter,
 		SessionID:      sessionID,
 	})
 	if err != nil {
+		// Check if provider source doesn't exist
+		if errors.Is(err, shared.ErrNotFound) {
+			RespondError(w, http.StatusNotFound, "Provider source not found")
+			return
+		}
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -113,6 +120,11 @@ func (h *ProviderSourceAPIHandler) HandleGetRepositories(w http.ResponseWriter, 
 		IsAdmin:        isAdmin,
 	})
 	if err != nil {
+		// Check if provider source doesn't exist
+		if errors.Is(err, shared.ErrNotFound) {
+			RespondError(w, http.StatusNotFound, "Provider source not found")
+			return
+		}
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -153,6 +165,11 @@ func (h *ProviderSourceAPIHandler) HandleRefreshNamespace(w http.ResponseWriter,
 		ProviderSource: providerSource,
 		Namespace:      req.Namespace,
 	}); err != nil {
+		// Check if provider source or namespace doesn't exist
+		if errors.Is(err, shared.ErrNotFound) {
+			RespondError(w, http.StatusNotFound, "Not found")
+			return
+		}
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

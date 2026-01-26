@@ -1,7 +1,10 @@
 package terrareg_test
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,20 +35,20 @@ func TestProviderSourceOrganizations_Authentication(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "authenticated user can access organizations",
+			name: "authenticated user gets 404 when provider source doesn't exist",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/github/organizations", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name: "admin user can access organizations",
+			name: "admin user gets 404 when provider source doesn't exist",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/github/organizations")
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound,
 		},
 	}
 
@@ -80,20 +83,20 @@ func TestProviderSourceRepositories_Authentication(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "authenticated user can access repositories",
+			name: "authenticated user gets 404 when provider source doesn't exist",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "GET", "/github/repositories", "regular-user", false)
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name: "admin user can access repositories",
+			name: "admin user gets 404 when provider source doesn't exist",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req, _ := testutils.BuildAdminRequest(t, db, "GET", "/github/repositories")
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound,
 		},
 	}
 
@@ -123,28 +126,32 @@ func TestProviderSourceRefreshNamespace_Authentication(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name: "unauthenticated request returns 401",
+			name: "unauthenticated request returns 403 (requires admin)",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
 				req := testutils.BuildUnauthenticatedRequest(t, "POST", "/github/refresh-namespace")
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "authenticated user can refresh namespace",
+			name: "authenticated user gets 403 (requires admin)",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				reqBody, _ := json.Marshal(map[string]string{"namespace": "refresh-namespace"})
 				req, _ := testutils.BuildAuthenticatedRequestWithSession(t, db, "POST", "/github/refresh-namespace", "regular-user", false)
+				req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "admin user can refresh namespace",
+			name: "admin user gets 404 when provider source doesn't exist",
 			setupAuth: func(t *testing.T, db *sqldb.Database) *http.Request {
+				reqBody, _ := json.Marshal(map[string]string{"namespace": "refresh-namespace"})
 				req, _ := testutils.BuildAdminRequest(t, db, "POST", "/github/refresh-namespace")
+				req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
 				return testutils.AddChiContext(t, req, map[string]string{"provider_source": "github"})
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound,
 		},
 	}
 

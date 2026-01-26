@@ -7,6 +7,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 )
 
 // GetOrganizationsQuery retrieves organizations for a provider source
@@ -57,7 +58,7 @@ func (q *GetOrganizationsQuery) Execute(ctx context.Context, req GetOrganization
 		return nil, fmt.Errorf("failed to get provider source: %w", err)
 	}
 	if providerSource == nil {
-		return nil, fmt.Errorf("provider source not found: %s", req.ProviderSource)
+		return nil, shared.ErrNotFound
 	}
 
 	// Get organizations from provider source

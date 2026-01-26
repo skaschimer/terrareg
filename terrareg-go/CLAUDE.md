@@ -524,6 +524,175 @@ type DomainError struct {
 
 ---
 
+## Error Handling Patterns
+
+### Use Error Types, Not String Matching
+
+**CRITICAL**: Always use proper error types for error checking, never string matching.
+
+```go
+// ❌ WRONG - String matching
+if err != nil && strings.Contains(err.Error(), "not found") {
+    return http.StatusNotFound
+}
+
+// ✅ CORRECT - Error type checking
+if errors.Is(err, shared.ErrNotFound) {
+    return http.StatusNotFound
+}
+```
+
+### Standard Error Types
+
+Common errors are defined in `/internal/domain/shared/errors.go`:
+
+```go
+var (
+    ErrNotFound            = errors.New("not found")
+    ErrAlreadyExists       = errors.New("already exists")
+    ErrInvalidInput        = errors.New("invalid input")
+    ErrUnauthorized        = errors.New("unauthorized")
+    ErrForbidden           = errors.New("forbidden")
+    // ... more standard errors
+)
+```
+
+### Repository Error Pattern
+
+Repositories should return `shared.ErrNotFound` when a record doesn't exist:
+
+```go
+// In repository implementation
+func (r *MyRepositoryImpl) FindByID(ctx context.Context, id int) (*Model, error) {
+    var dbModel DBModel
+    err := r.db.WithContext(ctx).First(&dbModel, id).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, shared.ErrNotFound  // ✅ Return standard error type
+        }
+        return nil, fmt.Errorf("failed to find: %w", err)
+    }
+    return r.dbModelToDomain(&dbModel), nil
+}
+```
+
+### Query/Command Error Handling
+
+Application layer queries and commands should use `errors.Is()` to check for specific errors:
+
+```go
+// In query or command
+func (q *MyQuery) Execute(ctx context.Context, req Request) (*Result, error) {
+    entity, err := q.repo.FindByName(ctx, req.Name)
+    if err != nil {
+        // Check for not found error
+        if errors.Is(err, shared.ErrNotFound) {
+            return nil, shared.ErrNotFound  // ✅ Return standard error type
+        }
+        return nil, fmt.Errorf("failed to get entity: %w", err)
+    }
+    // ... process entity
+}
+```
+
+### Handler Error Response
+
+HTTP handlers should check error types and return appropriate HTTP status codes:
+
+```go
+// In HTTP handler
+func (h *MyHandler) HandleRequest(w http.ResponseWriter, r *http.Request) {
+    result, err := h.myQuery.Execute(r.Context(), req)
+    if err != nil {
+        // Check for specific error types
+        if errors.Is(err, shared.ErrNotFound) {
+            RespondError(w, http.StatusNotFound, "Resource not found")
+            return
+        }
+        if errors.Is(err, shared.ErrInvalidInput) {
+            RespondError(w, http.StatusBadRequest, err.Error())
+            return
+        }
+        // Generic error handling
+        RespondError(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+    RespondJSON(w, http.StatusOK, result)
+}
+```
+
+### DomainError for Custom Errors
+
+For domain-specific errors, use the `DomainError` type:
+
+```go
+// Domain error with code and message
+type DomainError struct {
+    Code    string
+    Message string
+    Err     error
+}
+
+func (e *DomainError) Error() string {
+    if e.Err != nil {
+        return e.Message + ": " + e.Err.Error()
+    }
+    return e.Message
+}
+
+func (e *DomainError) Unwrap() error {
+    return e.Err
+}
+
+// Usage
+func ValidateVersion(version string) error {
+    if !semver.IsValid(version) {
+        return &shared.DomainError{
+            Code:    "INVALID_VERSION",
+            Message: fmt.Sprintf("version %q is invalid", version),
+        }
+    }
+    return nil
+}
+```
+
+### Error Wrapping Guidelines
+
+**When to wrap errors:**
+- ✅ Wrap with context when passing up layers: `fmt.Errorf("failed to get user: %w", err)`
+- ✅ Wrap with `shared.ErrNotFound` for not found cases: `return nil, shared.ErrNotFound`
+- ❌ Don't wrap if you're just adding context to a standard error type
+
+**Error wrapping patterns:**
+```go
+// ✅ GOOD - Direct return of standard error type
+if entity == nil {
+    return nil, shared.ErrNotFound
+}
+
+// ✅ GOOD - Wrap with context using %w
+if err != nil {
+    return nil, fmt.Errorf("failed to query database: %w", err)
+}
+
+// ❌ BAD - Wrapping standard error (loses error type)
+if entity == nil {
+    return nil, fmt.Errorf("entity not found: %w", shared.ErrNotFound)
+}
+```
+
+### Summary
+
+| Pattern | Correct Usage |
+|---------|--------------|
+| **Define errors** | Use `var ErrNotFound = errors.New("not found")` in shared package |
+| **Return errors** | Return `shared.ErrNotFound` directly, not wrapped |
+| **Check errors** | Use `errors.Is(err, shared.ErrNotFound)` not string matching |
+| **HTTP status** | Check error type in handler, return appropriate status code |
+| **Custom errors** | Use `DomainError` for domain-specific error codes |
+
+---
+
 ## Configuration Management
 
 ### Three-Tier Configuration

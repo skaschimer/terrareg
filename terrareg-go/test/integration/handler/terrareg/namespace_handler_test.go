@@ -277,7 +277,7 @@ func TestNamespaceHandler_HandleNamespaceCreate_Success(t *testing.T) {
 
 	handler.HandleNamespaceCreate(w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "name")

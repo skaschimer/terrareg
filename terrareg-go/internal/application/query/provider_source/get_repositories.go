@@ -8,6 +8,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	providerSourceModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 )
 
 // GetRepositoriesQuery retrieves repositories for a provider source
@@ -68,7 +69,7 @@ func (q *GetRepositoriesQuery) Execute(ctx context.Context, req GetRepositoriesR
 		return nil, fmt.Errorf("failed to get provider source: %w", err)
 	}
 	if providerSource == nil {
-		return nil, fmt.Errorf("provider source not found: %s", req.ProviderSource)
+		return nil, shared.ErrNotFound
 	}
 
 	// Get repositories from provider source

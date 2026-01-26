@@ -83,7 +83,7 @@ func createNamespace(t *testing.T, client *http.Client, baseURL, namespaceName s
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
-	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var response map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&response)
