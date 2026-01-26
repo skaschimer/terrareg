@@ -1,11 +1,12 @@
 package provider_source
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // GithubProviderSourceClass implements ProviderSourceClass for GitHub
@@ -104,4 +105,16 @@ func (g *GithubProviderSourceClass) GenerateDBConfigFromSourceConfig(sourceConfi
 // ValidateConfig validates a provider source configuration for GitHub
 func (g *GithubProviderSourceClass) ValidateConfig(config *model.ProviderSourceConfig) error {
 	return config.ValidateForType(string(model.ProviderSourceTypeGithub))
+}
+
+// CreateInstance creates a new GithubProviderSource instance
+// Python reference: factory.py::get_provider_source_class_by_type() followed by instantiation
+func (g *GithubProviderSourceClass) CreateInstance(name string, repo repository.ProviderSourceRepository, db interface{}) (service.ProviderSourceInstance, error) {
+	var dbPtr *sqldb.Database
+	if db != nil {
+		if d, ok := db.(*sqldb.Database); ok {
+			dbPtr = d
+		}
+	}
+	return NewGithubProviderSource(name, repo, g, dbPtr), nil
 }

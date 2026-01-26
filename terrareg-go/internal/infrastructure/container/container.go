@@ -55,6 +55,7 @@ import (
 	urlservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	providerSourceRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
+	providerSourceImpl "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/git"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
@@ -445,8 +446,11 @@ func NewContainer(
 	// Initialize provider source factory
 	c.ProviderSourceFactory = providerSourceService.NewProviderSourceFactory(c.ProviderSourceRepo)
 
+	// Set database on factory for provider source instances
+	c.ProviderSourceFactory.SetDatabase(c.DB)
+
 	// Register provider source classes
-	githubClass := providerSourceService.NewGithubProviderSourceClass()
+	githubClass := providerSourceImpl.NewGithubProviderSourceClass()
 	c.ProviderSourceFactory.RegisterProviderSourceClass(githubClass)
 
 	c.URLService = urlservice.NewURLService(infraConfig)

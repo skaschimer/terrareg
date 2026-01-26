@@ -23,7 +23,7 @@ type ProviderSourceClass interface {
 	GenerateDBConfigFromSourceConfig(sourceConfig map[string]interface{}) (*model.ProviderSourceConfig, error)
 
 	// CreateInstance creates a provider source instance with the given name
-	CreateInstance(name string, repo repository.ProviderSourceRepository) (ProviderSourceInstance, error)
+	CreateInstance(name string, repo repository.ProviderSourceRepository, db interface{}) (ProviderSourceInstance, error)
 }
 
 // ProviderSourceFactory manages provider sources
@@ -32,6 +32,7 @@ type ProviderSourceFactory struct {
 	repo         repository.ProviderSourceRepository
 	classMapping map[model.ProviderSourceType]ProviderSourceClass
 	mu           sync.RWMutex
+	db           interface{} // Database for provider source instances
 }
 
 // NewProviderSourceFactory creates a new ProviderSourceFactory
@@ -41,6 +42,21 @@ func NewProviderSourceFactory(repo repository.ProviderSourceRepository) *Provide
 		repo:         repo,
 		classMapping: make(map[model.ProviderSourceType]ProviderSourceClass),
 	}
+}
+
+// SetDatabase sets the database for the factory
+// This is called after factory creation to provide database access
+func (f *ProviderSourceFactory) SetDatabase(db interface{}) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.db = db
+}
+
+// getDatabase returns the database (with lock protection)
+func (f *ProviderSourceFactory) getDatabase() interface{} {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.db
 }
 
 // RegisterProviderSourceClass registers a provider source class
@@ -243,7 +259,7 @@ func (f *ProviderSourceFactory) InitialiseFromConfig(ctx context.Context, config
 // Python reference: provider_source/base.py::BaseProviderSource
 type ProviderSourceInstance interface {
 	Name() string
-	ApiName() string
+	ApiName(ctx context.Context) (string, error)
 	Type() model.ProviderSourceType
 
 	// OAuth methods for GitHub provider sources
@@ -289,8 +305,8 @@ func (p *providerSourceInstanceImpl) Name() string {
 	return p.source.Name()
 }
 
-func (p *providerSourceInstanceImpl) ApiName() string {
-	return p.source.ApiName()
+func (p *providerSourceInstanceImpl) ApiName(ctx context.Context) (string, error) {
+	return p.source.ApiName(), nil
 }
 
 func (p *providerSourceInstanceImpl) Type() model.ProviderSourceType {
@@ -372,32 +388,14 @@ func (p *providerSourceInstanceImpl) PublishProviderFromRepository(ctx context.C
 // getProviderSourceImplementation gets the actual provider source implementation
 // This creates the concrete implementation (e.g., GithubProviderSource) from the model
 func (f *ProviderSourceFactory) getProviderSourceImplementation(ctx context.Context, source *model.ProviderSource) (ProviderSourceInstance, error) {
-	// For now, only GitHub is implemented
-	if source.Type() != model.ProviderSourceTypeGithub {
-		return nil, fmt.Errorf("unsupported provider source type: %s", source.Type())
-	}
-
-	// Get the GitHub provider source class from factory
+	// Get the provider source class from factory
 	sourceClass := f.GetProviderSourceClassByType(source.Type())
 	if sourceClass == nil {
-		return nil, fmt.Errorf("GitHub provider source class not registered")
+		return nil, fmt.Errorf("provider source class not registered for type: %s", source.Type())
 	}
 
-	// Create the actual GithubProviderSource instance
-	githubClass, ok := sourceClass.(*GithubProviderSourceClass)
-	if !ok {
-		return nil, fmt.Errorf("invalid GitHub provider source class type")
-	}
-
-	// Create the actual GithubProviderSource instance
-	// This creates the actual implementation with OAuth methods
-	githubProviderSource := NewGithubProviderSource(
-		source.Name(),
-		f.repo,
-		githubClass,
-	)
-
-	return githubProviderSource, nil
+	// Use the class's CreateInstance method to create the actual implementation
+	return sourceClass.CreateInstance(source.Name(), f.repo, f.getDatabase())
 }
 
 // providerSourceInstanceAdapter adapts a ProviderSource model to ProviderSourceInstance interface
@@ -410,8 +408,8 @@ func (a *providerSourceInstanceAdapter) Name() string {
 	return a.source.Name()
 }
 
-func (a *providerSourceInstanceAdapter) ApiName() string {
-	return a.source.ApiName()
+func (a *providerSourceInstanceAdapter) ApiName(ctx context.Context) (string, error) {
+	return a.source.ApiName(), nil
 }
 
 func (a *providerSourceInstanceAdapter) Type() model.ProviderSourceType {
