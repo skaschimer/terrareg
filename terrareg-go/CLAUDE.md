@@ -693,6 +693,245 @@ if entity == nil {
 
 ---
 
+## Provider Source Architecture
+
+### Overview
+
+The Provider Source system manages external Git provider integrations (GitHub, GitLab, etc.) for OAuth authentication and repository operations. It uses a factory pattern with class registration to support multiple provider types.
+
+### Python Reference
+
+- **Base**: `terrareg/server/provider_source/base.py::BaseProviderSource`
+- **GitHub**: `terrareg/server/provider_source/github.py::GithubProviderSource`
+- **Factory**: `terrareg/server/provider_source/factory.py::ProviderSourceFactory`
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Provider Source System                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    Domain Layer (provider_source)                    │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────────┐ │    │
+│  │  │ GithubProviderSource │  │      BaseProviderSource              │ │    │
+│  │  │                      │  │  (embeds ProviderSourceClass)        │ │    │
+│  │  │ - GetLoginRedirectURL│  │                                      │ │    │
+│  │  │ - GetUserAccessToken │  │ - Name() string                     │ │    │
+│  │  │ - GetUsername        │  │ - ApiName(ctx) (string, error)      │ │    │
+│  │  │ - GetUserOrganizations│ │ - Config(ctx) (*Config, error)       │ │    │
+│  │  │ - RefreshNamespace   │  │                                      │ │    │
+│  │  │ - PublishProvider    │  │                                      │ │    │
+│  │  └──────────┬───────────┘  └──────────────────┬───────────────────┘ │    │
+│  │             │                                  │                       │    │
+│  │             │                                  │                       │    │
+│  │  ┌──────────▼──────────────────────────────────▼───────────────────┐ │    │
+│  │  │           GithubProviderSourceClass                             │ │    │
+│  │  │           (implements ProviderSourceClass)                      │ │    │
+│  │  │                                                                  │ │    │
+│  │  │  - Type() ProviderSourceType                                    │ │    │
+│  │  │  - GenerateDBConfigFromSourceConfig(config) (*Config, error)    │ │    │
+│  │  │  - CreateInstance(name, repo, db) (ProviderSourceInstance, error)│ │    │
+│  │  └──────────────────────────────────────────────────────────────────┘ │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│                                    │ implements                              │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │              Service Layer (provider_source/service)                 │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │           ProviderSourceClass (interface)                    │   │    │
+│  │  │                                                              │   │    │
+│  │  │  - Type() ProviderSourceType                                │   │    │
+│  │  │  - GenerateDBConfigFromSourceConfig(config) (*Config, error) │   │    │
+│  │  │  - CreateInstance(name, repo, db) (ProviderSourceInstance, error)│   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │            ProviderSourceFactory                             │   │    │
+│  │  │                                                              │   │    │
+│  │  │  - repo: ProviderSourceRepository                           │   │    │
+│  │  │  - db: interface{} (database reference)                      │   │    │
+│  │  │  - classMapping: map[Type]ProviderSourceClass                │   │    │
+│  │  │                                                              │   │    │
+│  │  │  Methods:                                                    │   │    │
+│  │  │  - RegisterProviderSourceClass(class)                        │   │    │
+│  │  │  - GetProviderClasses() map[Type]Class                       │   │    │
+│  │  │  - GetProviderSourceByName(ctx, name) (Instance, error)      │   │    │
+│  │  │  - GetProviderSourceByApiName(ctx, apiName) (Instance, error) │   │    │
+│  │  │  - GetAllProviderSources(ctx) ([]Instance, error)             │   │    │
+│  │  │  - InitialiseFromConfig(ctx, configJSON) error                │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│                                    │ uses                                   │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │              Model Layer (provider_source/model)                     │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────────┐ │    │
+│  │  │   ProviderSource     │  │      ProviderSourceConfig            │ │    │
+│  │  │                      │  │                                      │ │    │
+│  │  │  - name string       │  │  - BaseURL string                    │ │    │
+│  │  │  - apiName string    │  │  - ApiURL string                     │ │    │
+│  │  │  - type Type         │  │  - ClientID string                   │ │    │
+│  │  │  - config *Config    │  │  - ClientSecret string               │ │    │
+│  │  └──────────────────────┘  │  - PrivateKeyPath string             │ │    │
+│  │                             │  - AppID string                      │ │    │
+│  │                             │  - LoginButtonText string            │ │    │
+│  │                             │  - DefaultAccessToken string         │ │    │
+│  │                             │  - DefaultInstallationID string      │ │    │
+│  │                             │  - AutoGenerateNamespaces bool       │ │    │
+│  │                             └──────────────────────────────────────┘ │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│                                    │ persists                               │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │         Repository Layer (provider_source/repository)                │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │      ProviderSourceRepository (interface)                    │   │    │
+│  │  │                                                              │   │    │
+│  │  │  - Upsert(ctx, source) error                                 │   │    │
+│  │  │  - FindByName(ctx, name) (*ProviderSource, error)            │   │    │
+│  │  │  - FindByApiName(ctx, apiName) (*ProviderSource, error)       │   │    │
+│  │  │  - FindAll(ctx) ([]*ProviderSource, error)                   │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│                                    │ implements                             │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │      Infrastructure Layer (persistence/sqldb/provider_source)         │    │
+│  │                                                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │     ProviderSourceRepositoryImpl                              │   │    │
+│  │  │     (implements ProviderSourceRepository)                     │   │    │
+│  │  │                                                              │   │    │
+│  │  │  - db *gorm.DB                                               │   │    │
+│  │  │  - Converts between domain/model and DB models               │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      Container Initialization                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Create repository:                                                       │
+│     repo := provider_source.NewProviderSourceRepository(db.DB)               │
+│                                                                              │
+│  2. Create factory:                                                          │
+│     factory := service.NewProviderSourceFactory(repo)                        │
+│                                                                              │
+│  3. Set database on factory (for provider instances):                        │
+│     factory.SetDatabase(db)                                                  │
+│                                                                              │
+│  4. Register provider source classes:                                        │
+│     githubClass := provider_source.NewGithubProviderSourceClass()            │
+│     factory.RegisterProviderSourceClass(githubClass)                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Files
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| **Domain** | `internal/domain/provider_source/github_provider_source.go` | GitHub provider implementation |
+| **Domain** | `internal/domain/provider_source/base_provider_source.go` | Base provider source functionality |
+| **Domain** | `internal/domain/provider_source/github_provider_source_class.go` | GitHub provider class (config validation, instance creation) |
+| **Model** | `internal/domain/provider_source/model/provider_source.go` | Domain models |
+| **Service** | `internal/domain/provider_source/service/provider_source_factory.go` | Factory pattern for provider sources |
+| **Repository** | `internal/domain/provider_source/repository/provider_source_repository.go` | Repository interface |
+| **Infra** | `internal/infrastructure/persistence/sqldb/provider_source/` | Repository implementation |
+
+### ProviderSourceInstance Interface
+
+The `ProviderSourceInstance` interface defines all operations that can be performed on a provider source:
+
+```go
+type ProviderSourceInstance interface {
+    // Basic properties
+    Name() string
+    ApiName(ctx context.Context) (string, error)
+    Type() model.ProviderSourceType
+
+    // OAuth methods
+    GetLoginRedirectURL(ctx context.Context) (string, error)
+    GetUserAccessToken(ctx context.Context, code string) (string, error)
+    GetUsername(ctx context.Context, accessToken string) (string, error)
+    GetUserOrganizations(ctx context.Context, accessToken string) []string
+
+    // API methods
+    GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*model.Organization, error)
+    GetUserRepositories(ctx context.Context, sessionID string) ([]*model.Repository, error)
+    RefreshNamespaceRepositories(ctx context.Context, namespace string) error
+    PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*PublishProviderResult, error)
+}
+```
+
+### Factory Pattern
+
+The factory pattern allows for:
+1. **Class Registration**: Provider classes are registered at startup
+2. **Type-based Discovery**: Get provider class by type
+3. **Lazy Instantiation**: Provider instances created on-demand
+4. **Database Injection**: Database passed to instances for operations
+
+```go
+// Registration (during container init)
+githubClass := provider_source.NewGithubProviderSourceClass()
+factory.RegisterProviderSourceClass(githubClass)
+
+// Usage (in handlers/queries)
+providerSource, err := factory.GetProviderSourceByName(ctx, "GitHub")
+if err != nil {
+    return err
+}
+redirectURL, err := providerSource.GetLoginRedirectURL(ctx)
+```
+
+### Configuration Management
+
+Provider sources are configured via JSON and initialized into the database:
+
+```go
+configJSON := `[
+    {
+        "name": "GitHub",
+        "type": "github",
+        "base_url": "https://github.com",
+        "api_url": "https://api.github.com",
+        "client_id": "xxx",
+        "client_secret": "yyy",
+        "private_key_path": "/path/to/key.pem",
+        "app_id": "12345",
+        "login_button_text": "Sign in with GitHub"
+    }
+]`
+
+err := factory.InitialiseFromConfig(ctx, configJSON)
+```
+
+### Critical Design Decisions
+
+1. **Class Moved to provider_source Package**: `GithubProviderSourceClass` is in the `provider_source` package (not `service`) to avoid circular imports since it needs to create `GithubProviderSource` instances.
+
+2. **Database Stored in Factory**: The factory stores a database reference and passes it to provider instances via `CreateInstance()`. This allows providers to perform database operations without tight coupling.
+
+3. **Interface-based Design**: All provider operations go through the `ProviderSourceInstance` interface, allowing different provider types (GitHub, GitLab, etc.) to be used interchangeably.
+
+4. **Lazy Instance Creation**: The factory stores provider source data (from DB) and creates actual implementation instances (`GithubProviderSource`) only when methods are called, via `getProviderSourceImplementation()`.
+
+---
+
 ## Configuration Management
 
 ### Three-Tier Configuration

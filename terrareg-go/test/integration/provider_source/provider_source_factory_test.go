@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
+	providerSourceImpl "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider_source"
@@ -27,8 +28,11 @@ func setupTestFactory(t *testing.T) (*service.ProviderSourceFactory, *sqldb.Data
 	// Create factory
 	factory := service.NewProviderSourceFactory(repo)
 
+	// Set database on factory for provider source instances
+	factory.SetDatabase(db)
+
 	// Register GitHub provider source class
-	githubClass := service.NewGithubProviderSourceClass()
+	githubClass := providerSourceImpl.NewGithubProviderSourceClass()
 	factory.RegisterProviderSourceClass(githubClass)
 
 	return factory, db
@@ -204,7 +208,9 @@ func TestGetProviderSourceByApiName(t *testing.T) {
 
 			if tt.expectFound {
 				require.NotNil(t, result)
-				assert.Equal(t, tt.providerApiName, result.ApiName())
+				apiName, err := result.ApiName(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, tt.providerApiName, apiName)
 			} else {
 				assert.Nil(t, result)
 			}
@@ -253,7 +259,9 @@ func TestGetAllProviderSources(t *testing.T) {
 	apiNames := make([]string, len(result))
 	for i, ps := range result {
 		names[i] = ps.Name()
-		apiNames[i] = ps.ApiName()
+		apiName, err := ps.ApiName(ctx)
+		require.NoError(t, err)
+		apiNames[i] = apiName
 	}
 
 	assert.ElementsMatch(t, []string{"Test Provider 1", "Test Provider 2"}, names)
@@ -374,7 +382,9 @@ func TestInitialiseFromConfig_Create(t *testing.T) {
 	require.NotNil(t, result)
 
 	assert.Equal(t, "Test Create 1", result.Name())
-	assert.Equal(t, "test-create-1", result.ApiName())
+	apiName, err := result.ApiName(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "test-create-1", apiName)
 	assert.Equal(t, model.ProviderSourceTypeGithub, result.Type())
 
 	// Verify in database
