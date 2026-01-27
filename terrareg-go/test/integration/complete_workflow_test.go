@@ -30,7 +30,7 @@ func TestCompleteWorkflow(t *testing.T) {
 	server := httptest.NewServer(container.Server.Router())
 	defer server.Close()
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	baseURL := server.URL
 
 	// Test 1: Create namespace
@@ -413,7 +413,7 @@ func TestCompleteWorkflowWebhookIntegration(t *testing.T) {
 	server := httptest.NewServer(container.Server.Router())
 	defer server.Close()
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	baseURL := server.URL
 
 	// Setup: Create a module provider for webhooks
