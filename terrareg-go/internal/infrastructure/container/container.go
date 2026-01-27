@@ -153,7 +153,6 @@ type Container struct {
 	TempDirManager         storageService.TemporaryDirectoryManager
 	StorageWorkflowService storageService.StorageWorkflowService
 	GitService             gitService.GitService
-	ModuleIndexingService  moduleService.ModuleIndexingService
 	ModuleParser           moduleService.ModuleParser
 	ModuleProcessorService moduleService.ModuleProcessorService
 
@@ -498,16 +497,6 @@ func NewContainer(
 	// Create adapter for module-specific storage operations (CopyDir, ExtractArchive, etc.)
 	moduleStorageAdapter := storageInfrastructure.NewModuleStorageAdapter(c.DomainStorageService, c.PathBuilder)
 	c.ModuleStorageService = moduleStorageAdapter
-
-	// Initialize module indexing service (pending ModuleProcessorService and ArchiveGenerationService)
-	// TODO: Implement ModuleProcessorService and ArchiveGenerationService
-	// c.ModuleIndexingService = moduleService.NewModuleIndexingServiceImpl(
-	//     c.GitService,
-	//     c.StorageWorkflowService,
-	//     c.ModuleProcessorService, // TODO: Create this service
-	//     c.ArchiveGenerationService, // TODO: Create this service
-	//     c.Logger,
-	// )
 
 	c.ModuleParser = parser.NewModuleParserImpl(c.ModuleStorageService, c.DomainConfig)
 

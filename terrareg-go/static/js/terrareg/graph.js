@@ -5,6 +5,7 @@ const router = new Navigo("/");
 
 function updateGraphData(data) {
     // Obtain graph data from relative URL
+    console.log(data);
     jQuery.get(
         `/v1/terrareg/modules/${data.namespace}/${data.module}/${data.provider}/${data.version}/graph/data`,
         {
