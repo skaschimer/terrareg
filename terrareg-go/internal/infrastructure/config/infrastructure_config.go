@@ -43,7 +43,7 @@ type InfrastructureConfig struct {
 	SecretKey                string   `env:"SECRET_KEY"`
 
 	// Analytics authentication (from Python ANALYTICS_AUTH_KEYS)
-	AnalyticsAuthKeys []string `env:"ANALYTICS_AUTH_KEYS" envDefault:""`
+	AnalyticsAuthKeys []string `env:"ANALYTICS_AUTH_KEYS"`
 
 	// Internal extraction authentication (from Python INTERNAL_EXTRACTION_ANALYTICS_TOKEN)
 	InternalExtractionAnalyticsToken string `env:"INTERNAL_EXTRACTION_ANALYTICS_TOKEN"`
@@ -101,8 +101,8 @@ type InfrastructureConfig struct {
 
 	// Terraform Configuration
 	TerraformBinaryPath     string `env:"TERRAFORM_BINARY_PATH"`
-	TerraformDefaultVersion string `env:"TERRAFORM_DEFAULT_VERSION" envDefault:"1.5.7"`
-	TerraformProduct        string `env:"TERRAFORM_PRODUCT" envDefault:"terraform"`
+	TerraformDefaultVersion string `env:"TERRAFORM_DEFAULT_VERSION"`
+	TerraformProduct        string `env:"TERRAFORM_PRODUCT"`
 	TerraformArchiveMirror  string `env:"TERRAFORM_ARCHIVE_MIRROR"`
 
 	// Server Configuration
@@ -111,11 +111,11 @@ type InfrastructureConfig struct {
 	AllowedProviders []string         `env:"ALLOWED_PROVIDERS"`
 
 	// HTTP Timeouts (in seconds)
-	StandardRequestTimeoutSeconds int `env:"STANDARD_REQUEST_TIMEOUT_SECONDS" envDefault:"60"`  // 1 minute default
-	ModuleIndexingTimeoutSeconds  int `env:"MODULE_INDEXING_TIMEOUT_SECONDS" envDefault:"1800"` // 30 minutes default
+	StandardRequestTimeoutSeconds int `env:"STANDARD_REQUEST_TIMEOUT_SECONDS"`  // Default: 60
+	ModuleIndexingTimeoutSeconds  int `env:"MODULE_INDEXING_TIMEOUT_SECONDS"`  // Default: 1800
 
 	// Terraform Processing Timeouts (in seconds)
-	TerraformLockTimeoutSeconds int `env:"TERRAFORM_LOCK_TIMEOUT_SECONDS" envDefault:"1800"` // 30 minutes default
+	TerraformLockTimeoutSeconds int `env:"TERRAFORM_LOCK_TIMEOUT_SECONDS"`  // Default: 1800
 
 	// Terraform Presigned URL Configuration
 	TerraformPresignedUrlSecret        string `env:"TERRAFORM_PRESIGNED_URL_SECRET"`
@@ -145,41 +145,6 @@ func (c *InfrastructureConfig) GetDatabaseConnectionURL() string {
 // GetListenAddress returns the server listen address
 func (c *InfrastructureConfig) GetListenAddress() string {
 	return fmt.Sprintf(":%d", c.ListenPort)
-}
-
-// ApplyDefaults applies default values to any empty configuration fields
-// This is called after config is created (either from env vars or directly)
-// to ensure sensible defaults are set without relying on env var loading
-// This is especially useful for tests that create config structs directly
-func (c *InfrastructureConfig) ApplyDefaults() *InfrastructureConfig {
-	// Create a copy to avoid mutating the original
-	cfg := *c
-
-	// Apply Terraform defaults
-	if cfg.TerraformDefaultVersion == "" {
-		cfg.TerraformDefaultVersion = "1.3.6" // Matches Python default
-	}
-	if cfg.TerraformProduct == "" {
-		cfg.TerraformProduct = "terraform"
-	}
-
-	// Apply timeout defaults
-	if cfg.StandardRequestTimeoutSeconds == 0 {
-		cfg.StandardRequestTimeoutSeconds = 60
-	}
-	if cfg.ModuleIndexingTimeoutSeconds == 0 {
-		cfg.ModuleIndexingTimeoutSeconds = 1800
-	}
-	if cfg.TerraformLockTimeoutSeconds == 0 {
-		cfg.TerraformLockTimeoutSeconds = 1800
-	}
-
-	// Apply slice defaults (for empty/nil slices)
-	if len(cfg.OpenIDConnectScopes) == 0 {
-		cfg.OpenIDConnectScopes = []string{"openid", "profile"}
-	}
-
-	return &cfg
 }
 
 // ValidateSAMLConfig validates SAML configuration
