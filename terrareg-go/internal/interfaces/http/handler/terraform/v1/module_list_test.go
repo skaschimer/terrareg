@@ -140,7 +140,8 @@ func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 		Modules:    modules,
 		TotalCount: 2,
 	}
-	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{}).Return(searchResult, nil)
+	// The query uses a default limit of 10 if not specified
+	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{Limit: 10}).Return(searchResult, nil)
 
 	// Create HTTP request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -152,9 +153,8 @@ func TestModuleListHandler_HandleListModules_Success(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// Verify the response structure
-	expectedBody := `{"modules":[`
-	assert.Contains(t, w.Body.String(), expectedBody)
+	// Verify the response structure (response includes meta and modules)
+	assert.Contains(t, w.Body.String(), `"modules":[`)
 	assert.Contains(t, w.Body.String(), `"namespace":"example"`)
 	assert.Contains(t, w.Body.String(), `"name":"aws"`)
 	assert.Contains(t, w.Body.String(), `"provider":"aws"`)
@@ -176,7 +176,8 @@ func TestModuleListHandler_HandleListModules_Empty(t *testing.T) {
 		Modules:    modules,
 		TotalCount: 0,
 	}
-	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{}).Return(searchResult, nil)
+	// The query uses a default limit of 10 if not specified
+	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{Limit: 10}).Return(searchResult, nil)
 
 	// Create HTTP request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -187,7 +188,7 @@ func TestModuleListHandler_HandleListModules_Empty(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `{"modules":[]}`)
+	assert.Contains(t, w.Body.String(), `"modules":[]`)
 }
 
 func TestModuleListHandler_HandleListModules_Error(t *testing.T) {
@@ -197,7 +198,7 @@ func TestModuleListHandler_HandleListModules_Error(t *testing.T) {
 	handler := NewModuleListHandler(listQuery)
 
 	// Return error
-	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{}).Return(nil, errors.New("database connection failed"))
+	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{Limit: 10}).Return(nil, errors.New("database connection failed"))
 
 	// Create HTTP request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -227,7 +228,8 @@ func TestModuleListHandler_HandleListModules_WithUnverified(t *testing.T) {
 		Modules:    modules,
 		TotalCount: 2,
 	}
-	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{}).Return(searchResult, nil)
+	// The query uses a default limit of 10 if not specified
+	mockRepo.On("Search", mock.Anything, repository.ModuleSearchQuery{Limit: 10}).Return(searchResult, nil)
 
 	// Create HTTP request
 	req := httptest.NewRequest("GET", "/v1/modules", nil)
@@ -263,12 +265,12 @@ func TestConvertModuleProviderToListResponse(t *testing.T) {
 	// Assert
 	assert.NotNil(t, result)
 	assert.Equal(t, "0", result.ID) // New ModuleProvider has ID 0
-	assert.Equal(t, "testns", result.Namespace)
+	assert.Equal(t, "testns", result.Namespace) // Namespace from module provider
 	assert.Equal(t, "testmodule", result.Name)
 	assert.Equal(t, "testprovider", result.Provider)
 	assert.True(t, result.Verified)
 	assert.False(t, result.Trusted)          // TODO: Get from namespace service
-	assert.Equal(t, "testns", *result.Owner) // Owner uses namespace name
+	assert.Equal(t, "test-owner", *result.Owner) // Owner uses version owner (from module version)
 	assert.Equal(t, "Test description", *result.Description)
 	assert.Equal(t, "2023-01-01T12:00:00Z", *result.PublishedAt)
 	assert.Equal(t, 0, result.Downloads) // Placeholder

@@ -142,7 +142,7 @@ func CreateModuleProvider(t *testing.T, db *sqldb.Database, namespaceID int, mod
 		LatestVersionID:       nil,
 	}
 
-	err := db.DB.Create(&moduleProvider).Error
+	err := db.DB.Save(&moduleProvider).Error
 	require.NoError(t, err)
 
 	return moduleProvider

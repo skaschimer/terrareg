@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,9 +39,9 @@ func TestGithubProviderSource_Config(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	config, err := gh.Config(context.Background())
 	require.NoError(t, err)
@@ -77,9 +76,9 @@ func TestGithubProviderSource_LoginButtonText(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	text, err := gh.LoginButtonText(context.Background())
 	require.NoError(t, err)
@@ -108,13 +107,17 @@ func TestGithubProviderSource_GetLoginRedirectURL(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	url, err := gh.GetLoginRedirectURL(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "https://github.example-test.com/login/oauth/authorize?client_id=unittest-github-client-id", url)
+	// The URL should include client_id, state, and scope
+	assert.Contains(t, url, "https://github.example-test.com/login/oauth/authorize")
+	assert.Contains(t, url, "client_id=unittest-github-client-id")
+	assert.Contains(t, url, "state=")
+	assert.Contains(t, url, "scope=read:org")
 }
 
 // TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces tests the AutoGenerateGithubOrganisationNamespaces method
@@ -166,9 +169,9 @@ func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testin
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			result, err := gh.AutoGenerateGithubOrganisationNamespaces(context.Background())
 			require.NoError(t, err)
@@ -259,9 +262,9 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			result, err := gh.IsEnabled(context.Background())
 			require.NoError(t, err)
@@ -292,9 +295,9 @@ func TestGithubProviderSource_GetPublicSourceURL(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	// Mock repository
 	mockRepo := &mockRepositoryImpl{
@@ -329,9 +332,9 @@ func TestGithubProviderSource_GetPublicArtifactDownloadURL(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	// Mock repository and provider version
 	testRepo := &mockRepositoryImpl{
@@ -435,9 +438,9 @@ func TestGithubProviderSource_GetUserAccessToken(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			token, err := gh.GetUserAccessToken(context.Background(), "abcdef-inputcode")
 			require.NoError(t, err)
@@ -526,9 +529,9 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			username, err := gh.GetUsername(context.Background(), tt.accessToken)
 			require.NoError(t, err)
@@ -634,9 +637,9 @@ func TestGithubProviderSource_GetUserOrganisations(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			orgs, err := gh.GetUserOrganisations(context.Background(), tt.accessToken)
 			require.NoError(t, err)
@@ -698,9 +701,9 @@ func TestGithubProviderSource_GetDefaultAccessToken(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			token, err := gh.GetDefaultAccessToken(context.Background())
 			require.NoError(t, err)
@@ -805,9 +808,9 @@ func TestGithubProviderSource_GenerateAppInstallationToken(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			token, err := gh.GenerateAppInstallationToken(context.Background(), tt.installationID)
 
@@ -868,9 +871,9 @@ func TestGithubProviderSource_GenerateJWT(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			jwt, err := gh.generateJWT(context.Background())
 
@@ -971,9 +974,9 @@ func TestGithubProviderSource_GetAppMetadata(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			metadata, err := gh.GetAppMetadata(context.Background())
 
@@ -1022,9 +1025,9 @@ func TestGithubProviderSource_GetAppInstallationURL(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 	url, err := gh.GetAppInstallationURL(context.Background())
 
@@ -1163,9 +1166,9 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			id, err := gh.GetGithubAppInstallationID(context.Background(), tt.namespace)
 
@@ -1273,9 +1276,9 @@ func TestGithubProviderSource_GetAccessTokenForProvider(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			token, err := gh.GetAccessTokenForProvider(context.Background(), tt.namespace)
 
@@ -1382,9 +1385,9 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			entityType, err := gh.IsEntityOrgOrUser(context.Background(), tt.identity, "unittest-access-token")
 

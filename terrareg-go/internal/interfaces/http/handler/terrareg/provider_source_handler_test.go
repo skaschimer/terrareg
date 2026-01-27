@@ -57,8 +57,8 @@ func (m *MockProviderSourceInstance) Name() string {
 	return "Test GitHub"
 }
 
-func (m *MockProviderSourceInstance) ApiName() string {
-	return "test-github"
+func (m *MockProviderSourceInstance) ApiName(ctx context.Context) (string, error) {
+	return "test-github", nil
 }
 
 func (m *MockProviderSourceInstance) Type() provider_source_model.ProviderSourceType {
@@ -97,6 +97,22 @@ func (m *MockProviderSourceInstance) GetUserOrganizations(ctx context.Context, a
 		return m.organizations
 	}
 	return []string{"test-org-1", "test-org-2"}
+}
+
+func (m *MockProviderSourceInstance) GetUserOrganizationsList(ctx context.Context, sessionID string) ([]*provider_source_model.Organization, error) {
+	return []*provider_source_model.Organization{}, nil
+}
+
+func (m *MockProviderSourceInstance) GetUserRepositories(ctx context.Context, sessionID string) ([]*provider_source_model.Repository, error) {
+	return []*provider_source_model.Repository{}, nil
+}
+
+func (m *MockProviderSourceInstance) RefreshNamespaceRepositories(ctx context.Context, namespace string) error {
+	return nil
+}
+
+func (m *MockProviderSourceInstance) PublishProviderFromRepository(ctx context.Context, repoID int, categoryID int, namespace string) (*provider_source_service.PublishProviderResult, error) {
+	return nil, nil
 }
 
 // MockAuthenticationService for testing

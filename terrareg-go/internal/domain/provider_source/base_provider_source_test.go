@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -71,6 +73,10 @@ func (m *MockProviderSourceClass) ValidateConfig(config *model.ProviderSourceCon
 		return m.validateFunc(config)
 	}
 	return nil
+}
+
+func (m *MockProviderSourceClass) CreateInstance(name string, repo repository.ProviderSourceRepository, db interface{}) (service.ProviderSourceInstance, error) {
+	return nil, nil
 }
 
 // TestBaseProviderSource_Name tests the Name method

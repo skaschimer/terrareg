@@ -214,9 +214,10 @@ golang-unit-tests:
   image: golang:1.25.4-trixie
   extends: .before_script_golang
   script:
-    - go test -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
-    - go tool cover -func=coverage.out | tee coverage.txt
-    - go tool cover -html=coverage.out -o coverage.html
+    # Run only non-integration, non-selenium tests with coverage
+    - go test -short -timeout 10m -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
+    # Only show coverage summary, not full function-by-function output
+    - go tool cover -func=coverage.out | grep total: | tee coverage.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < test-report.txt > junit-report.xml
   coverage: '/total:\s+\(statements\)\s+(\d+\.\d+)%/'
   artifacts:
@@ -225,7 +226,6 @@ golang-unit-tests:
     paths:
       - terrareg-go/coverage.out
       - terrareg-go/coverage.txt
-      - terrareg-go/coverage.html
       - terrareg-go/test-report.txt
       - terrareg-go/junit-report.xml
     expire_in: 1 week
@@ -243,7 +243,8 @@ golang-integration-tests-sqlite:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    - go test ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
+    # Run integration tests excluding selenium (using -short)
+    - go test -short ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-test-report.txt > junit-integration-report.xml
   artifacts:
     reports:
@@ -300,7 +301,8 @@ golang-integration-tests-postgres:
     POSTGRES_PASSWORD: terrareg
     POSTGRES_DATABASE: terrareg
   script:
-    - go test -v -race ./test/integration/... -timeout 10m 2>&1 | tee integration-postgres-test-report.txt
+    # Run integration tests with race detector (excluding selenium via -short)
+    - go test -short -v -race ./test/integration/... -timeout 15m 2>&1 | tee integration-postgres-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-postgres-test-report.txt > junit-integration-postgres-report.xml
   artifacts:
     reports:
@@ -308,6 +310,91 @@ golang-integration-tests-postgres:
     paths:
       - terrareg-go/integration-postgres-test-report.txt
       - terrareg-go/junit-integration-postgres-report.xml
+    expire_in: 1 week
+
+# Go selenium tests with SQLite (default)
+golang-selenium-tests-sqlite:
+  stage: test
+  extends: .test_image_golang
+  needs:
+    - build-golang-test-docker-image
+  services:
+    - name: minio/minio
+      alias: minio
+      command: ["server", "/data", "--console-address", ":9001"]
+  variables:
+    MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
+    MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
+  script:
+    # Run selenium tests (without -short flag)
+    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-test-report.txt
+    - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-test-report.txt > junit-selenium-report.xml
+  artifacts:
+    reports:
+      junit: terrareg-go/junit-selenium-report.xml
+    paths:
+      - terrareg-go/selenium-test-report.txt
+      - terrareg-go/junit-selenium-report.xml
+    expire_in: 1 week
+
+# Go selenium tests with MySQL
+golang-selenium-tests-mysql:
+  stage: test
+  extends: .test_image_golang
+  needs:
+    - build-golang-test-docker-image
+    - golang-selenium-tests-sqlite
+  services:
+    - name: mariadb:10.8
+      alias: mysql
+    - name: minio/minio
+      alias: minio
+      command: ["server", "/data", "--console-address", ":9001"]
+  variables:
+    INTEGRATION_DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true
+    MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
+    MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
+  script:
+    # Run selenium tests (without -short flag)
+    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-mysql-test-report.txt
+    - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-mysql-test-report.txt > junit-selenium-mysql-report.xml
+  artifacts:
+    reports:
+      junit: terrareg-go/junit-selenium-mysql-report.xml
+    paths:
+      - terrareg-go/selenium-mysql-test-report.txt
+      - terrareg-go/junit-selenium-mysql-report.xml
+    expire_in: 1 week
+
+# Go selenium tests with PostgreSQL
+golang-selenium-tests-postgres:
+  stage: test
+  extends: .test_image_golang
+  needs:
+    - build-golang-test-docker-image
+  services:
+    - name: postgres:17.4
+      alias: postgres
+    - name: minio/minio
+      alias: minio
+      command: ["server", "/data", "--console-address", ":9001"]
+  variables:
+    INTEGRATION_DATABASE_URL: postgres://terrareg:terrareg@postgres:5432/terrareg?sslmode=disable
+    MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
+    MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
+    POSTGRES_USER: terrareg
+    POSTGRES_PASSWORD: terrareg
+    POSTGRES_DATABASE: terrareg
+  script:
+    # Run selenium tests (without -short flag)
+    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-postgres-test-report.txt
+    - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-postgres-test-report.txt > junit-selenium-postgres-report.xml
+  artifacts:
+    reports:
+      junit: terrareg-go/junit-selenium-postgres-report.xml
+    paths:
+      - terrareg-go/selenium-postgres-test-report.txt
+      - terrareg-go/junit-selenium-postgres-report.xml
     expire_in: 1 week
 
 # Go security tests

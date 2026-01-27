@@ -11,13 +11,10 @@ import (
 	"testing"
 
 	provider_source_model "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 // TestGetCommitHashByRelease tests the GetCommitHashByRelease method
@@ -78,9 +75,14 @@ func TestGetCommitHashByRelease(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -155,9 +157,14 @@ func TestGetReleaseArtifactsMetadata(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -227,9 +234,14 @@ func TestGetReleaseArtifact(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -301,9 +313,14 @@ func TestGetReleaseArchive(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -374,14 +391,6 @@ func TestAddRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set up in-memory database
-			db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
-			require.NoError(t, err)
-			err = db.AutoMigrate(&sqldb.RepositoryDB{})
-			require.NoError(t, err)
-
-			database := &sqldb.Database{DB: db}
-
 			mockPSRepo := &MockProviderSourceRepository{
 				findByNameFunc: func(ctx context.Context, name string) (*provider_source_model.ProviderSource, error) {
 					return provider_source_model.NewProviderSource(
@@ -392,18 +401,23 @@ func TestAddRepository(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-source-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-source-name", mockPSRepo, ghClass, sqldbDB)
 
-			err = gh.AddRepository(context.Background(), database, tt.repositoryMetadata)
+			err = gh.AddRepository(context.Background(), sqldbDB, tt.repositoryMetadata)
 
 			assert.NoError(t, err)
 
 			if tt.expectCreate {
 				// Verify repository was created
 				var repos []sqldb.RepositoryDB
-				db.Find(&repos)
+				sqldbDB.DB.Find(&repos)
 				require.Len(t, repos, 1)
 				assert.Equal(t, tt.expectedProviderID, *repos[0].ProviderID)
 				assert.Equal(t, tt.expectedOwner, *repos[0].Owner)
@@ -474,25 +488,22 @@ func TestUpdateRepositories(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-			// Set up unique in-memory database for this test
-			db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = db.AutoMigrate(&sqldb.RepositoryDB{})
-			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
-			database := &sqldb.Database{DB: db}
-
-			err = gh.UpdateRepositories(context.Background(), database, "test-token")
+			err = gh.UpdateRepositories(context.Background(), sqldbDB, "test-token")
 
 			assert.NoError(t, err)
 
 			// Verify repository count
 			var count int64
-			db.Model(&sqldb.RepositoryDB{}).Count(&count)
+			sqldbDB.DB.Model(&sqldb.RepositoryDB{}).Count(&count)
 			assert.Equal(t, int64(tt.expectedAddRepoCall), count)
 		})
 	}
@@ -541,20 +552,17 @@ func TestUpdateRepositoriesInvalidResponse(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-	// Set up in-memory database
-	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	// Create test database
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = db.AutoMigrate(&sqldb.RepositoryDB{})
-	require.NoError(t, err)
-
-	database := &sqldb.Database{DB: db}
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	// Call UpdateRepositories - should return error without adding repositories
-	err = gh.UpdateRepositories(context.Background(), database, "test-token")
+	err = gh.UpdateRepositories(context.Background(), sqldbDB, "test-token")
 
 	// Should get an error about invalid response code
 	assert.Error(t, err)
@@ -562,7 +570,7 @@ func TestUpdateRepositoriesInvalidResponse(t *testing.T) {
 
 	// Verify no repositories were added
 	var count int64
-	db.Model(&sqldb.RepositoryDB{}).Count(&count)
+	sqldbDB.DB.Model(&sqldb.RepositoryDB{}).Count(&count)
 	assert.Equal(t, int64(0), count)
 }
 
@@ -693,9 +701,14 @@ func TestProcessRelease(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -824,9 +837,14 @@ func TestGetNewReleases(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
 			name := "test-repo"
@@ -910,9 +928,14 @@ func TestGetNewReleasesSkipInvalidReleases(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	// Create test database
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+	require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	owner := "test-owner"
 	name := "test-repo"
@@ -960,9 +983,14 @@ func TestGetNewReleasesInvalidResponse(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	// Create test database
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+	require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	owner := "test-owner"
 	name := "test-repo"
@@ -1150,10 +1178,16 @@ func TestGetNewReleasesBreakIfAlreadyExists(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
+
+	// Create test database
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
+	require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
 
 	// Create the base GithubProviderSource
-	baseGH := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
+	baseGH := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	// Track ProcessRelease calls
 	processReleaseCalls := 0

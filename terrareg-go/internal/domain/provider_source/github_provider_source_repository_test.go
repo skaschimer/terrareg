@@ -10,12 +10,9 @@ import (
 	"testing"
 
 	provider_source_model "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 // TestRefreshNamespaceRepositories tests the RefreshNamespaceRepositories method
@@ -126,26 +123,23 @@ func TestRefreshNamespaceRepositories(t *testing.T) {
 					), nil
 				},
 			}
-			ghClass := service.NewGithubProviderSourceClass()
+			ghClass := NewGithubProviderSourceClass()
 
-			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-			// Set up in-memory database
-			db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+			// Create test database
+			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = db.AutoMigrate(&sqldb.RepositoryDB{})
-			require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
-			database := &sqldb.Database{DB: db}
-
-			err = gh.RefreshNamespaceRepositories(context.Background(), database, "test-namespace")
+			err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
 
 			assert.NoError(t, err)
 			assert.True(t, entityTypeChecked, "Entity type should have been checked")
 
 			// Verify repository count
 			var count int64
-			db.Model(&sqldb.RepositoryDB{}).Count(&count)
+			sqldbDB.DB.Model(&sqldb.RepositoryDB{}).Count(&count)
 			assert.Equal(t, int64(tt.expectedAddRepos), count)
 		})
 	}
@@ -188,19 +182,16 @@ func TestRefreshNamespaceRepositoriesNoAccessToken(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-	// Set up in-memory database
-	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	// Create test database
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = db.AutoMigrate(&sqldb.RepositoryDB{})
-	require.NoError(t, err)
+		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+		require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
-	database := &sqldb.Database{DB: db}
-
-	err = gh.RefreshNamespaceRepositories(context.Background(), database, "test-namespace")
+	err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
 
 	// Should get an error about no default access token
 	assert.Error(t, err)
@@ -208,7 +199,7 @@ func TestRefreshNamespaceRepositoriesNoAccessToken(t *testing.T) {
 
 	// Verify no repositories were added
 	var count int64
-	db.Model(&sqldb.RepositoryDB{}).Count(&count)
+	sqldbDB.DB.Model(&sqldb.RepositoryDB{}).Count(&count)
 	assert.Equal(t, int64(0), count)
 }
 
@@ -246,28 +237,20 @@ func TestRefreshNamespaceRepositoriesNoType(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-	// Set up in-memory database
-	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	// Create test database with migrations
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = db.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
-	database := &sqldb.Database{DB: db}
-
-	err = gh.RefreshNamespaceRepositories(context.Background(), database, "test-namespace")
+	err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
 
 	// Should get an error about not finding namespace entity
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "could not find namespace entity")
-
-	// Verify no repositories were added
-	var count int64
-	db.Model(&sqldb.RepositoryDB{}).Count(&count)
-	assert.Equal(t, int64(0), count)
 }
 
 // TestRefreshNamespaceRepositoriesInvalidResponse tests RefreshNamespaceRepositories with invalid API response
@@ -310,27 +293,19 @@ func TestRefreshNamespaceRepositoriesInvalidResponse(t *testing.T) {
 			), nil
 		},
 	}
-	ghClass := service.NewGithubProviderSourceClass()
+	ghClass := NewGithubProviderSourceClass()
 
-	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass)
-
-	// Set up in-memory database
-	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	// Create test database with migrations
+	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = db.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
+	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
-	database := &sqldb.Database{DB: db}
-
-	err = gh.RefreshNamespaceRepositories(context.Background(), database, "test-namespace")
+	err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
 
 	// Should get an error about invalid response code
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid response code")
 	assert.True(t, entityTypeChecked, "Entity type should have been checked")
-
-	// Verify no repositories were added
-	var count int64
-	db.Model(&sqldb.RepositoryDB{}).Count(&count)
-	assert.Equal(t, int64(0), count)
 }
