@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -281,9 +281,12 @@ func TestTerraformIDPConcurrency(t *testing.T) {
 		results := make([]int, numRequests)
 		errors := make([]error, numRequests)
 
+		var wg sync.WaitGroup
 		// Create multiple concurrent discovery requests
-		for i := 0; i < numRequests; i++ {
+		for i := range numRequests {
+			wg.Add(1)
 			go func(index int) {
+				defer wg.Done()
 				req := httptest.NewRequest("GET", "/.well-known/openid-configuration", nil)
 				w := httptest.NewRecorder()
 
@@ -297,11 +300,11 @@ func TestTerraformIDPConcurrency(t *testing.T) {
 		}
 
 		// Wait for all requests to complete
-		time.Sleep(2 * time.Second)
+		wg.Wait()
 
 		// Verify all requests succeeded
 		successCount := 0
-		for i := 0; i < numRequests; i++ {
+		for i := range numRequests {
 			if results[i] == http.StatusOK {
 				successCount++
 			}
@@ -311,7 +314,7 @@ func TestTerraformIDPConcurrency(t *testing.T) {
 
 		// Verify no errors occurred
 		errorCount := 0
-		for i := 0; i < numRequests; i++ {
+		for i := range numRequests {
 			if errors[i] != nil {
 				errorCount++
 			}
