@@ -89,18 +89,20 @@ func CreateTestInfraConfig(t *testing.T) *config.InfrastructureConfig {
 // CreateTestInfraConfigWithPublicURL creates a test infrastructure configuration with a custom PUBLIC_URL
 func CreateTestInfraConfigWithPublicURL(t *testing.T, publicURL string) *config.InfrastructureConfig {
 	return &config.InfrastructureConfig{
-		ListenPort:               5000,
-		PublicURL:                publicURL,
-		DomainName:               "localhost",
-		Debug:                    true,
-		DatabaseURL:              "sqlite:///:memory:",
-		DataDirectory:            "/tmp/terrareg-test",
-		SecretKey:                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		SessionCookieName:        "terrareg_session",
-		AdminAuthenticationToken: "test-admin-api-key",
-		UploadApiKeys:            []string{"test-upload-key"},
-		AdminSessionExpiryMins:   60, // 1 hour for admin sessions
+		ListenPort:                 5000,
+		PublicURL:                  publicURL,
+		DomainName:                 "localhost",
+		Debug:                       true,
+		DatabaseURL:                 "sqlite:///:memory:",
+		DataDirectory:               "/tmp/terrareg-test",
+		SecretKey:                   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		SessionCookieName:           "terrareg_session",
+		AdminAuthenticationToken:    "test-admin-api-key",
+		UploadApiKeys:               []string{"test-upload-key"},
+		AdminSessionExpiryMins:      60, // 1 hour for admin sessions
 		TerraformLockTimeoutSeconds: 1800, // 30 minutes default (required for terraform operations)
+		TerraformDefaultVersion:      "1.5.7", // Required for tfswitch
+		TerraformProduct:            "terraform",
 	}
 }
 
