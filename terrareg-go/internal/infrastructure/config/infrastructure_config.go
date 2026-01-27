@@ -147,6 +147,41 @@ func (c *InfrastructureConfig) GetListenAddress() string {
 	return fmt.Sprintf(":%d", c.ListenPort)
 }
 
+// ApplyDefaults applies default values to any empty configuration fields
+// This is called after config is created (either from env vars or directly)
+// to ensure sensible defaults are set without relying on env var loading
+// This is especially useful for tests that create config structs directly
+func (c *InfrastructureConfig) ApplyDefaults() *InfrastructureConfig {
+	// Create a copy to avoid mutating the original
+	cfg := *c
+
+	// Apply Terraform defaults
+	if cfg.TerraformDefaultVersion == "" {
+		cfg.TerraformDefaultVersion = "1.3.6" // Matches Python default
+	}
+	if cfg.TerraformProduct == "" {
+		cfg.TerraformProduct = "terraform"
+	}
+
+	// Apply timeout defaults
+	if cfg.StandardRequestTimeoutSeconds == 0 {
+		cfg.StandardRequestTimeoutSeconds = 60
+	}
+	if cfg.ModuleIndexingTimeoutSeconds == 0 {
+		cfg.ModuleIndexingTimeoutSeconds = 1800
+	}
+	if cfg.TerraformLockTimeoutSeconds == 0 {
+		cfg.TerraformLockTimeoutSeconds = 1800
+	}
+
+	// Apply slice defaults (for empty/nil slices)
+	if len(cfg.OpenIDConnectScopes) == 0 {
+		cfg.OpenIDConnectScopes = []string{"openid", "profile"}
+	}
+
+	return &cfg
+}
+
 // ValidateSAMLConfig validates SAML configuration
 func (c *InfrastructureConfig) ValidateSAMLConfig() error {
 	if c.SAML2IDPMetadataURL != "" {

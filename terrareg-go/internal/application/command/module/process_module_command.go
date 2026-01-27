@@ -23,7 +23,7 @@ type ProcessingOrchestratorInterface interface {
 
 // ProcessModuleCommand handles all module processing with unified pipeline
 type ProcessModuleCommand struct {
-	sourcePrepService       SourcePreparationServiceInterface
+	sourcePrepService      SourcePreparationServiceInterface
 	processingOrchestrator ProcessingOrchestratorInterface
 }
 
@@ -36,10 +36,10 @@ type ProcessModuleRequest struct {
 	Version   string `json:"version"`
 
 	// Source type (one of these)
-	UploadSource  io.Reader   // For file uploads
-	UploadSize    int64       // For file uploads
-	GitTag        *string     // For git-based imports
-	ArchivePath   string      // For archive files
+	UploadSource io.Reader // For file uploads
+	UploadSize   int64     // For file uploads
+	GitTag       *string   // For git-based imports
+	ArchivePath  string    // For archive files
 
 	// Processing options (all optional, with sensible defaults)
 	Options service.ProcessingOptions `json:"options"`
@@ -51,7 +51,7 @@ func NewProcessModuleCommand(
 	processingOrchestrator ProcessingOrchestratorInterface,
 ) *ProcessModuleCommand {
 	return &ProcessModuleCommand{
-		sourcePrepService:       sourcePrepService,
+		sourcePrepService:      sourcePrepService,
 		processingOrchestrator: processingOrchestrator,
 	}
 }
@@ -117,15 +117,15 @@ func (c *ProcessModuleCommand) Execute(ctx context.Context, req ProcessModuleReq
 
 	// 3. Execute processing pipeline
 	processingReq := service.ProcessingRequest{
-		Namespace:   req.Namespace,
-		ModuleName:  req.Module,
-		Provider:    req.Provider,
-		Version:     req.Version,
-		GitTag:      req.GitTag,
-		CommitSHA:   preparedSource.CommitSHA,
-		ModulePath:  preparedSource.SourcePath,
-		SourceType:  preparedSource.SourceType,
-		Options:     req.Options,
+		Namespace:  req.Namespace,
+		ModuleName: req.Module,
+		Provider:   req.Provider,
+		Version:    req.Version,
+		GitTag:     req.GitTag,
+		CommitSHA:  preparedSource.CommitSHA,
+		ModulePath: preparedSource.SourcePath,
+		SourceType: preparedSource.SourceType,
+		Options:    req.Options,
 	}
 
 	result, err := c.processingOrchestrator.ProcessModuleWithTransaction(ctx, processingReq)

@@ -347,6 +347,10 @@ func NewContainer(
 	logger zerolog.Logger,
 	db *sqldb.Database,
 ) (*Container, error) {
+	// Apply default values to any empty configuration fields
+	// This ensures tests that create config structs directly still get proper defaults
+	infraConfig = infraConfig.ApplyDefaults()
+
 	c := &Container{
 		DomainConfig:  domainConfig,
 		InfraConfig:   infraConfig,

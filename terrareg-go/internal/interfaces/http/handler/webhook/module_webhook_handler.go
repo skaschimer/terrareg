@@ -167,9 +167,9 @@ type GitHubReleaseWebhookPayload struct {
 type BitbucketPushWebhookPayload struct {
 	Changes []struct {
 		Ref struct {
-			ID         string `json:"id"`         // refs/tags/v4.0.6
-			DisplayID  string `json:"displayId"`  // v4.0.6
-			Type       string `json:"type"`       // TAG
+			ID        string `json:"id"`        // refs/tags/v4.0.6
+			DisplayID string `json:"displayId"` // v4.0.6
+			Type      string `json:"type"`      // TAG
 		} `json:"ref"`
 		Type string `json:"type"` // ADD or UPDATE
 	} `json:"changes"`

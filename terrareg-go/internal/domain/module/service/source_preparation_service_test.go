@@ -98,17 +98,17 @@ func (m *mockGitClient) GetCommitSHA(ctx context.Context, repoDir string) (strin
 
 // mockStorageService is a mock implementation of StorageService
 type mockStorageService struct {
-	tempDirs   []string
+	tempDirs     []string
 	removedPaths []string
 	mkdirTempErr error
 }
 
-func (m *mockStorageService) CopyDir(src, dest string) error { return nil }
-func (m *mockStorageService) Stat(name string) (os.FileInfo, error) { return nil, nil }
-func (m *mockStorageService) MkdirAll(path string, perm os.FileMode) error { return nil }
-func (m *mockStorageService) ReadFile(filename string) ([]byte, error) { return nil, nil }
+func (m *mockStorageService) CopyDir(src, dest string) error                { return nil }
+func (m *mockStorageService) Stat(name string) (os.FileInfo, error)         { return nil, nil }
+func (m *mockStorageService) MkdirAll(path string, perm os.FileMode) error  { return nil }
+func (m *mockStorageService) ReadFile(filename string) ([]byte, error)      { return nil, nil }
 func (m *mockStorageService) ReadDir(dirname string) ([]os.DirEntry, error) { return nil, nil }
-func (m *mockStorageService) ExtractArchive(src, dest string) error { return nil }
+func (m *mockStorageService) ExtractArchive(src, dest string) error         { return nil }
 
 func (m *mockStorageService) MkdirTemp(dir, pattern string) (string, error) {
 	if m.mkdirTempErr != nil {
@@ -127,8 +127,8 @@ func (m *mockStorageService) RemoveAll(path string) error {
 
 // mockArchiveProcessor is a mock implementation of ArchiveProcessor
 type mockArchiveProcessor struct {
-	detectType ArchiveType
-	extractErr error
+	detectType        ArchiveType
+	extractErr        error
 	failOnNonExistent bool
 }
 
@@ -198,10 +198,10 @@ func createTestZIPArchive(t *testing.T) *bytes.Reader {
 
 	// Add some test files
 	files := map[string]string{
-		"main.tf":         `resource "aws_s3_bucket" "example" {}`,
-		"variables.tf":    `variable "bucket_name" { type = string }`,
-		"outputs.tf":      `output "bucket_id" { value = aws_s3_bucket.example.id }`,
-		"README.md":       "# Test Module",
+		"main.tf":             `resource "aws_s3_bucket" "example" {}`,
+		"variables.tf":        `variable "bucket_name" { type = string }`,
+		"outputs.tf":          `output "bucket_id" { value = aws_s3_bucket.example.id }`,
+		"README.md":           "# Test Module",
 		"modules/sub/main.tf": `resource "aws_instance" "example" {}`,
 	}
 
@@ -546,8 +546,8 @@ func TestPrepareFromArchive_NonExistentArchive(t *testing.T) {
 
 	// Set archive processor to fail on non-existent files
 	service.archiveProcessor = &mockArchiveProcessor{
-		detectType: 0,
-		extractErr: nil,
+		detectType:        0,
+		extractErr:        nil,
 		failOnNonExistent: true,
 	}
 
@@ -634,11 +634,11 @@ func TestBuildCloneURL(t *testing.T) {
 		"aws",
 		false,
 		nil,
-		nil,                // repoBaseURLTemplate
-		&cloneURLTemplate,  // repoCloneURLTemplate
-		nil,                // repoBrowseURLTemplate
-		nil,                // gitTagFormat
-		nil,                // gitPath
+		nil,               // repoBaseURLTemplate
+		&cloneURLTemplate, // repoCloneURLTemplate
+		nil,               // repoBrowseURLTemplate
+		nil,               // gitTagFormat
+		nil,               // gitPath
 		false,
 		time.Now(),
 		time.Now(),
@@ -661,10 +661,10 @@ func TestFormatGitTag(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name           string
-		tagFormat      string
-		inputTag       string
-		expectedTag    string
+		name        string
+		tagFormat   string
+		inputTag    string
+		expectedTag string
 	}{
 		{
 			name:        "Default format (no template)",

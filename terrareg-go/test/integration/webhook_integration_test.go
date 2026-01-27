@@ -453,7 +453,7 @@ func TestBitbucketWebhookIntegration(t *testing.T) {
 					"ref": map[string]interface{}{
 						"id":        "refs/heads/main",
 						"displayId": "main",
-						"type":      "BRANCH",  // BRANCH type should be ignored
+						"type":      "BRANCH", // BRANCH type should be ignored
 					},
 					"type": "UPDATE",
 				},
@@ -497,7 +497,7 @@ func TestBitbucketWebhookIntegration(t *testing.T) {
 						"displayId": "v5.0.0",
 						"type":      "TAG",
 					},
-					"type": "DELETE",  // DELETE type should be ignored
+					"type": "DELETE", // DELETE type should be ignored
 				},
 			},
 		}
@@ -839,7 +839,7 @@ func TestBitbucketWebhookCorrectPayloadStructure(t *testing.T) {
 		"date":     "2022-04-23T21:21:46+0000",
 		"actor": map[string]interface{}{
 			"name":         "admin",
-			"emailAddress":  "admin@localhost",
+			"emailAddress": "admin@localhost",
 			"displayName":  "Administrator",
 			"id":           1,
 			"type":         "normal",
@@ -854,9 +854,9 @@ func TestBitbucketWebhookCorrectPayloadStructure(t *testing.T) {
 		"changes": []map[string]interface{}{
 			{
 				"ref": map[string]interface{}{
-					"id":         "refs/tags/v4.0.6",  // Python uses ref.id
-					"displayId":  "v4.0.6",
-					"type":       "TAG",
+					"id":        "refs/tags/v4.0.6", // Python uses ref.id
+					"displayId": "v4.0.6",
+					"type":      "TAG",
 				},
 				"refId":    "refs/tags/v4.0.6",
 				"fromHash": "0000000000000000000000000000000000000000",

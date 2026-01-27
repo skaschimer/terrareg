@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
@@ -34,19 +34,19 @@ type PrepareFromUploadRequest struct {
 
 // PrepareFromGitRequest represents a request to prepare from git repository
 type PrepareFromGitRequest struct {
-	Namespace  string
-	Module     string
-	Provider   string
-	Version    string
-	GitTag     *string
+	Namespace string
+	Module    string
+	Provider  string
+	Version   string
+	GitTag    *string
 }
 
 // PrepareFromArchiveRequest represents a request to prepare from archive file
 type PrepareFromArchiveRequest struct {
-	Namespace  string
-	Module     string
-	Provider   string
-	Version    string
+	Namespace   string
+	Module      string
+	Provider    string
+	Version     string
 	ArchivePath string
 }
 
@@ -55,7 +55,7 @@ type PreparedSource struct {
 	SourcePath string  // Path to prepared source files
 	CommitSHA  *string // Git commit SHA (nil for non-git sources)
 	SourceType SourceType
-	Cleanup    func()  // Cleanup function to remove temporary resources
+	Cleanup    func() // Cleanup function to remove temporary resources
 }
 
 // SourcePreparationService prepares module sources for processing

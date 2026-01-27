@@ -17,11 +17,11 @@ import (
 
 // WebhookResult represents the result of webhook processing
 type WebhookResult struct {
-	Success      bool                      `json:"success"`
-	Message      string                    `json:"message"`
-	TriggerBuild bool                      `json:"trigger_build,omitempty"`
-	Tag          string                    `json:"tag,omitempty"`      // Tag name (GitHub webhooks)
-	Versions     map[string]interface{}    `json:"tags,omitempty"`    // Multiple versions (Bitbucket webhooks)
+	Success      bool                   `json:"success"`
+	Message      string                 `json:"message"`
+	TriggerBuild bool                   `json:"trigger_build,omitempty"`
+	Tag          string                 `json:"tag,omitempty"`  // Tag name (GitHub webhooks)
+	Versions     map[string]interface{} `json:"tags,omitempty"` // Multiple versions (Bitbucket webhooks)
 }
 
 // WebhookService handles webhook processing for modules

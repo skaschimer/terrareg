@@ -124,7 +124,7 @@ func (s *ConfigurationService) buildDomainConfig(rawConfig map[string]string) *m
 		RedirectDeletionLookbackDays:                s.parseInt(rawConfig["REDIRECT_DELETION_LOOKBACK_DAYS"], -1),
 
 		// Example Configuration
-		ExampleFileExtensions: s.parseStringSlice(rawConfig["EXAMPLE_FILE_EXTENSIONS"], ","),
+		ExampleFileExtensions: s.parseStringSlice(s.getEnvStringWithDefault(rawConfig, "EXAMPLE_FILE_EXTENSIONS", "tf,tfvars,sh,json"), ","),
 
 		// Provider Registry Configuration
 		ProviderSourcesJSON: s.getEnvStringWithDefault(rawConfig, "PROVIDER_SOURCES", "[]"),
@@ -234,7 +234,7 @@ func (s *ConfigurationService) buildInfrastructureConfig(rawConfig map[string]st
 		SAML2Debug:          s.parseBool(rawConfig["SAML2_DEBUG"], false),
 
 		// Enhanced OpenID Connect Configuration
-		OpenIDConnectScopes: s.parseStringSlice(rawConfig["OPENID_CONNECT_SCOPES"], ","),
+		OpenIDConnectScopes: s.parseStringSlice(s.getEnvStringWithDefault(rawConfig, "OPENID_CONNECT_SCOPES", "openid,profile"), ","),
 		OpenIDConnectDebug:  s.parseBool(rawConfig["OPENID_CONNECT_DEBUG"], false),
 
 		// Access Control Configuration
