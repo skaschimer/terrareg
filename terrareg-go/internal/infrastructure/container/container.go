@@ -175,7 +175,7 @@ type Container struct {
 	FileContentTransactionService       *moduleService.FileContentTransactionService
 	TransactionProcessingOrchestrator   *moduleService.TransactionProcessingOrchestrator
 	SourcePreparationService            *moduleService.SourcePreparationService
-	ArchiveExtractionService             *moduleService.ArchiveExtractionService
+	ArchiveExtractionService            *moduleService.ArchiveExtractionService
 	AuthFactory                         *authservice.AuthFactory
 	SessionService                      *authservice.SessionService
 	CookieService                       *authservice.CookieService
@@ -549,18 +549,29 @@ func NewContainer(
 	metadataService := moduleService.NewMetadataProcessingService(savepointHelper)
 	c.MetadataProcessingService = metadataService
 
-	// Initialize terraform executor service with tfswitch config from infrastructure config
-	tfswitchConfig := &moduleService.TfswitchConfig{
-		DefaultTerraformVersion: infraConfig.TerraformDefaultVersion,
-		TerraformProduct:        infraConfig.TerraformProduct,
-		ArchiveMirror:           infraConfig.TerraformArchiveMirror,
-		BinaryPath:              infraConfig.TerraformBinaryPath,
-	}
-
 	// Use terraform binary path from config, or default to bin/terraform relative to CWD
 	terraformBinaryPath := infraConfig.TerraformBinaryPath
 	if terraformBinaryPath == "" {
-		terraformBinaryPath = "bin/terraform" // Default to bin/terraform relative to application CWD
+		// Default to bin/terraform relative to application CWD
+		// However, in development/test environments, the binary might be at /app/bin/terraform
+		// Try the default relative path first, then fall back to /app/bin/terraform
+		wd, err := os.Getwd()
+		if err != nil {
+			logger.Warn().
+				Err(err).
+				Msg("Failed to get current working directory")
+			// Fall back to /app/bin/terraform
+			terraformBinaryPath = "/app/bin/terraform"
+		} else {
+			// Try CWD-relative path first
+			cwdPath := filepath.Join(wd, "bin", "terraform")
+			if _, err := os.Stat(cwdPath); err == nil {
+				terraformBinaryPath = cwdPath
+			} else {
+				// Fall back to /app/bin/terraform for development/test environments
+				terraformBinaryPath = "/app/bin/terraform"
+			}
+		}
 	}
 
 	// Convert to absolute path to avoid issues when working directory changes during terraform execution
@@ -572,10 +583,20 @@ func NewContainer(
 				Msg("Failed to get current working directory")
 		} else {
 			terraformBinaryPath = filepath.Join(wd, terraformBinaryPath)
-			logger.Debug().
-				Str("terraform_binary_path", terraformBinaryPath).
-				Msg("Resolved terraform binary to absolute path from current working directory")
 		}
+	}
+
+	logger.Debug().
+		Str("terraform_binary_path", terraformBinaryPath).
+		Msg("Using terraform binary path")
+
+	// Initialize terraform executor service with tfswitch config from infrastructure config
+	// IMPORTANT: Set BinaryPath to the resolved terraformBinaryPath so tfswitch installs to the correct location
+	tfswitchConfig := &moduleService.TfswitchConfig{
+		DefaultTerraformVersion: infraConfig.TerraformDefaultVersion,
+		TerraformProduct:        infraConfig.TerraformProduct,
+		ArchiveMirror:           infraConfig.TerraformArchiveMirror,
+		BinaryPath:              terraformBinaryPath, // Use resolved path
 	}
 
 	terraformLockTimeout := time.Duration(infraConfig.TerraformLockTimeoutSeconds) * time.Second

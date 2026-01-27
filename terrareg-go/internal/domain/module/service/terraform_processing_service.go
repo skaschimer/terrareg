@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -463,6 +464,7 @@ func (s *TerraformExecutorService) runTfswitch(ctx context.Context, modulePath s
 	logger := zerolog.Ctx(ctx)
 
 	// Prepare environment variables for tfswitch
+	// Note: os.Environ() returns a copy of all environment variables
 	tfswitchEnv := os.Environ()
 	if s.tfswitchConfig.DefaultTerraformVersion != "" {
 		tfswitchEnv = append(tfswitchEnv, fmt.Sprintf("TF_DEFAULT_VERSION=%s", s.tfswitchConfig.DefaultTerraformVersion))
@@ -470,18 +472,53 @@ func (s *TerraformExecutorService) runTfswitch(ctx context.Context, modulePath s
 	if s.tfswitchConfig.TerraformProduct != "" {
 		tfswitchEnv = append(tfswitchEnv, fmt.Sprintf("TF_PRODUCT=%s", s.tfswitchConfig.TerraformProduct))
 	}
-	if s.tfswitchConfig.ArchiveMirror != "" {
-		tfswitchEnv = append(tfswitchEnv, fmt.Sprintf("TERRAFORM_ARCHIVE_MIRROR=%s", s.tfswitchConfig.ArchiveMirror))
-	}
 
 	// Prepare tfswitch command arguments
+	// Matching Python behavior: only --bin and --mirror flags
+	// Version is read from TF_DEFAULT_VERSION environment variable, not passed as argument
 	var tfswitchArgs []string
-	if s.tfswitchConfig.DefaultTerraformVersion != "" {
-		tfswitchArgs = append(tfswitchArgs, s.tfswitchConfig.DefaultTerraformVersion)
-	}
 	if s.tfswitchConfig.BinaryPath != "" {
 		tfswitchArgs = append(tfswitchArgs, "--bin", s.tfswitchConfig.BinaryPath)
 	}
+	if s.tfswitchConfig.ArchiveMirror != "" {
+		tfswitchArgs = append(tfswitchArgs, "--mirror", s.tfswitchConfig.ArchiveMirror)
+	}
+
+	// Debug logging to diagnose tfswitch issues
+	logger.Debug().
+		Str("tfswitch_binary_path", s.tfswitchConfig.BinaryPath).
+		Strs("tfswitch_args", tfswitchArgs).
+		Str("tf_default_version", s.tfswitchConfig.DefaultTerraformVersion).
+		Str("tf_product", s.tfswitchConfig.TerraformProduct).
+		Str("working_dir", modulePath).
+		Msg("About to execute tfswitch")
+
+	// Verify module path exists
+	if _, err := os.Stat(modulePath); os.IsNotExist(err) {
+		logger.Error().
+			Str("module_path", modulePath).
+			Err(err).
+			Msg("Module path does not exist - cannot run tfswitch")
+		return fmt.Errorf("module path does not exist: %s", modulePath)
+	}
+
+	// Verify tfswitch binary exists
+	if _, err := exec.LookPath("tfswitch"); err != nil {
+		logger.Error().
+			Err(err).
+			Msg("tfswitch binary not found in PATH")
+		return fmt.Errorf("tfswitch not found: %w", err)
+	}
+
+	// Verify binary path exists and is accessible
+	// if s.tfswitchConfig.BinaryPath != "" {
+	// 	if _, err := os.Stat(s.tfswitchConfig.BinaryPath); os.IsNotExist(err) {
+	// 		logger.Error().
+	// 			Str("binary_path", s.tfswitchConfig.BinaryPath).
+	// 			Msg("Terraform binary path does not exist")
+	// 		return fmt.Errorf("terraform binary path does not exist: %s", s.tfswitchConfig.BinaryPath)
+	// 	}
+	// }
 
 	// Create tfswitch command using SystemCommandService
 	cmd := &service.Command{
@@ -491,19 +528,23 @@ func (s *TerraformExecutorService) runTfswitch(ctx context.Context, modulePath s
 		Env:  tfswitchEnv,
 	}
 
-	logger.Debug().
-		Str("command", "tfswitch "+strings.Join(tfswitchArgs, " ")).
-		Str("working_dir", modulePath).
-		Msg("Executing tfswitch to set terraform version")
-
 	// Execute tfswitch
 	result, err := s.commandService.Execute(ctx, cmd)
 	if err != nil {
 		logger.Error().
 			Err(err).
-			Str("tfswitch_output", result.Stdout).
+			Str("tfswitch_stdout", result.Stdout).
+			Str("tfswitch_stderr", result.Stderr).
+			Str("tfswitch_exit_code", fmt.Sprintf("%d", result.ExitCode)).
 			Msg("Tfswitch failed to set terraform version")
-		return fmt.Errorf("terraform version switch failed: %v\nOutput: %s", err, result.Stdout)
+		// Include both stdout and stderr in the error message for debugging
+		output := result.Stdout
+		if result.Stderr != "" {
+			output += "\nStderr: " + result.Stderr
+		}
+		// Add more context for debugging
+		return fmt.Errorf("terraform version switch failed: %v\nCommand: tfswitch %s\nModulePath: %s\nOutput: %s",
+			err, strings.Join(tfswitchArgs, " "), modulePath, output)
 	}
 
 	logger.Info().
@@ -602,7 +643,12 @@ func (s *TerraformExecutorService) SwitchTerraformVersions(
 	result, err := s.commandService.Execute(ctx, cmd)
 	if err != nil {
 		terraformGlobalLock.Unlock()
-		return nil, fmt.Errorf("terraform version switch failed: %v\nOutput: %s", err, result.Stdout)
+		// Include both stdout and stderr in the error message for debugging
+		output := result.Stdout
+		if result.Stderr != "" {
+			output += "\nStderr: " + result.Stderr
+		}
+		return nil, fmt.Errorf("terraform version switch failed: %v\nOutput: %s", err, output)
 	}
 
 	_ = result.Stdout // Ignore output on success
@@ -697,12 +743,35 @@ func (s *TerraformExecutorService) getFailedStep(err error) string {
 	case contains(errorMsg, "signal: killed"):
 		return "process_killed"
 	default:
+		// Check for specific patterns first
+		if contains(errorMsg, "terraform version switch failed:") {
+			// Extract the actual error from tfswitch
+			parts := strings.SplitN(errorMsg, "terraform version switch failed:", 2)
+			if len(parts) > 1 {
+				detail := strings.TrimSpace(parts[1])
+				// Remove "Output:" section if present to get the actual error
+				if outputParts := strings.Split(detail, "\nOutput:"); len(outputParts) > 0 {
+					detail = strings.TrimSpace(outputParts[0])
+				}
+				if detail != "" {
+					return fmt.Sprintf("terraform_version switch failed: %s", detail)
+				}
+			}
+			return "terraform_version switch failed"
+		}
 		// Extract the actual command that failed if possible
 		if strings.Contains(errorMsg, "failed:") {
 			// Return everything after "failed:" for more detail
-			parts := strings.Split(errorMsg, "failed:")
+			parts := strings.SplitN(errorMsg, "failed:", 2)
 			if len(parts) > 1 {
-				return strings.TrimSpace(parts[1])
+				detail := strings.TrimSpace(parts[1])
+				// Remove "Output:" section if present
+				if outputParts := strings.Split(detail, "\nOutput:"); len(outputParts) > 0 {
+					detail = strings.TrimSpace(outputParts[0])
+				}
+				if detail != "" {
+					return detail
+				}
 			}
 		}
 		return fmt.Sprintf("terraform_error: %s", errorMsg)
