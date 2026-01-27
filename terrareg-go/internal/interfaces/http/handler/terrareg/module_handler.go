@@ -14,7 +14,6 @@ import (
 	moduleCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/module"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
 	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
@@ -41,8 +40,7 @@ type ModuleHandler struct {
 	publishModuleVersionCmd         *moduleCmd.PublishModuleVersionCommand
 	updateModuleProviderSettingsCmd *moduleCmd.UpdateModuleProviderSettingsCommand
 	deleteModuleProviderCmd         *moduleCmd.DeleteModuleProviderCommand
-	uploadModuleVersionCmd          *moduleCmd.UploadModuleVersionCommand
-	importModuleVersionCmd          *moduleCmd.ImportModuleVersionCommand
+	processModuleCmd                *moduleCmd.ProcessModuleCommand
 	getModuleVersionFileCmd         *moduleCmd.GetModuleVersionFileQuery
 	deleteModuleVersionCmd          *moduleCmd.DeleteModuleVersionCommand
 	generateModuleSourceCmd         *moduleCmd.GenerateModuleSourceCommand
@@ -75,8 +73,7 @@ func NewModuleHandler(
 	publishModuleVersionCmd *moduleCmd.PublishModuleVersionCommand,
 	updateModuleProviderSettingsCmd *moduleCmd.UpdateModuleProviderSettingsCommand,
 	deleteModuleProviderCmd *moduleCmd.DeleteModuleProviderCommand,
-	uploadModuleVersionCmd *moduleCmd.UploadModuleVersionCommand,
-	importModuleVersionCmd *moduleCmd.ImportModuleVersionCommand,
+	processModuleCmd *moduleCmd.ProcessModuleCommand,
 	getModuleVersionFileCmd *moduleCmd.GetModuleVersionFileQuery,
 	deleteModuleVersionCmd *moduleCmd.DeleteModuleVersionCommand,
 	generateModuleSourceCmd *moduleCmd.GenerateModuleSourceCommand,
@@ -136,11 +133,8 @@ func NewModuleHandler(
 	if deleteModuleProviderCmd == nil {
 		return nil, fmt.Errorf("deleteModuleProviderCmd cannot be nil")
 	}
-	if uploadModuleVersionCmd == nil {
-		return nil, fmt.Errorf("uploadModuleVersionCmd cannot be nil")
-	}
-	if importModuleVersionCmd == nil {
-		return nil, fmt.Errorf("importModuleVersionCmd cannot be nil")
+	if processModuleCmd == nil {
+		return nil, fmt.Errorf("processModuleCmd cannot be nil")
 	}
 	if getModuleVersionFileCmd == nil {
 		return nil, fmt.Errorf("getModuleVersionFileCmd cannot be nil")
@@ -189,8 +183,7 @@ func NewModuleHandler(
 		publishModuleVersionCmd:         publishModuleVersionCmd,
 		updateModuleProviderSettingsCmd: updateModuleProviderSettingsCmd,
 		deleteModuleProviderCmd:         deleteModuleProviderCmd,
-		uploadModuleVersionCmd:          uploadModuleVersionCmd,
-		importModuleVersionCmd:          importModuleVersionCmd,
+		processModuleCmd:                processModuleCmd,
 		getModuleVersionFileCmd:         getModuleVersionFileCmd,
 		deleteModuleVersionCmd:          deleteModuleVersionCmd,
 		generateModuleSourceCmd:         generateModuleSourceCmd,
@@ -884,7 +877,6 @@ func (h *ModuleHandler) HandleModuleProviderDelete(w http.ResponseWriter, r *htt
 // HandleModuleVersionUpload handles POST /v1/terrareg/modules/{namespace}/{name}/{provider}/{version}/upload
 func (h *ModuleHandler) HandleModuleVersionUpload(w http.ResponseWriter, r *http.Request) {
 	// Use background context to avoid HTTP request timeout issues during long-running operations
-	// Keep request context for cancellation signals if needed
 	ctx := context.Background()
 
 	// Get path parameters
@@ -918,17 +910,32 @@ func (h *ModuleHandler) HandleModuleVersionUpload(w http.ResponseWriter, r *http
 	}
 	defer file.Close()
 
-	// Execute upload command
-	uploadReq := moduleCmd.UploadModuleVersionRequest{
-		Namespace:  namespace,
-		Module:     name,
-		Provider:   provider,
-		Version:    version,
-		Source:     file,
-		SourceSize: header.Size,
+	// Execute unified process module command
+	processReq := moduleCmd.ProcessModuleRequest{
+		Namespace:    namespace,
+		Module:       name,
+		Provider:     provider,
+		Version:      version,
+		UploadSource: file,
+		UploadSize:   header.Size,
+		Options: moduleService.ProcessingOptions{
+			SkipArchiveExtraction:   false,
+			SkipTerraformProcessing: false,
+			SkipMetadataProcessing:  false,
+			SkipSecurityScanning:    false,
+			SkipFileContentStorage:  false,
+			SkipArchiveGeneration:   false,
+			SecurityScanEnabled:     true,
+			FileProcessingEnabled:   true,
+			GenerateArchives:        true,
+			ArchiveFormats: []moduleService.ArchiveFormat{
+				moduleService.ArchiveFormatZIP,
+				moduleService.ArchiveFormatTarGz,
+			},
+		},
 	}
 
-	if err := h.uploadModuleVersionCmd.Execute(ctx, uploadReq); err != nil {
+	if err := h.processModuleCmd.Execute(ctx, processReq); err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -963,16 +970,31 @@ func (h *ModuleHandler) HandleModuleVersionImport(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Execute import command
-	importReq := module.ImportModuleVersionRequest{
+	// Execute unified process module command
+	processReq := moduleCmd.ProcessModuleRequest{
 		Namespace: namespace,
 		Module:    name,
 		Provider:  provider,
-		Version:   reqBody.Version,
+		Version:   *reqBody.Version,
 		GitTag:    reqBody.GitTag,
+		Options: moduleService.ProcessingOptions{
+			SkipArchiveExtraction:   false,
+			SkipTerraformProcessing: false,
+			SkipMetadataProcessing:  false,
+			SkipSecurityScanning:    false,
+			SkipFileContentStorage:  false,
+			SkipArchiveGeneration:   false,
+			SecurityScanEnabled:     true,
+			FileProcessingEnabled:   true,
+			GenerateArchives:        true,
+			ArchiveFormats: []moduleService.ArchiveFormat{
+				moduleService.ArchiveFormatZIP,
+				moduleService.ArchiveFormatTarGz,
+			},
+		},
 	}
 
-	if err := h.importModuleVersionCmd.Execute(ctx, importReq); err != nil {
+	if err := h.processModuleCmd.Execute(ctx, processReq); err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -1182,19 +1204,31 @@ func (h *ModuleHandler) HandleModuleVersionCreate(w http.ResponseWriter, r *http
 		gitTag = &version
 	}
 
-	// Create import request
-	// For this endpoint, we use git tag for cloning since version in URL alone isn't enough
-	request := module.ImportModuleVersionRequest{
+	// Execute unified process module command
+	processReq := moduleCmd.ProcessModuleRequest{
 		Namespace: namespace,
 		Module:    moduleName,
 		Provider:  provider,
-		Version:   nil,    // Don't provide version when using git tag (validation requires exactly one)
-		GitTag:    gitTag, // Use provided or derived git tag for cloning
+		Version:   version,
+		GitTag:    gitTag,
+		Options: moduleService.ProcessingOptions{
+			SkipArchiveExtraction:   false,
+			SkipTerraformProcessing: false,
+			SkipMetadataProcessing:  false,
+			SkipSecurityScanning:    false,
+			SkipFileContentStorage:  false,
+			SkipArchiveGeneration:   false,
+			SecurityScanEnabled:     true,
+			FileProcessingEnabled:   true,
+			GenerateArchives:        true,
+			ArchiveFormats: []moduleService.ArchiveFormat{
+				moduleService.ArchiveFormatZIP,
+				moduleService.ArchiveFormatTarGz,
+			},
+		},
 	}
 
-	// Execute import command
-	err := h.importModuleVersionCmd.Execute(ctx, request)
-	if err != nil {
+	if err := h.processModuleCmd.Execute(ctx, processReq); err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

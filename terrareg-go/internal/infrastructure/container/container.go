@@ -174,6 +174,8 @@ type Container struct {
 	TerraformExecutorService            *moduleService.TerraformExecutorService
 	FileContentTransactionService       *moduleService.FileContentTransactionService
 	TransactionProcessingOrchestrator   *moduleService.TransactionProcessingOrchestrator
+	SourcePreparationService            *moduleService.SourcePreparationService
+	ArchiveExtractionService             *moduleService.ArchiveExtractionService
 	AuthFactory                         *authservice.AuthFactory
 	SessionService                      *authservice.SessionService
 	CookieService                       *authservice.CookieService
@@ -193,8 +195,7 @@ type Container struct {
 	PublishModuleVersionCmd         *moduleCmd.PublishModuleVersionCommand
 	UpdateModuleProviderSettingsCmd *moduleCmd.UpdateModuleProviderSettingsCommand
 	DeleteModuleProviderCmd         *moduleCmd.DeleteModuleProviderCommand
-	UploadModuleVersionCmd          *moduleCmd.UploadModuleVersionCommand
-	ImportModuleVersionCmd          *moduleCmd.ImportModuleVersionCommand
+	ProcessModuleCmd                *moduleCmd.ProcessModuleCommand
 	GetModuleVersionFileCmd         *moduleCmd.GetModuleVersionFileQuery
 	DeleteModuleVersionCmd          *moduleCmd.DeleteModuleVersionCommand
 	GenerateModuleSourceCmd         *moduleCmd.GenerateModuleSourceCommand
@@ -649,6 +650,35 @@ func NewContainer(
 	)
 	c.TransactionProcessingOrchestrator = processingOrchestrator
 
+	// Initialize archive processor
+	archiveProcessor := moduleService.NewDefaultArchiveProcessor()
+
+	// Initialize archive extraction service
+	archiveExtractionService := moduleService.NewArchiveExtractionService(
+		archiveProcessor,
+		savepointHelper,
+	)
+	c.ArchiveExtractionService = archiveExtractionService
+
+	// Initialize source preparation service
+	sourcePreparationService := moduleService.NewSourcePreparationService(
+		c.ModuleProviderRepo,
+		c.GitClient,
+		c.ModuleStorageService,
+		archiveProcessor,
+		c.DomainConfig,
+		infraConfig,
+		logger,
+	)
+	c.SourcePreparationService = sourcePreparationService
+
+	// Initialize process module command
+	processModuleCmd := moduleCmd.NewProcessModuleCommand(
+		sourcePreparationService,
+		processingOrchestrator,
+	)
+	c.ProcessModuleCmd = processModuleCmd
+
 	// Update module importer service with the orchestrator
 	moduleImporterService, err := moduleService.NewModuleImporterService(
 		processingOrchestrator,
@@ -742,8 +772,6 @@ func NewContainer(
 	c.PublishModuleVersionCmd = publishModuleVersionCmd
 	c.UpdateModuleProviderSettingsCmd = moduleCmd.NewUpdateModuleProviderSettingsCommand(c.ModuleProviderRepo)
 	c.DeleteModuleProviderCmd = moduleCmd.NewDeleteModuleProviderCommand(c.ModuleProviderRepo, moduleAuditService)
-	c.UploadModuleVersionCmd = moduleCmd.NewUploadModuleVersionCommand(c.ModuleProviderRepo, c.ModuleParser, c.ModuleStorageService, infraConfig, domainConfig) // Uses InfrastructureConfig for file operations, DomainConfig for auto-publish logic
-	c.ImportModuleVersionCmd = moduleCmd.NewImportModuleVersionCommand(c.ModuleImporterService)
 	c.RecordModuleDownloadCmd = analyticsCmd.NewRecordModuleDownloadCommand(c.ModuleProviderRepo, c.AnalyticsRepo)
 	c.GetModuleVersionFileCmd = moduleCmd.NewGetModuleVersionFileQuery(c.ModuleFileService)
 	c.DeleteModuleVersionCmd = moduleCmd.NewDeleteModuleVersionCommand(c.ModuleProviderRepo, c.ModuleVersionRepo, moduleAuditService)
@@ -889,8 +917,7 @@ func NewContainer(
 		c.PublishModuleVersionCmd,
 		c.UpdateModuleProviderSettingsCmd,
 		c.DeleteModuleProviderCmd,
-		c.UploadModuleVersionCmd,
-		c.ImportModuleVersionCmd,
+		c.ProcessModuleCmd,
 		c.GetModuleVersionFileCmd,
 		c.DeleteModuleVersionCmd,
 		c.GenerateModuleSourceCmd,
