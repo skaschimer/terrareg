@@ -65,7 +65,7 @@ func TestCompleteWorkflow(t *testing.T) {
 	// Test 8: Test module provider redirects
 	testModuleProviderRedirects(t, client, baseURL, namespaceName, moduleName, providerName)
 
-	t.Log("✅ Complete workflow test passed successfully")
+	t.Log("Complete workflow test passed successfully")
 }
 
 func createNamespace(t *testing.T, client *http.Client, baseURL, namespaceName string) int {
@@ -286,7 +286,7 @@ T3S6U9V2W5Y8Z1X4Q7F0K3M6P9T2S5U8V1W4Y7Z0X3Q6F9K2M5N8P1T4S7U0V3W6Y
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-	t.Logf("✅ GPG key management test completed successfully with key ID: %s", gpgKeyID)
+	t.Logf("GPG key management test completed successfully with key ID: %s", gpgKeyID)
 	return gpgKeyID
 }
 
@@ -312,7 +312,7 @@ func testAuditHistory(t *testing.T, client *http.Client, baseURL string) {
 		resp.StatusCode == http.StatusForbidden)
 
 	resp.Body.Close()
-	t.Log("✅ Audit history endpoint test completed")
+	t.Log("Audit history endpoint test completed")
 }
 
 func testGraphData(t *testing.T, client *http.Client, baseURL, namespaceName, moduleName, providerName, version string) {
@@ -336,16 +336,16 @@ func testGraphData(t *testing.T, client *http.Client, baseURL, namespaceName, mo
 		// Graph data should have nodes and edges structure
 		if _, exists := graphData["nodes"]; exists {
 			nodes := graphData["nodes"].([]interface{})
-			t.Logf("✅ Graph data returned with %d nodes", len(nodes))
+			t.Logf("Graph data returned with %d nodes", len(nodes))
 		}
 		if _, exists := graphData["edges"]; exists {
 			edges := graphData["edges"].([]interface{})
-			t.Logf("✅ Graph data returned with %d edges", len(edges))
+			t.Logf("Graph data returned with %d edges", len(edges))
 		}
 	}
 
 	resp.Body.Close()
-	t.Log("✅ Graph data test completed")
+	t.Log("Graph data test completed")
 }
 
 func testModuleProviderRedirects(t *testing.T, client *http.Client, baseURL, namespaceName, moduleName, providerName string) {
@@ -363,7 +363,7 @@ func testModuleProviderRedirects(t *testing.T, client *http.Client, baseURL, nam
 	err = json.NewDecoder(resp.Body).Decode(&redirects)
 	require.NoError(t, resp.Body.Close())
 
-	t.Logf("✅ Module provider redirects test completed with %d redirects", len(redirects))
+	t.Logf("Module provider redirects test completed with %d redirects", len(redirects))
 }
 
 // TestCompleteWorkflowAPICompatibility compares critical API responses between Go and Python implementations
@@ -400,7 +400,7 @@ func TestCompleteWorkflowAPICompatibility(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, modules)
 
-	t.Log("✅ API compatibility test completed - Go implementation follows expected patterns")
+	t.Log("API compatibility test completed - Go implementation follows expected patterns")
 }
 
 // TestCompleteWorkflowWebhookIntegration tests webhook functionality for all Git providers
@@ -483,14 +483,14 @@ func testGitHubWebhook(t *testing.T, client *http.Client, baseURL, namespace, mo
 		// Read response to verify it's the expected error
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Webhook returned 400 (no Git repo configured): %s", string(body))
-		t.Log("✅ GitHub webhook test completed - endpoint correctly rejects without Git URL")
+		t.Log("GitHub webhook test completed - endpoint correctly rejects without Git URL")
 		return
 	}
 
 	require.True(t, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted,
 		"Expected 200 or 202, got %d", resp.StatusCode)
 
-	t.Log("✅ GitHub webhook test completed")
+	t.Log("GitHub webhook test completed")
 }
 
 // testGitLabWebhook tests GitLab webhook processing
@@ -529,7 +529,7 @@ func testGitLabWebhook(t *testing.T, client *http.Client, baseURL, namespace, mo
 		// Read response to verify it's the expected error
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Webhook returned 400 (no Git repo configured): %s", string(body))
-		t.Log("✅ GitLab webhook test completed - endpoint correctly rejects without Git URL")
+		t.Log("GitLab webhook test completed - endpoint correctly rejects without Git URL")
 		return
 	}
 
@@ -537,14 +537,14 @@ func testGitLabWebhook(t *testing.T, client *http.Client, baseURL, namespace, mo
 		// GitLab webhook not implemented yet
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("GitLab webhook not yet implemented: %s", string(body))
-		t.Log("✅ GitLab webhook test completed - endpoint returns 501 (not implemented)")
+		t.Log("GitLab webhook test completed - endpoint returns 501 (not implemented)")
 		return
 	}
 
 	require.True(t, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted,
 		"Expected 200 or 202, got %d", resp.StatusCode)
 
-	t.Log("✅ GitLab webhook test completed")
+	t.Log("GitLab webhook test completed")
 }
 
 // testBitBucketWebhook tests BitBucket webhook processing
@@ -600,7 +600,7 @@ func testBitBucketWebhook(t *testing.T, client *http.Client, baseURL, namespace,
 		// Read response to verify it's the expected error
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Webhook returned 400 (no Git repo configured): %s", string(body))
-		t.Log("✅ BitBucket webhook test completed - endpoint correctly rejects without Git URL")
+		t.Log("BitBucket webhook test completed - endpoint correctly rejects without Git URL")
 		return
 	}
 
@@ -608,14 +608,14 @@ func testBitBucketWebhook(t *testing.T, client *http.Client, baseURL, namespace,
 		// BitBucket webhook not implemented yet
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("BitBucket webhook not yet implemented: %s", string(body))
-		t.Log("✅ BitBucket webhook test completed - endpoint returns 501 (not implemented)")
+		t.Log("BitBucket webhook test completed - endpoint returns 501 (not implemented)")
 		return
 	}
 
 	require.True(t, resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted,
 		"Expected 200 or 202, got %d", resp.StatusCode)
 
-	t.Log("✅ BitBucket webhook test completed")
+	t.Log("BitBucket webhook test completed")
 }
 
 // TestAPIResponseFormats validates API response formats match expected structure
@@ -669,5 +669,5 @@ func TestAPIResponseFormats(t *testing.T) {
 	// Test audit history response format (if accessible)
 	testAuditHistory(t, client, baseURL)
 
-	t.Log("✅ API response format test completed - all responses follow expected structure")
+	t.Log("API response format test completed - all responses follow expected structure")
 }
