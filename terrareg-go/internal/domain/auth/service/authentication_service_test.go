@@ -12,8 +12,8 @@ import (
 // returns an error when sessionService is nil
 func TestNewAuthenticationService_NilSessionService(t *testing.T) {
 	infraCfg := &config.InfrastructureConfig{
-		PublicURL:  "http://localhost:3000",
-		SecretKey:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", // 64 hex chars = 32 bytes
+		PublicURL: "http://localhost:3000",
+		SecretKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", // 64 hex chars = 32 bytes
 	}
 	cookieService := NewCookieService(infraCfg)
 
@@ -62,8 +62,8 @@ func TestNewAuthenticationService_ValidDependencies(t *testing.T) {
 	sessionService := NewSessionService(nil, sessionConfig)
 
 	infraCfg := &config.InfrastructureConfig{
-		PublicURL:  "http://localhost:3000",
-		SecretKey:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", // 64 hex chars = 32 bytes
+		PublicURL: "http://localhost:3000",
+		SecretKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", // 64 hex chars = 32 bytes
 	}
 	cookieService := NewCookieService(infraCfg)
 

@@ -73,11 +73,11 @@ func TestRepositoryReleaseMetadata_Equals(t *testing.T) {
 	}
 
 	params := &provider_source.RepositoryReleaseMetadata{
-		Name:            "Unit Test Name",
-		Tag:             "v5.7.2",
-		ArchiveURL:      "https://example.com/unittest/example.zip",
-		CommitHash:      "abcdefgunittesthash",
-		ProviderID:      "unittestproviderreleaseid",
+		Name:             "Unit Test Name",
+		Tag:              "v5.7.2",
+		ArchiveURL:       "https://example.com/unittest/example.zip",
+		CommitHash:       "abcdefgunittesthash",
+		ProviderID:       "unittestproviderreleaseid",
 		ReleaseArtifacts: releaseArtifacts,
 	}
 
@@ -86,11 +86,11 @@ func TestRepositoryReleaseMetadata_Equals(t *testing.T) {
 	}
 
 	otherParams := &provider_source.RepositoryReleaseMetadata{
-		Name:            "Unit Test Name",
-		Tag:             "v5.7.2",
-		ArchiveURL:      "https://example.com/unittest/example.zip",
-		CommitHash:      "abcdefgunittesthash",
-		ProviderID:      "unittestproviderreleaseid",
+		Name:             "Unit Test Name",
+		Tag:              "v5.7.2",
+		ArchiveURL:       "https://example.com/unittest/example.zip",
+		CommitHash:       "abcdefgunittesthash",
+		ProviderID:       "unittestproviderreleaseid",
 		ReleaseArtifacts: otherReleaseArtifacts,
 	}
 
@@ -203,7 +203,7 @@ func TestRepositoryReleaseMetadata_Equals(t *testing.T) {
 // Python reference: test_repository_release_metadata.py::TestRepositoryReleaseMetadata::test_tag_to_version
 func TestTagToVersion(t *testing.T) {
 	testCases := []struct {
-		tag          string
+		tag             string
 		expectedVersion *string
 	}{
 		// Valid tags

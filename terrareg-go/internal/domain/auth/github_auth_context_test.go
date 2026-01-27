@@ -44,45 +44,45 @@ func TestNewGitHubAuthContext(t *testing.T) {
 // TestGitHubAuthContext_CheckNamespaceAccess tests namespace access checking
 func TestGitHubAuthContext_CheckNamespaceAccess(t *testing.T) {
 	tests := []struct {
-		name          string
-		namespace     string
-		accessType    string
+		name             string
+		namespace        string
+		accessType       string
 		shouldHaveAccess bool
 	}{
 		{
-			name:          "user has MODIFY access to own namespace",
-			namespace:     "test-user",
-			accessType:    "MODIFY",
+			name:             "user has MODIFY access to own namespace",
+			namespace:        "test-user",
+			accessType:       "MODIFY",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user has FULL access to own namespace",
-			namespace:     "test-user",
-			accessType:    "FULL",
+			name:             "user has FULL access to own namespace",
+			namespace:        "test-user",
+			accessType:       "FULL",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user has MODIFY access to organization namespace",
-			namespace:     "test-org-1",
-			accessType:    "MODIFY",
+			name:             "user has MODIFY access to organization namespace",
+			namespace:        "test-org-1",
+			accessType:       "MODIFY",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user has FULL access to organization namespace",
-			namespace:     "test-org-1",
-			accessType:    "FULL",
+			name:             "user has FULL access to organization namespace",
+			namespace:        "test-org-1",
+			accessType:       "FULL",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user does not have access to other namespace",
-			namespace:     "other-org",
-			accessType:    "MODIFY",
+			name:             "user does not have access to other namespace",
+			namespace:        "other-org",
+			accessType:       "MODIFY",
 			shouldHaveAccess: false,
 		},
 		{
-			name:          "user does not have FULL access to other namespace",
-			namespace:     "other-org",
-			accessType:    "FULL",
+			name:             "user does not have FULL access to other namespace",
+			namespace:        "other-org",
+			accessType:       "FULL",
 			shouldHaveAccess: false,
 		},
 	}
@@ -150,23 +150,23 @@ func TestGitHubAuthContext_CheckNamespaceAccess_AllAccessLevels(t *testing.T) {
 // TestGitHubAuthContext_CanPublishModuleVersion tests module version publish permissions
 func TestGitHubAuthContext_CanPublishModuleVersion(t *testing.T) {
 	tests := []struct {
-		name          string
-		namespace     string
+		name             string
+		namespace        string
 		shouldHaveAccess bool
 	}{
 		{
-			name:          "user can publish to own namespace",
-			namespace:     "test-user",
+			name:             "user can publish to own namespace",
+			namespace:        "test-user",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user can publish to organization namespace",
-			namespace:     "test-org-1",
+			name:             "user can publish to organization namespace",
+			namespace:        "test-org-1",
 			shouldHaveAccess: true,
 		},
 		{
-			name:          "user cannot publish to other namespace",
-			namespace:     "other-org",
+			name:             "user cannot publish to other namespace",
+			namespace:        "other-org",
 			shouldHaveAccess: false,
 		},
 	}
@@ -196,9 +196,9 @@ func TestGitHubAuthContext_CanPublishModuleVersion(t *testing.T) {
 // TestGitHubAuthContext_GetAllNamespacePermissions tests getting all namespace permissions
 func TestGitHubAuthContext_GetAllNamespacePermissions(t *testing.T) {
 	organizations := map[string]sqldb.NamespaceType{
-		"test-user":        sqldb.NamespaceTypeGithubUser,
-		"test-org-1":       sqldb.NamespaceTypeGithubOrg,
-		"test-org-2":       sqldb.NamespaceTypeGithubOrg,
+		"test-user":          sqldb.NamespaceTypeGithubUser,
+		"test-org-1":         sqldb.NamespaceTypeGithubOrg,
+		"test-org-2":         sqldb.NamespaceTypeGithubOrg,
 		"auto-generated-org": sqldb.NamespaceTypeGithubOrg,
 	}
 

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/testutils/mocks"
@@ -14,15 +14,15 @@ import (
 
 func TestListUserGroupsQuery_Success(t *testing.T) {
 	tests := []struct {
-		name           string
-		userGroups     []*auth.UserGroup
-		permissions    map[int][]auth.NamespacePermission
-		expectedCount  int
+		name          string
+		userGroups    []*auth.UserGroup
+		permissions   map[int][]auth.NamespacePermission
+		expectedCount int
 	}{
 		{
-			name: "List with no user groups",
-			userGroups: []*auth.UserGroup{},
-			permissions: map[int][]auth.NamespacePermission{},
+			name:          "List with no user groups",
+			userGroups:    []*auth.UserGroup{},
+			permissions:   map[int][]auth.NamespacePermission{},
 			expectedCount: 0,
 		},
 		{
@@ -34,7 +34,7 @@ func TestListUserGroupsQuery_Success(t *testing.T) {
 					SiteAdmin: false,
 				},
 			},
-			permissions: map[int][]auth.NamespacePermission{},
+			permissions:   map[int][]auth.NamespacePermission{},
 			expectedCount: 1,
 		},
 		{

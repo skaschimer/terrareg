@@ -264,12 +264,12 @@ func TestConvertModuleProviderToListResponse(t *testing.T) {
 
 	// Assert
 	assert.NotNil(t, result)
-	assert.Equal(t, "0", result.ID) // New ModuleProvider has ID 0
+	assert.Equal(t, "0", result.ID)             // New ModuleProvider has ID 0
 	assert.Equal(t, "testns", result.Namespace) // Namespace from module provider
 	assert.Equal(t, "testmodule", result.Name)
 	assert.Equal(t, "testprovider", result.Provider)
 	assert.True(t, result.Verified)
-	assert.False(t, result.Trusted)          // TODO: Get from namespace service
+	assert.False(t, result.Trusted)              // TODO: Get from namespace service
 	assert.Equal(t, "test-owner", *result.Owner) // Owner uses version owner (from module version)
 	assert.Equal(t, "Test description", *result.Description)
 	assert.Equal(t, "2023-01-01T12:00:00Z", *result.PublishedAt)

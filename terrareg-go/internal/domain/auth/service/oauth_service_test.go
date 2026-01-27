@@ -57,11 +57,11 @@ func TestOAuth2StateTokenGeneration(t *testing.T) {
 // TestOAuth2AuthorizationCodeFlow tests the OAuth 2.0 authorization code flow scenarios
 func TestOAuth2AuthorizationCodeFlow(t *testing.T) {
 	tests := []struct {
-		name              string
-		scenario          func(*testing.T, *authservice.AuthenticationService)
-		expectError       bool
-		expectSession     bool
-		description       string
+		name          string
+		scenario      func(*testing.T, *authservice.AuthenticationService)
+		expectError   bool
+		expectSession bool
+		description   string
 	}{
 		{
 			name: "Successful authorization code exchange",
@@ -142,10 +142,10 @@ func TestOAuth2AuthorizationCodeFlow(t *testing.T) {
 // TestOAuth2TokenExchangeValidation tests token exchange parameter validation
 func TestOAuth2TokenExchangeValidation(t *testing.T) {
 	tests := []struct {
-		name          string
-		parameters    map[string]string
-		expectValid   bool
-		description   string
+		name        string
+		parameters  map[string]string
+		expectValid bool
+		description string
 	}{
 		{
 			name: "Valid token request parameters",
@@ -157,7 +157,7 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"client_secret": "test_client_secret",
 			},
 			expectValid: true,
-			description:  "All required parameters present and valid",
+			description: "All required parameters present and valid",
 		},
 		{
 			name: "Missing grant_type",
@@ -168,7 +168,7 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"client_secret": "test_client_secret",
 			},
 			expectValid: false,
-			description:  "Grant type is required",
+			description: "Grant type is required",
 		},
 		{
 			name: "Invalid grant type",
@@ -180,7 +180,7 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"client_secret": "test_client_secret",
 			},
 			expectValid: false,
-			description:  "Only 'authorization_code' grant type is supported",
+			description: "Only 'authorization_code' grant type is supported",
 		},
 		{
 			name: "Missing authorization code",
@@ -191,7 +191,7 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"client_secret": "test_client_secret",
 			},
 			expectValid: false,
-			description:  "Authorization code is required",
+			description: "Authorization code is required",
 		},
 		{
 			name: "Empty authorization code",
@@ -203,18 +203,18 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"client_secret": "test_client_secret",
 			},
 			expectValid: false,
-			description:  "Authorization code cannot be empty",
+			description: "Authorization code cannot be empty",
 		},
 		{
 			name: "Missing redirect URI",
 			parameters: map[string]string{
-				"grant_type":   "authorization_code",
-				"code":         "valid_auth_code",
-				"client_id":    "test_client_id",
+				"grant_type":    "authorization_code",
+				"code":          "valid_auth_code",
+				"client_id":     "test_client_id",
 				"client_secret": "test_client_secret",
 			},
 			expectValid: false,
-			description:  "Redirect URI must match the original request",
+			description: "Redirect URI must match the original request",
 		},
 		{
 			name: "Missing client credentials",
@@ -224,7 +224,7 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 				"redirect_uri": "https://example.com/callback",
 			},
 			expectValid: false,
-			description:  "Client authentication is required",
+			description: "Client authentication is required",
 		},
 	}
 
@@ -244,39 +244,39 @@ func TestOAuth2TokenExchangeValidation(t *testing.T) {
 // TestOAuth2ErrorResponses tests OAuth 2.0 error response scenarios
 func TestOAuth2ErrorResponses(t *testing.T) {
 	tests := []struct {
-		name          string
-		error         string
+		name             string
+		error            string
 		errorDescription string
-		expectedStatus int
-		description   string
+		expectedStatus   int
+		description      string
 	}{
 		{
-			name:            "invalid_request",
-			error:           "invalid_request",
+			name:             "invalid_request",
+			error:            "invalid_request",
 			errorDescription: "The request is missing a required parameter",
-			expectedStatus:  400,
-			description:     "Bad Request - Missing required parameter",
+			expectedStatus:   400,
+			description:      "Bad Request - Missing required parameter",
 		},
 		{
-			name:            "unauthorized_client",
-			error:           "unauthorized_client",
+			name:             "unauthorized_client",
+			error:            "unauthorized_client",
 			errorDescription: "Client is not authorized to use this grant type",
-			expectedStatus:  401,
-			description:     "Unauthorized - Client authentication failed",
+			expectedStatus:   401,
+			description:      "Unauthorized - Client authentication failed",
 		},
 		{
-			name:            "access_denied",
-			error:           "access_denied",
+			name:             "access_denied",
+			error:            "access_denied",
 			errorDescription: "Resource owner denied the request",
-			expectedStatus:  403,
-			description:     "Forbidden - User denied access",
+			expectedStatus:   403,
+			description:      "Forbidden - User denied access",
 		},
 		{
-			name:            "invalid_scope",
-			error:           "invalid_scope",
+			name:             "invalid_scope",
+			error:            "invalid_scope",
 			errorDescription: "The requested scope is invalid",
-			expectedStatus:  400,
-			description:     "Bad Request - Invalid scope requested",
+			expectedStatus:   400,
+			description:      "Bad Request - Invalid scope requested",
 		},
 	}
 
@@ -284,11 +284,11 @@ func TestOAuth2ErrorResponses(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify error codes match OAuth 2.0 specification
 			validErrors := map[string]bool{
-				"invalid_request":     true,
-				"unauthorized_client": true,
-				"access_denied":       true,
-				"invalid_scope":       true,
-				"server_error":        true,
+				"invalid_request":         true,
+				"unauthorized_client":     true,
+				"access_denied":           true,
+				"invalid_scope":           true,
+				"server_error":            true,
 				"temporarily_unavailable": true,
 			}
 

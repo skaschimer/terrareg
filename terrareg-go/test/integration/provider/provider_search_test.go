@@ -93,9 +93,9 @@ func TestProviderSearch_BasicSearch(t *testing.T) {
 
 	t.Run("Search with empty query returns all", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "",
-		Offset: 0,
-		Limit:  10,
+			Query:  "",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 3, result.TotalCount)
@@ -127,9 +127,9 @@ func TestProviderSearch_SearchInDescription(t *testing.T) {
 
 	t.Run("Search by description term", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "DESCRIPTION-Search",
-		Offset: 0,
-		Limit:  10,
+			Query:  "DESCRIPTION-Search",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.TotalCount)
@@ -213,9 +213,9 @@ func TestProviderSearch_OffsetAndLimit(t *testing.T) {
 
 	t.Run("Limit with offset", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "pagination-provider",
-		Offset: 0,
-		Limit:  2,
+			Query:  "pagination-provider",
+			Offset: 0,
+			Limit:  2,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 5, result.TotalCount)
@@ -224,9 +224,9 @@ func TestProviderSearch_OffsetAndLimit(t *testing.T) {
 
 	t.Run("Offset beyond results", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "pagination-provider",
-		Offset: 10,
-		Limit:  2,
+			Query:  "pagination-provider",
+			Offset: 10,
+			Limit:  2,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 5, result.TotalCount)
@@ -235,9 +235,9 @@ func TestProviderSearch_OffsetAndLimit(t *testing.T) {
 
 	t.Run("Offset in middle of results", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "pagination-provider",
-		Offset: 2,
-		Limit:  2,
+			Query:  "pagination-provider",
+			Offset: 2,
+			Limit:  2,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 5, result.TotalCount)
@@ -272,9 +272,9 @@ func TestProviderSearch_ExcludeProvidersWithoutLatestVersion(t *testing.T) {
 
 	t.Run("Search includes provider with latest", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "",
-		Offset: 0,
-		Limit:  10,
+			Query:  "",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		// Only the provider with a version should be included
@@ -314,9 +314,9 @@ func TestProviderSearch_MultipleProvidersSameNamespace(t *testing.T) {
 
 	t.Run("Search by partial name matches multiple", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "multi-provider",
-		Offset: 0,
-		Limit:  10,
+			Query:  "multi-provider",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 2, result.TotalCount)
@@ -346,9 +346,9 @@ func TestProviderSearch_BetaVersionProviders(t *testing.T) {
 
 	t.Run("Search includes provider with beta version", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "beta-provider",
-		Offset: 0,
-		Limit:  10,
+			Query:  "beta-provider",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.TotalCount)
@@ -384,9 +384,9 @@ func TestProviderSearch_WithProviderCategory(t *testing.T) {
 
 	t.Run("Search finds provider with category", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
-		Query:  "cloud-provider",
-		Offset: 0,
-		Limit:  10,
+			Query:  "cloud-provider",
+			Offset: 0,
+			Limit:  10,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.TotalCount)

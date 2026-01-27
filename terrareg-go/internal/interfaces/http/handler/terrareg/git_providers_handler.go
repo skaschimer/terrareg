@@ -25,9 +25,9 @@ func NewGitProvidersHandler(
 
 // GitProviderResponse represents a git provider in the API response
 type GitProviderResponse struct {
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
-	GitPathTemplate  string `json:"git_path_template"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	GitPathTemplate string `json:"git_path_template"`
 }
 
 // ServeHTTP handles the HTTP request
@@ -47,9 +47,9 @@ func (h *GitProvidersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	response := make([]GitProviderResponse, len(gitProviders))
 	for i, gp := range gitProviders {
 		response[i] = GitProviderResponse{
-			ID:               gp.ID,
-			Name:             gp.Name,
-			GitPathTemplate:  gp.GitPathTemplate,
+			ID:              gp.ID,
+			Name:            gp.Name,
+			GitPathTemplate: gp.GitPathTemplate,
 		}
 	}
 

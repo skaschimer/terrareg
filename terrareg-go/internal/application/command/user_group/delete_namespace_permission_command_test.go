@@ -6,25 +6,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
-	
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/testutils/mocks"
 )
 
 func TestDeleteUserGroupNamespacePermissionCommand_Success(t *testing.T) {
 	tests := []struct {
-		name          string
+		name           string
 		permissionType auth.PermissionType
 	}{
 		{
-			name:          "Delete FULL permission",
+			name:           "Delete FULL permission",
 			permissionType: auth.PermissionFull,
 		},
 		{
-			name:          "Delete MODIFY permission",
+			name:           "Delete MODIFY permission",
 			permissionType: auth.PermissionModify,
 		},
 	}

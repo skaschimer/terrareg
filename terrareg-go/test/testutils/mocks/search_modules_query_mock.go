@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	modulequery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockSearchModulesQuery is a mock for SearchModulesQuery

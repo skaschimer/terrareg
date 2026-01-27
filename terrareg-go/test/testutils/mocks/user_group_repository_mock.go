@@ -3,9 +3,9 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockUserGroupRepository is a mock for UserGroupRepository

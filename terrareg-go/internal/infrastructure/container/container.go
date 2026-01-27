@@ -12,26 +12,26 @@ import (
 
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
 	authCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/auth"
-	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	gpgkeyCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/gpgkey"
 	moduleCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
 	providerCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider"
 	providerSourceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider_source"
+	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
-	userGroupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/user_group"
 	configQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/config"
 	gpgkeyQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/gpgkey"
 	graphQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/graph"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
-	providerSourceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider_source"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
 	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
 	providerLogoQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider_logo"
+	providerSourceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider_source"
 	setupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/setup"
+	userGroupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/user_group"
 	terraformCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/terraform"
 	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
 	auditservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/service"
@@ -48,14 +48,14 @@ import (
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service" // Alias for the new module service
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
+	providerSourceImpl "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source"
+	providerSourceRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
+	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	repositoryRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/repository"
 	sharedService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
 	storageModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/model"
 	storageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
 	urlservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
-	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
-	providerSourceRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/repository"
-	providerSourceImpl "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/git"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
@@ -131,15 +131,15 @@ type Container struct {
 	GitProviderFactory *gitService.GitProviderFactory
 
 	// Provider Sources
-	ProviderSourceFactory       *providerSourceService.ProviderSourceFactory
+	ProviderSourceFactory *providerSourceService.ProviderSourceFactory
 
 	// Provider Source API Queries
-	GetOrganizationsQuery       *providerSourceQuery.GetOrganizationsQuery
-	GetRepositoriesQuery        *providerSourceQuery.GetRepositoriesQuery
+	GetOrganizationsQuery *providerSourceQuery.GetOrganizationsQuery
+	GetRepositoriesQuery  *providerSourceQuery.GetRepositoriesQuery
 
 	// Provider Source API Commands
-	RefreshNamespaceCommand     *providerSourceCmd.RefreshNamespaceCommand
-	publishProviderCommand      *providerSourceCmd.PublishProviderCommand
+	RefreshNamespaceCommand *providerSourceCmd.RefreshNamespaceCommand
+	publishProviderCommand  *providerSourceCmd.PublishProviderCommand
 
 	// Repository
 	RepositoryRepo repositoryRepo.RepositoryRepository
@@ -212,11 +212,11 @@ type Container struct {
 	GithubOAuthCmd  *authCmd.GithubOAuthCommand
 
 	// User Group Commands and Queries
-	ListUserGroupsQuery                      *userGroupQuery.ListUserGroupsQuery
-	CreateUserGroupCmd                       *userGroupCmd.CreateUserGroupCommand
-	DeleteUserGroupCmd                       *userGroupCmd.DeleteUserGroupCommand
-	CreateUserGroupNamespacePermissionCmd    *userGroupCmd.CreateUserGroupNamespacePermissionCommand
-	DeleteUserGroupNamespacePermissionCmd    *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
+	ListUserGroupsQuery                   *userGroupQuery.ListUserGroupsQuery
+	CreateUserGroupCmd                    *userGroupCmd.CreateUserGroupCommand
+	DeleteUserGroupCmd                    *userGroupCmd.DeleteUserGroupCommand
+	CreateUserGroupNamespacePermissionCmd *userGroupCmd.CreateUserGroupNamespacePermissionCommand
+	DeleteUserGroupNamespacePermissionCmd *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
 
 	// Terraform Authentication Commands
 	AuthenticateOIDCTokenCmd *terraformCmd.AuthenticateOIDCTokenCommand
@@ -330,9 +330,9 @@ type Container struct {
 	GitProvidersHandler *terrareg.GitProvidersHandler
 
 	// Search Filters
-	SearchFiltersQuery          *moduleQuery.SearchFiltersQuery
-	ProviderSearchFiltersQuery  *providerQuery.SearchFiltersQuery
-	SearchFiltersHandler        *terrareg.SearchFiltersHandler
+	SearchFiltersQuery         *moduleQuery.SearchFiltersQuery
+	ProviderSearchFiltersQuery *providerQuery.SearchFiltersQuery
+	SearchFiltersHandler       *terrareg.SearchFiltersHandler
 
 	// HTTP Server
 	Server *http.Server

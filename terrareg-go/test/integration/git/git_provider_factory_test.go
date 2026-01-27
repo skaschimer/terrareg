@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
-	gitrepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/git"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	gitrepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/git"
 	testutils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
@@ -287,9 +287,9 @@ func TestGitProviderFactory_UpdateExisting(t *testing.T) {
 // TestInitialiseFromConfig_InvalidConfig tests invalid configurations
 func TestGitProviderFactory_InvalidConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		configJSON     string
-		expectedError  string
+		name          string
+		configJSON    string
+		expectedError string
 	}{
 		{
 			name: "missing name",
@@ -328,9 +328,9 @@ func TestGitProviderFactory_InvalidConfig(t *testing.T) {
 			expectedError: "Git provider config does not contain required attribute: browse_url",
 		},
 		{
-			name:           "invalid JSON",
-			configJSON:     `{invalid JSON}`,
-			expectedError:  "not valid JSON",
+			name:          "invalid JSON",
+			configJSON:    `{invalid JSON}`,
+			expectedError: "not valid JSON",
 		},
 	}
 

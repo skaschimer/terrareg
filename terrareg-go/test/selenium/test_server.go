@@ -71,7 +71,7 @@ type TestServer struct {
 	serverCtx       context.Context
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
-	originalWd      string  // Original working directory to restore on shutdown
+	originalWd      string // Original working directory to restore on shutdown
 }
 
 // TestServerOption is a function that configures the test server after container creation.
@@ -134,41 +134,41 @@ func (ts *TestServer) setup() {
 	// Set default config values if not provided
 	// Python reference: /app/test/selenium/__init__.py - _get_database_path() returns 'temp-selenium.db'
 	defaults := map[string]string{
-		"LISTEN_PORT":                      "5000", // Valid port (will be overridden to random port after bootstrap)
-		"PUBLIC_URL":                       "http://127.0.0.1:5000",
-		"DATABASE_URL":                     "sqlite:///temp-selenium.db", // File-based DB like Python tests
-		"SECRET_KEY":                       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		"ADMIN_AUTHENTICATION_TOKEN":       "test-admin-token",
-		"ALLOW_MODULE_HOSTING":             "true",
-		"DEBUG":                            "true",
-		"SESSION_COOKIE_NAME":              "terrareg_session",
-		"SESSION_EXPIRY_MINS":              "60",
-		"ADMIN_SESSION_EXPIRY_MINS":         "60",
-		"SESSION_REFRESH_MINS":             "5",
-		"TRUSTED_NAMESPACE_LABEL":          "Trusted",
-		"CONTRIBUTED_NAMESPACE_LABEL":      "Contributed",
-		"VERIFIED_MODULE_LABEL":            "Verified",
+		"LISTEN_PORT":                          "5000", // Valid port (will be overridden to random port after bootstrap)
+		"PUBLIC_URL":                           "http://127.0.0.1:5000",
+		"DATABASE_URL":                         "sqlite:///temp-selenium.db", // File-based DB like Python tests
+		"SECRET_KEY":                           "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		"ADMIN_AUTHENTICATION_TOKEN":           "test-admin-token",
+		"ALLOW_MODULE_HOSTING":                 "true",
+		"DEBUG":                                "true",
+		"SESSION_COOKIE_NAME":                  "terrareg_session",
+		"SESSION_EXPIRY_MINS":                  "60",
+		"ADMIN_SESSION_EXPIRY_MINS":            "60",
+		"SESSION_REFRESH_MINS":                 "5",
+		"TRUSTED_NAMESPACE_LABEL":              "Trusted",
+		"CONTRIBUTED_NAMESPACE_LABEL":          "Contributed",
+		"VERIFIED_MODULE_LABEL":                "Verified",
 		"ALLOW_CUSTOM_GIT_URL_MODULE_PROVIDER": "true",
 		"ALLOW_CUSTOM_GIT_URL_MODULE_VERSION":  "true",
-		"AUTO_CREATE_NAMESPACE":            "true",
-		"AUTO_CREATE_MODULE_PROVIDER":      "true",
-		"DISABLE_ANALYTICS":                "false",
-		"AUTO_PUBLISH_MODULE_VERSIONS":     "true",
-		"MODULE_VERSION_REINDEX_MODE":      "legacy",
-		"PRODUCT":                          "terraform",
-		"DEFAULT_TERRAFORM_VERSION":        "1.5.7",
-		"MANAGE_TERRAFORM_RC_FILE":         "false",
-		"MODULES_DIRECTORY":                "modules",
-		"EXAMPLES_DIRECTORY":               "examples",
-		"PROVIDER_SOURCES":                 "[]",
-		"PROVIDER_CATEGORIES":              `[{"id": 1, "name": "Example Category", "slug": "example-category", "user-selectable": true}]`,
-		"GITHUB_URL":                       "https://github.com",
-		"GITHUB_API_URL":                   "https://api.github.com",
-		"GITHUB_LOGIN_TEXT":                "Login with Github",
-		"OPENID_CONNECT_LOGIN_TEXT":        "Login using OpenID Connect",
-		"SAML2_LOGIN_TEXT":                 "Login using SAML",
-		"INFRACOST_TLS_INSECURE_SKIP_VERIFY": "false",
-		"ALLOW_UNIDENTIFIED_DOWNLOADS":     "false",
+		"AUTO_CREATE_NAMESPACE":                "true",
+		"AUTO_CREATE_MODULE_PROVIDER":          "true",
+		"DISABLE_ANALYTICS":                    "false",
+		"AUTO_PUBLISH_MODULE_VERSIONS":         "true",
+		"MODULE_VERSION_REINDEX_MODE":          "legacy",
+		"PRODUCT":                              "terraform",
+		"DEFAULT_TERRAFORM_VERSION":            "1.5.7",
+		"MANAGE_TERRAFORM_RC_FILE":             "false",
+		"MODULES_DIRECTORY":                    "modules",
+		"EXAMPLES_DIRECTORY":                   "examples",
+		"PROVIDER_SOURCES":                     "[]",
+		"PROVIDER_CATEGORIES":                  `[{"id": 1, "name": "Example Category", "slug": "example-category", "user-selectable": true}]`,
+		"GITHUB_URL":                           "https://github.com",
+		"GITHUB_API_URL":                       "https://api.github.com",
+		"GITHUB_LOGIN_TEXT":                    "Login with Github",
+		"OPENID_CONNECT_LOGIN_TEXT":            "Login using OpenID Connect",
+		"SAML2_LOGIN_TEXT":                     "Login using SAML",
+		"INFRACOST_TLS_INSECURE_SKIP_VERIFY":   "false",
+		"ALLOW_UNIDENTIFIED_DOWNLOADS":         "false",
 		// Terraform OIDC settings (will be overridden with generated key)
 		"TERRAFORM_OIDC_IDP_SUBJECT_ID_HASH_SALT": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		"TERRAFORM_OIDC_IDP_SESSION_EXPIRY":       "3600",

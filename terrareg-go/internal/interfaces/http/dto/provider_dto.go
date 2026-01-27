@@ -85,7 +85,7 @@ func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[
 			Alias:       nil, // Always null in Python
 			Version:     versionData.Version,
 			Tag:         versionData.GitTag,
-			Description: versionData.RepositoryDescription, // Repository description, not provider description
+			Description: versionData.RepositoryDescription,                  // Repository description, not provider description
 			Source:      getPublicSourceURL(versionData.RepositoryCloneURL), // Convert clone URL to public source URL
 			PublishedAt: versionData.PublishedAt,
 			Downloads:   versionData.Downloads,

@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationTestUtils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	integrationTestUtils "github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
 // TestCreateModuleProvider tests the create module provider page.

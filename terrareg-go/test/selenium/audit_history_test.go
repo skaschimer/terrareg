@@ -143,9 +143,9 @@ func testAuditHistoryBasicView(t *testing.T) {
 
 // auditHistoryFilterTestCase represents a test case for audit history filtering.
 type auditHistoryFilterTestCase struct {
-	searchString  string
-	resultCount   int
-	expectedRows  []string
+	searchString string
+	resultCount  int
+	expectedRows []string
 }
 
 // testAuditHistoryPagination tests pagination for audit history.

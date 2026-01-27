@@ -12,9 +12,9 @@ import (
 
 // AdminSessionAuthMethod implements immutable authentication for admin users via session cookies
 type AdminSessionAuthMethod struct {
-	sessionRepo     repository.SessionRepository
-	userGroupRepo   repository.UserGroupRepository
-	namespaceRepo   moduleRepo.NamespaceRepository
+	sessionRepo   repository.SessionRepository
+	userGroupRepo repository.UserGroupRepository
+	namespaceRepo moduleRepo.NamespaceRepository
 }
 
 // NewAdminSessionAuthMethod creates a new immutable admin session authentication method

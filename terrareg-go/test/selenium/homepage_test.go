@@ -89,7 +89,8 @@ func testHomepageTitle(t *testing.T) {
 // testHomepageCounts checks counters on homepage.
 // Python reference: /app/test/selenium/test_homepage.py - TestHomepage.test_counts
 // Python uses @pytest.mark.parametrize with these values:
-//   ('namespace', 27), ('module', 74), ('version', 104), ('download', 2005)
+//
+//	('namespace', 27), ('module', 74), ('version', 104), ('download', 2005)
 //
 // Note: Python tests have global test data created via integration_test_data.
 // For Go, we create minimal data to verify the homepage works and the mock analytics are applied.

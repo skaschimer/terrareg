@@ -11,9 +11,9 @@ import (
 // BaseProviderSource is the base implementation for provider sources
 // Python reference: provider_source/base.py::BaseProviderSource
 type BaseProviderSource struct {
-	name         string
-	repo         repository.ProviderSourceRepository
-	sourceClass  service.ProviderSourceClass
+	name        string
+	repo        repository.ProviderSourceRepository
+	sourceClass service.ProviderSourceClass
 }
 
 // NewBaseProviderSource creates a new base provider source

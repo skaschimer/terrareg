@@ -12,8 +12,8 @@ import (
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
-	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	provider_source_model "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
+	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 )
 
 // MockProviderSourceFactory for testing
@@ -45,12 +45,12 @@ func (m *MockProviderSourceFactory) GetProviderSourceByName(ctx context.Context,
 
 // MockProviderSourceInstance for testing
 type MockProviderSourceInstance struct {
-	loginRedirectURL     string
-	accessToken          string
-	username             string
-	organizations        []string
-	shouldFailToken      bool
-	shouldFailUsername   bool
+	loginRedirectURL   string
+	accessToken        string
+	username           string
+	organizations      []string
+	shouldFailToken    bool
+	shouldFailUsername bool
 }
 
 func (m *MockProviderSourceInstance) Name() string {

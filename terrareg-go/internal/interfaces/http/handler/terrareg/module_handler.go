@@ -281,10 +281,10 @@ func (h *ModuleHandler) HandleModuleList(w http.ResponseWriter, r *http.Request)
 
 	// Build input for query
 	input := moduleQuery.ListModulesInput{
-		Offset:      offset,
-		Limit:       limit,
-		Providers:   providers,
-		Verified:    verified,
+		Offset:       offset,
+		Limit:        limit,
+		Providers:    providers,
+		Verified:     verified,
 		IncludeCount: true, // Always include count to determine if more results exist
 	}
 
@@ -402,10 +402,10 @@ func (h *ModuleHandler) HandleNamespaceModules(w http.ResponseWriter, r *http.Re
 
 	// Build input for query with namespace filter
 	input := moduleQuery.ListModulesInput{
-		Offset:        0,
-		Limit:         0, // No limit for namespace modules
-		Verified:      nil,
-		IncludeCount:  false,
+		Offset:       0,
+		Limit:        0, // No limit for namespace modules
+		Verified:     nil,
+		IncludeCount: false,
 	}
 
 	// Execute query with namespace filter

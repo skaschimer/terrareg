@@ -50,11 +50,11 @@ func (h *ModuleListHandler) HandleListModules(w http.ResponseWriter, r *http.Req
 
 	// Build input for query
 	input := module.ListModulesInput{
-		Offset:        offset,
-		Limit:         limit,
-		Providers:     providers,
-		Verified:      verified,
-		IncludeCount:  true, // Always include count to determine if more results exist
+		Offset:       offset,
+		Limit:        limit,
+		Providers:    providers,
+		Verified:     verified,
+		IncludeCount: true, // Always include count to determine if more results exist
 	}
 
 	// Execute query

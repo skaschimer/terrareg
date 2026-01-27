@@ -552,11 +552,11 @@ func (s *Server) handleTerraformWellKnown(w http.ResponseWriter, r *http.Request
 	// Terraform IDP is enabled when a signing key is configured
 	if s.infraConfig.TerraformOidcIdpSigningKeyPath != "" {
 		data["login.v1"] = map[string]interface{}{
-			"client":     "terraform-cli",
+			"client":      "terraform-cli",
 			"grant_types": []string{"authz_code", "token"},
-			"authz":      "/terraform/oauth/authorization",
-			"token":      "/terraform/oauth/token",
-			"ports":      "10000-10015",
+			"authz":       "/terraform/oauth/authorization",
+			"token":       "/terraform/oauth/token",
+			"ports":       "10000-10015",
 		}
 	}
 

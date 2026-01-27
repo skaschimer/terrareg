@@ -21,10 +21,10 @@ func NewListModulesQuery(moduleProviderRepo repository.ModuleProviderRepository)
 
 // ListModulesInput represents input parameters for listing modules
 type ListModulesInput struct {
-	Offset      int
-	Limit       int
-	Providers   []string
-	Verified    *bool
+	Offset       int
+	Limit        int
+	Providers    []string
+	Verified     *bool
 	IncludeCount bool
 }
 
@@ -32,10 +32,10 @@ type ListModulesInput struct {
 // Python reference: /app/test/unit/terrareg/server/test_api_module_list.py
 func (q *ListModulesQuery) Execute(ctx context.Context, input ListModulesInput) ([]*model.ModuleProvider, int, error) {
 	searchQuery := repository.ModuleSearchQuery{
-		Offset:   input.Offset,
-		Limit:    input.Limit,
+		Offset:    input.Offset,
+		Limit:     input.Limit,
 		Providers: input.Providers,
-		Verified: input.Verified,
+		Verified:  input.Verified,
 	}
 
 	// Default limit to 10 if not specified (matching Python behavior)

@@ -174,12 +174,12 @@ func TestBuildTerraformSourceURL_WithRequestDomain(t *testing.T) {
 		expectedResult string
 	}{
 		{
-			name:           "Request domain fallback when PUBLIC_URL not set (defaults to HTTPS)",
-			publicURL:      "",
-			providerID:     "test-namespace/test-module/aws",
-			version:        "1.0.0",
-			modulePath:     "modules/example-submodule",
-			requestDomain:  "example.com:8080",
+			name:          "Request domain fallback when PUBLIC_URL not set (defaults to HTTPS)",
+			publicURL:     "",
+			providerID:    "test-namespace/test-module/aws",
+			version:       "1.0.0",
+			modulePath:    "modules/example-submodule",
+			requestDomain: "example.com:8080",
 			// When PUBLIC_URL is not set, defaults to HTTPS protocol, so no /modules/ or version in URL
 			expectedResult: "example.com:8080/test-namespace/test-module/aws//modules/example-submodule",
 		},

@@ -34,11 +34,11 @@ func (r *ReleaseArtifactMetadata) Equals(other *ReleaseArtifactMetadata) bool {
 // RepositoryReleaseMetadata stores repository release metadata
 // Python reference: provider_source/repository_release_metadata.py::RepositoryReleaseMetadata
 type RepositoryReleaseMetadata struct {
-	Name            string
-	Tag             string
-	ArchiveURL      string
-	CommitHash      string
-	ProviderID      string
+	Name             string
+	Tag              string
+	ArchiveURL       string
+	CommitHash       string
+	ProviderID       string
 	ReleaseArtifacts []*ReleaseArtifactMetadata
 }
 
@@ -48,11 +48,11 @@ func NewRepositoryReleaseMetadata(
 	releaseArtifacts []*ReleaseArtifactMetadata,
 ) *RepositoryReleaseMetadata {
 	return &RepositoryReleaseMetadata{
-		Name:            name,
-		Tag:             tag,
-		ArchiveURL:      archiveURL,
-		CommitHash:      commitHash,
-		ProviderID:      providerID,
+		Name:             name,
+		Tag:              tag,
+		ArchiveURL:       archiveURL,
+		CommitHash:       commitHash,
+		ProviderID:       providerID,
 		ReleaseArtifacts: releaseArtifacts,
 	}
 }

@@ -23,7 +23,7 @@ func NewGitHubAuthContext(
 	organizations map[string]sqldb.NamespaceType,
 ) *GitHubAuthContext {
 	return &GitHubAuthContext{
-		BaseAuthContext:     BaseAuthContext{ctx: ctx},
+		BaseAuthContext:    BaseAuthContext{ctx: ctx},
 		providerSourceName: providerSourceName,
 		username:           username,
 		organizations:      organizations,

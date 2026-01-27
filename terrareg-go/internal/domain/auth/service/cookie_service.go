@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"time"
 
-	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	urlservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
+	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 )
 
 // CookieService handles HTTP cookie operations - pure cookie management

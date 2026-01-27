@@ -3,15 +3,15 @@ package testutils
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
-	analyticsRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	namespaceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	analyticsRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform/v1"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/presenter"
+	"github.com/stretchr/testify/require"
 )
 
 // CreateNamespaceHandler creates a fully configured NamespaceHandler

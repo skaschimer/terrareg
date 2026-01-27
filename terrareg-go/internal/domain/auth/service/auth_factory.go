@@ -10,24 +10,24 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	infraAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/auth"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/rs/zerolog"
 )
 
 // AuthFactory handles authentication with immutable AuthMethod implementations
 // It uses AuthMethod factories to create AuthContext instances with authentication state
 type AuthFactory struct {
-	authMethods            []auth.AuthMethod
-	mutex                  sync.RWMutex
-	sessionRepo            repository.SessionRepository
-	userGroupRepo          repository.UserGroupRepository
-	namespaceRepo          moduleRepo.NamespaceRepository
-	config                 *infraConfig.InfrastructureConfig
-	logger                 *zerolog.Logger
-	providerSourceFactory  *provider_source_service.ProviderSourceFactory
-	cookieService          *CookieService
+	authMethods           []auth.AuthMethod
+	mutex                 sync.RWMutex
+	sessionRepo           repository.SessionRepository
+	userGroupRepo         repository.UserGroupRepository
+	namespaceRepo         moduleRepo.NamespaceRepository
+	config                *infraConfig.InfrastructureConfig
+	logger                *zerolog.Logger
+	providerSourceFactory *provider_source_service.ProviderSourceFactory
+	cookieService         *CookieService
 }
 
 // NewAuthFactory creates a new immutable authentication factory

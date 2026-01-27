@@ -106,27 +106,27 @@ func (r *ProviderRepository) FindAll(ctx context.Context, offset, limit int) ([]
 
 	// Execute main query
 	type FindAllResult struct {
-		ProviderID                 int      `gorm:"column:provider_id"`
-		NamespaceID                int      `gorm:"column:provider_namespace_id"`
-		Name                       string   `gorm:"column:provider_name"`
-		Description                *string  `gorm:"column:provider_description"`
-		Tier                       string   `gorm:"column:provider_tier"`
-		DefaultProviderSourceAuth *bool    `gorm:"column:provider_default_provider_source_auth"`
-		ProviderCategoryID         *int     `gorm:"column:provider_provider_category_id"`
-		RepositoryID               *int     `gorm:"column:provider_repository_id"`
-		LatestVersionID            *int     `gorm:"column:provider_latest_version_id"`
-		NamespaceName              string   `gorm:"column:namespace_namespace"`
-		NamespaceDisplayName       *string  `gorm:"column:namespace_display_name"`
-		NamespaceType              string   `gorm:"column:namespace_type"`
-		VersionID                  *int     `gorm:"column:version_id"`
-		Version                    *string  `gorm:"column:version_version"`
-		GitTag                     *string  `gorm:"column:version_git_tag"`
-		PublishedAt                *string  `gorm:"column:version_published_at"`
-		RepositoryOwner            *string  `gorm:"column:repository_owner"`
-		RepositoryDescription      *string  `gorm:"column:repository_description"`
-		RepositoryCloneURL         *string  `gorm:"column:repository_clone_url"`
-		RepositoryLogoURL          *string  `gorm:"column:repository_logo_url"`
-		DownloadCount              int64    `gorm:"column:download_count"`
+		ProviderID                int     `gorm:"column:provider_id"`
+		NamespaceID               int     `gorm:"column:provider_namespace_id"`
+		Name                      string  `gorm:"column:provider_name"`
+		Description               *string `gorm:"column:provider_description"`
+		Tier                      string  `gorm:"column:provider_tier"`
+		DefaultProviderSourceAuth *bool   `gorm:"column:provider_default_provider_source_auth"`
+		ProviderCategoryID        *int    `gorm:"column:provider_provider_category_id"`
+		RepositoryID              *int    `gorm:"column:provider_repository_id"`
+		LatestVersionID           *int    `gorm:"column:provider_latest_version_id"`
+		NamespaceName             string  `gorm:"column:namespace_namespace"`
+		NamespaceDisplayName      *string `gorm:"column:namespace_display_name"`
+		NamespaceType             string  `gorm:"column:namespace_type"`
+		VersionID                 *int    `gorm:"column:version_id"`
+		Version                   *string `gorm:"column:version_version"`
+		GitTag                    *string `gorm:"column:version_git_tag"`
+		PublishedAt               *string `gorm:"column:version_published_at"`
+		RepositoryOwner           *string `gorm:"column:repository_owner"`
+		RepositoryDescription     *string `gorm:"column:repository_description"`
+		RepositoryCloneURL        *string `gorm:"column:repository_clone_url"`
+		RepositoryLogoURL         *string `gorm:"column:repository_logo_url"`
+		DownloadCount             int64   `gorm:"column:download_count"`
 	}
 
 	var results []FindAllResult
@@ -374,28 +374,28 @@ func (r *ProviderRepository) Search(ctx context.Context, params repository.Provi
 
 	// Execute main query
 	type SearchResult struct {
-		ProviderID                 int      `gorm:"column:provider_id"`
-		NamespaceID                int      `gorm:"column:provider_namespace_id"`
-		Name                       string   `gorm:"column:provider_name"`
-		Description                *string  `gorm:"column:provider_description"`
-		Tier                       string   `gorm:"column:provider_tier"`
-		DefaultProviderSourceAuth *bool    `gorm:"column:provider_default_provider_source_auth"`
-		ProviderCategoryID         *int     `gorm:"column:provider_provider_category_id"`
-		RepositoryID               *int     `gorm:"column:provider_repository_id"`
-		LatestVersionID            *int     `gorm:"column:provider_latest_version_id"`
-		RelevanceScore             *int     `gorm:"column:relevance_score"`
-		NamespaceName              string   `gorm:"column:namespace_namespace"`
-		NamespaceDisplayName       *string  `gorm:"column:namespace_display_name"`
-		NamespaceType              string   `gorm:"column:namespace_type"`
-		VersionID                  *int     `gorm:"column:version_id"`
-		Version                    *string  `gorm:"column:version_version"`
-		GitTag                     *string  `gorm:"column:version_git_tag"`
-		PublishedAt                *string  `gorm:"column:version_published_at"`
-		RepositoryOwner            *string  `gorm:"column:repository_owner"`
-		RepositoryDescription      *string  `gorm:"column:repository_description"`
-		RepositoryCloneURL         *string  `gorm:"column:repository_clone_url"`
-		RepositoryLogoURL          *string  `gorm:"column:repository_logo_url"`
-		DownloadCount              int64    `gorm:"column:download_count"`
+		ProviderID                int     `gorm:"column:provider_id"`
+		NamespaceID               int     `gorm:"column:provider_namespace_id"`
+		Name                      string  `gorm:"column:provider_name"`
+		Description               *string `gorm:"column:provider_description"`
+		Tier                      string  `gorm:"column:provider_tier"`
+		DefaultProviderSourceAuth *bool   `gorm:"column:provider_default_provider_source_auth"`
+		ProviderCategoryID        *int    `gorm:"column:provider_provider_category_id"`
+		RepositoryID              *int    `gorm:"column:provider_repository_id"`
+		LatestVersionID           *int    `gorm:"column:provider_latest_version_id"`
+		RelevanceScore            *int    `gorm:"column:relevance_score"`
+		NamespaceName             string  `gorm:"column:namespace_namespace"`
+		NamespaceDisplayName      *string `gorm:"column:namespace_display_name"`
+		NamespaceType             string  `gorm:"column:namespace_type"`
+		VersionID                 *int    `gorm:"column:version_id"`
+		Version                   *string `gorm:"column:version_version"`
+		GitTag                    *string `gorm:"column:version_git_tag"`
+		PublishedAt               *string `gorm:"column:version_published_at"`
+		RepositoryOwner           *string `gorm:"column:repository_owner"`
+		RepositoryDescription     *string `gorm:"column:repository_description"`
+		RepositoryCloneURL        *string `gorm:"column:repository_clone_url"`
+		RepositoryLogoURL         *string `gorm:"column:repository_logo_url"`
+		DownloadCount             int64   `gorm:"column:download_count"`
 	}
 
 	var results []SearchResult

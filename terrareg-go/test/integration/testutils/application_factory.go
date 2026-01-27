@@ -3,17 +3,17 @@ package testutils
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
+	namespaceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
+	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
-	namespaceCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/namespace"
-	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
-	auditQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/audit"
 	auditService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/service"
-	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/audit"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/audit"
+	"github.com/stretchr/testify/require"
 )
 
 // TestApplicationServices holds all common application services (queries/commands)
@@ -31,12 +31,12 @@ type TestApplicationServices struct {
 	DeleteNamespace *namespaceCmd.DeleteNamespaceCommand
 
 	// Analytics Queries
-	GlobalStats                *analytics.GlobalStatsQuery
-	GlobalUsageStats           *analytics.GlobalUsageStatsQuery
-	GetDownloadSummary         *analytics.GetDownloadSummaryQuery
-	GetMostRecentlyPublished   *analytics.GetMostRecentlyPublishedQuery
-	GetMostDownloadedThisWeek  *analytics.GetMostDownloadedThisWeekQuery
-	GetTokenVersions           *analytics.GetTokenVersionsQuery
+	GlobalStats               *analytics.GlobalStatsQuery
+	GlobalUsageStats          *analytics.GlobalUsageStatsQuery
+	GetDownloadSummary        *analytics.GetDownloadSummaryQuery
+	GetMostRecentlyPublished  *analytics.GetMostRecentlyPublishedQuery
+	GetMostDownloadedThisWeek *analytics.GetMostDownloadedThisWeekQuery
+	GetTokenVersions          *analytics.GetTokenVersionsQuery
 
 	// Analytics Commands
 	RecordModuleDownload *analyticsCmd.RecordModuleDownloadCommand
@@ -80,8 +80,8 @@ func CreateTestApplicationServices(t *testing.T, db *sqldb.Database, repos *Test
 
 	return &TestApplicationServices{
 		// Module Queries
-		ListNamespaces:  listNamespacesQuery,
-		ListModules:     listModulesQuery,
+		ListNamespaces:   listNamespacesQuery,
+		ListModules:      listModulesQuery,
 		NamespaceDetails: namespaceDetailsQuery,
 
 		// Namespace Commands
@@ -90,12 +90,12 @@ func CreateTestApplicationServices(t *testing.T, db *sqldb.Database, repos *Test
 		DeleteNamespace: deleteNamespaceCmd,
 
 		// Analytics Queries
-		GlobalStats:                globalStatsQuery,
-		GlobalUsageStats:           globalUsageStatsQuery,
-		GetDownloadSummary:         getDownloadSummaryQuery,
-		GetMostRecentlyPublished:   getMostRecentlyPublishedQuery,
-		GetMostDownloadedThisWeek:  getMostDownloadedThisWeekQuery,
-		GetTokenVersions:           getTokenVersionsQuery,
+		GlobalStats:               globalStatsQuery,
+		GlobalUsageStats:          globalUsageStatsQuery,
+		GetDownloadSummary:        getDownloadSummaryQuery,
+		GetMostRecentlyPublished:  getMostRecentlyPublishedQuery,
+		GetMostDownloadedThisWeek: getMostDownloadedThisWeekQuery,
+		GetTokenVersions:          getTokenVersionsQuery,
 
 		// Analytics Commands
 		RecordModuleDownload: recordModuleDownloadCmd,

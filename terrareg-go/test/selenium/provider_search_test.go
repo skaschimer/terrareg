@@ -33,8 +33,8 @@ func ConfigForProviderSearchTests() map[string]string {
 	base := getDefaultTestConfig()
 	return mergeMaps(base, map[string]string{
 		"CONTRIBUTED_NAMESPACE_LABEL": "unittest contributed module",
-		"TRUSTED_NAMESPACE_LABEL":      "unittest trusted namespace",
-		"TRUSTED_NAMESPACES":           "providersearch-trusted,relevancysearch",
+		"TRUSTED_NAMESPACE_LABEL":     "unittest trusted namespace",
+		"TRUSTED_NAMESPACES":          "providersearch-trusted,relevancysearch",
 	})
 }
 

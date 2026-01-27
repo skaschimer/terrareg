@@ -141,8 +141,8 @@ func TestModuleProvider(t *testing.T) {
 
 // pageTitleTest represents a single test case for page titles.
 type pageTitleTest struct {
-	url            string
-	expectedTitle  string
+	url           string
+	expectedTitle string
 }
 
 // pageTitleTests contains all test cases from Python's @pytest.mark.parametrize.
@@ -173,8 +173,8 @@ func testModuleProviderPageTitles(t *testing.T) {
 
 // breadcrumbTest represents a single test case for breadcrumbs.
 type breadcrumbTest struct {
-	url                 string
-	expectedBreadcrumb  string
+	url                string
+	expectedBreadcrumb string
 }
 
 // breadcrumbTests contains all test cases from Python's @pytest.mark.parametrize.
@@ -271,7 +271,7 @@ type moduleWithVersionsTest struct {
 // moduleWithVersionsTests contains all test cases from Python's @pytest.mark.parametrize.
 // Python reference: /app/test/selenium/test_module_provider.py line 154-166
 var moduleWithVersionsTests = []moduleWithVersionsTest{
-	{"", "", false, ""},         // Without any modified fields
+	{"", "", false, ""}, // Without any modified fields
 	{"description", "module-description", false, ""},
 	{"owner", "module-owner", false, ""},
 	{"repo_base_url_template", "source-url", false, ""},
@@ -348,11 +348,11 @@ func testModuleWithVersions(t *testing.T) {
 
 // securityIssuesTest represents a single test case for security issues.
 type securityIssuesTest struct {
-	url                string
+	url                    string
 	expectedLabelDisplayed bool
-	expectedCritical     int
-	expectedHigh         int
-	expectedMediumLow    int
+	expectedCritical       int
+	expectedHigh           int
+	expectedMediumLow      int
 }
 
 // securityIssuesTests contains all test cases from Python's @pytest.mark.parametrize.
@@ -419,11 +419,11 @@ func testExampleWithCostAnalysis(t *testing.T) {
 
 // submoduleExampleBasicDetailsTest represents a single test case for submodule/example details.
 type submoduleExampleBasicDetailsTest struct {
-	baseURL              string
-	dropDownType         string
-	dropDownText         string
-	expectedURL          string
-	expectedVersionString string
+	baseURL                string
+	dropDownType           string
+	dropDownText           string
+	expectedURL            string
+	expectedVersionString  string
 	expectedSubmoduleTitle string
 	expectedModuleTitle    string
 	expectedProvider       string
@@ -434,28 +434,28 @@ type submoduleExampleBasicDetailsTest struct {
 var submoduleExampleBasicDetailsTests = []submoduleExampleBasicDetailsTest{
 	// Test sub-module
 	{"/modules/moduledetails/fullypopulated/testprovider",
-	 "submodule-select", "modules/example-submodule1",
-	 "/modules/moduledetails/fullypopulated/testprovider/1.5.0/submodule/modules/example-submodule1",
-	 "Version: 1.5.0", "Submodule: modules/example-submodule1",
-	 "fullypopulated", "Provider: testprovider"},
+		"submodule-select", "modules/example-submodule1",
+		"/modules/moduledetails/fullypopulated/testprovider/1.5.0/submodule/modules/example-submodule1",
+		"Version: 1.5.0", "Submodule: modules/example-submodule1",
+		"fullypopulated", "Provider: testprovider"},
 	// Test example
 	{"/modules/moduledetails/fullypopulated/testprovider",
-	 "example-select", "examples/test-example",
-	 "/modules/moduledetails/fullypopulated/testprovider/1.5.0/example/examples/test-example",
-	 "Version: 1.5.0", "Example: examples/test-example",
-	 "fullypopulated", "Provider: testprovider"},
+		"example-select", "examples/test-example",
+		"/modules/moduledetails/fullypopulated/testprovider/1.5.0/example/examples/test-example",
+		"Version: 1.5.0", "Example: examples/test-example",
+		"fullypopulated", "Provider: testprovider"},
 	// Test submodule using 'latest'
 	{"/modules/moduledetails/fullypopulated/testprovider/latest/submodule/modules/example-submodule1",
-	 "", "", // No dropdown selection
-	 "/modules/moduledetails/fullypopulated/testprovider/latest/submodule/modules/example-submodule1",
-	 "Version: 1.5.0", "Submodule: modules/example-submodule1",
-	 "fullypopulated", "Provider: testprovider"},
+		"", "", // No dropdown selection
+		"/modules/moduledetails/fullypopulated/testprovider/latest/submodule/modules/example-submodule1",
+		"Version: 1.5.0", "Submodule: modules/example-submodule1",
+		"fullypopulated", "Provider: testprovider"},
 	// Test example using 'latest'
 	{"/modules/moduledetails/fullypopulated/testprovider/latest/example/examples/test-example",
-	 "", "", // No dropdown selection
-	 "/modules/moduledetails/fullypopulated/testprovider/latest/example/examples/test-example",
-	 "Version: 1.5.0", "Example: examples/test-example",
-	 "fullypopulated", "Provider: testprovider"},
+		"", "", // No dropdown selection
+		"/modules/moduledetails/fullypopulated/testprovider/latest/example/examples/test-example",
+		"Version: 1.5.0", "Example: examples/test-example",
+		"fullypopulated", "Provider: testprovider"},
 }
 
 // testSubmoduleExampleBasicDetails tests submodule/example basic details.
@@ -540,10 +540,10 @@ func testSubmoduleBackToParent(t *testing.T) {
 // exampleUsageTest represents a single test case for example usage validation.
 // Python reference: /app/test/selenium/test_module_provider.py line 2905-2933
 type exampleUsageTest struct {
-	url                              string
+	url                             string
 	expectedModuleName              string
 	expectedModulePath              string
-	expectedComment                  string
+	expectedComment                 string
 	expectedModuleVersionConstraint string
 }
 
@@ -1021,9 +1021,9 @@ func testIntegrationTabIndexVersionWithPublishingFailure(t *testing.T) {
 
 // versionDropdownTest represents a single test case for version dropdown.
 type versionDropdownTest struct {
-	currentVersion           string
-	expectedVersions         []string
-	expectedSelectedVersion  string
+	currentVersion          string
+	expectedVersions        []string
+	expectedSelectedVersion string
 }
 
 // versionDropdownTests contains test cases for version dropdown.
@@ -1634,9 +1634,9 @@ func testProviderLogos(t *testing.T) {
 
 // terraformCompatibilityTest represents a single test case for terraform compatibility.
 type terraformCompatibilityTest struct {
-	terraformVersion         string
+	terraformVersion            string
 	expectedCompatibilityResult string
-	expectedColor              string
+	expectedColor               string
 }
 
 // terraformCompatibilityTests contains all test cases from Python's @pytest.mark.parametrize.

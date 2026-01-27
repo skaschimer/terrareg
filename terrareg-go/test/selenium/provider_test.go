@@ -43,7 +43,7 @@ func ConfigForProviderTests() map[string]string {
 
 // providerPageTitleTestCase represents a test case for page title verification.
 type providerPageTitleTestCase struct {
-	url          string
+	url           string
 	expectedTitle string
 }
 

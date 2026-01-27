@@ -612,4 +612,3 @@ func TestAuthHandler_HandleUserGroupList_Empty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, response)
 }
-

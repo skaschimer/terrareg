@@ -23,7 +23,7 @@ type ProviderSourceAPIHandler struct {
 	getOrganizationsQuery   *provider_source_query.GetOrganizationsQuery
 	getRepositoriesQuery    *provider_source_query.GetRepositoriesQuery
 	refreshNamespaceCommand *provider_source.RefreshNamespaceCommand
-	publishProviderCommand   *provider_source.PublishProviderCommand
+	publishProviderCommand  *provider_source.PublishProviderCommand
 	repositoryRepo          repository.RepositoryRepository
 }
 
@@ -55,7 +55,7 @@ func NewProviderSourceAPIHandler(
 		getOrganizationsQuery:   getOrganizationsQuery,
 		getRepositoriesQuery:    getRepositoriesQuery,
 		refreshNamespaceCommand: refreshNamespaceCommand,
-		publishProviderCommand:   publishProviderCommand,
+		publishProviderCommand:  publishProviderCommand,
 		repositoryRepo:          repositoryRepo,
 	}, nil
 }
@@ -90,8 +90,8 @@ func (h *ProviderSourceAPIHandler) HandleGetOrganizations(w http.ResponseWriter,
 	response := make([]dto.OrganizationResponse, len(orgs))
 	for i, org := range orgs {
 		response[i] = dto.OrganizationResponse{
-			Name:               org.GetName(),
-			Type:               org.GetType(),
+			Name:                org.GetName(),
+			Type:                org.GetType(),
 			CanPublishProviders: org.CanPublish(),
 		}
 	}
@@ -133,11 +133,11 @@ func (h *ProviderSourceAPIHandler) HandleGetRepositories(w http.ResponseWriter, 
 	response := make([]dto.RepositoryResponse, len(repos))
 	for i, repo := range repos {
 		response[i] = dto.RepositoryResponse{
-			ID:         repo.GetID(),
-			FullName:   repo.GetFullName(),
-			OwnerLogin: repo.GetOwnerLogin(),
-			OwnerType:  repo.GetOwnerType(),
-			Kind:       repo.GetKind(),
+			ID:          repo.GetID(),
+			FullName:    repo.GetFullName(),
+			OwnerLogin:  repo.GetOwnerLogin(),
+			OwnerType:   repo.GetOwnerType(),
+			Kind:        repo.GetKind(),
 			PublishedID: repo.GetPublishedID(),
 		}
 	}

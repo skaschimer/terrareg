@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
 	httputils "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/utils"
 )
 

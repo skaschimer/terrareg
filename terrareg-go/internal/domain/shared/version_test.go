@@ -21,9 +21,9 @@ func TestParseVersion(t *testing.T) {
 		{"simple version", "1.2.3", false, 1, 2, 3, ""},
 		{"with v prefix", "v1.2.3", false, 1, 2, 3, ""},
 		{"with prerelease", "1.2.3-alpha", false, 1, 2, 3, "alpha"},
-		{"with build", "1.2.3+build", true, 0, 0, 0, ""}, // Build metadata not supported
+		{"with build", "1.2.3+build", true, 0, 0, 0, ""},                      // Build metadata not supported
 		{"with prerelease and build", "1.2.3-alpha+build", true, 0, 0, 0, ""}, // Build metadata not supported
-		{"complex prerelease", "1.2.3-alpha.1.beta.2", true, 0, 0, 0, ""}, // Dots in prerelease not supported by current regex
+		{"complex prerelease", "1.2.3-alpha.1.beta.2", true, 0, 0, 0, ""},     // Dots in prerelease not supported by current regex
 		{"empty string", "", true, 0, 0, 0, ""},
 		{"invalid format", "1.2", true, 0, 0, 0, ""},
 		{"invalid format - text", "abc", true, 0, 0, 0, ""},

@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockAuditHistoryRepository is a mock for AuditHistoryRepository interface

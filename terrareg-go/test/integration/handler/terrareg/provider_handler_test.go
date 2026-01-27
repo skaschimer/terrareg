@@ -14,9 +14,9 @@ import (
 
 	providerCommand "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider"
 	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
-	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider"
-	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
+	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )

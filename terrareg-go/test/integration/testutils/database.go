@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/webhook"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
 	configService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/webhook"
 )
 
 // TestLogger is a no-op logger for testing
@@ -89,17 +89,17 @@ func CreateTestInfraConfig(t *testing.T) *config.InfrastructureConfig {
 // CreateTestInfraConfigWithPublicURL creates a test infrastructure configuration with a custom PUBLIC_URL
 func CreateTestInfraConfigWithPublicURL(t *testing.T, publicURL string) *config.InfrastructureConfig {
 	return &config.InfrastructureConfig{
-		ListenPort:                5000,
-		PublicURL:                 publicURL,
-		DomainName:                "localhost",
-		Debug:                     true,
-		DatabaseURL:               "sqlite:///:memory:",
-		DataDirectory:             "/tmp/terrareg-test",
-		SecretKey:                 "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		SessionCookieName:         "terrareg_session",
-		AdminAuthenticationToken:  "test-admin-api-key",
-		UploadApiKeys:             []string{"test-upload-key"},
-		AdminSessionExpiryMins:    60, // 1 hour for admin sessions
+		ListenPort:               5000,
+		PublicURL:                publicURL,
+		DomainName:               "localhost",
+		Debug:                    true,
+		DatabaseURL:              "sqlite:///:memory:",
+		DataDirectory:            "/tmp/terrareg-test",
+		SecretKey:                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		SessionCookieName:        "terrareg_session",
+		AdminAuthenticationToken: "test-admin-api-key",
+		UploadApiKeys:            []string{"test-upload-key"},
+		AdminSessionExpiryMins:   60, // 1 hour for admin sessions
 	}
 }
 

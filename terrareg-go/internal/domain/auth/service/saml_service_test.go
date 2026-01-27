@@ -29,11 +29,11 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 			name: "Fully configured SAML",
 			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
 				return &config.InfrastructureConfig{
-					SAML2EntityID:         "https://terrareg.example.com",
-					SAML2IDPMetadataURL:   mockServer.MetadataURL,
-					SAML2PrivateKey:       testPrivateKey,
-					SAML2PublicKey:        testPublicKey,
-					PublicURL:             "https://terrareg.example.com",
+					SAML2EntityID:       "https://terrareg.example.com",
+					SAML2IDPMetadataURL: mockServer.MetadataURL,
+					SAML2PrivateKey:     testPrivateKey,
+					SAML2PublicKey:      testPublicKey,
+					PublicURL:           "https://terrareg.example.com",
 				}
 			},
 			expectError: false,
@@ -55,7 +55,7 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 			name: "Missing IDP metadata URL",
 			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
 				return &config.InfrastructureConfig{
-					SAML2EntityID:  "https://terrareg.example.com",
+					SAML2EntityID:   "https://terrareg.example.com",
 					SAML2PrivateKey: testPrivateKey,
 					SAML2PublicKey:  testPublicKey,
 				}
@@ -390,42 +390,42 @@ func TestSAMLService_ExtractUserInfo(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name         string
-		attributes   map[string]string
-		groups       []string
-		expectError  bool
+		name          string
+		attributes    map[string]string
+		groups        []string
+		expectError   bool
 		errorContains string
-		description  string
+		description   string
 	}{
 		{
 			name: "Email and name from attributes",
 			attributes: map[string]string{
 				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "user@example.com",
-				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": "John Doe",
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name":         "John Doe",
 			},
-			groups:       []string{"developers", "admins"},
-			expectError:  true, // Unsigned responses fail signature validation
+			groups:        []string{"developers", "admins"},
+			expectError:   true, // Unsigned responses fail signature validation
 			errorContains: "not signed",
-			description:  "Unsigned response should fail signature validation",
+			description:   "Unsigned response should fail signature validation",
 		},
 		{
-			name:         "Only NameID available",
-			attributes:   map[string]string{},
-			groups:       nil,
-			expectError:  true,
+			name:          "Only NameID available",
+			attributes:    map[string]string{},
+			groups:        nil,
+			expectError:   true,
 			errorContains: "not signed",
-			description:  "Unsigned response should fail signature validation",
+			description:   "Unsigned response should fail signature validation",
 		},
 		{
 			name: "First and last name",
 			attributes: map[string]string{
 				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname": "John",
-				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname": "Doe",
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname":   "Doe",
 			},
-			groups:       nil,
-			expectError:  true,
+			groups:        nil,
+			expectError:   true,
 			errorContains: "not signed",
-			description:  "Unsigned response should fail signature validation",
+			description:   "Unsigned response should fail signature validation",
 		},
 	}
 
@@ -554,7 +554,7 @@ func generateSAMLResponseWithConstraints(notBefore, notOnOrAfter time.Time, audi
 	return generateSAMLResponseWithAttributes(
 		map[string]string{
 			"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "user@example.com",
-			"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": "Test User",
+			"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name":         "Test User",
 		},
 		[]string{"developers"},
 		notBefore,

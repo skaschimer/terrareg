@@ -22,15 +22,15 @@ func TestOIDCDiscoveryDocument(t *testing.T) {
 			name:   "Valid discovery document",
 			issuer: "https://accounts.example.com",
 			document: map[string]interface{}{
-				"issuer":                 "https://accounts.example.com",
-				"authorization_endpoint": "https://accounts.example.com/o/oauth2/v2/auth",
-				"token_endpoint":         "https://oauth2.googleapis.com/token",
-				"jwks_uri":               "https://www.googleapis.com/oauth2/v3/certs",
-				"userinfo_endpoint":      "https://openidconnect.googleapis.com/v1/userinfo",
-				"response_types_supported": []string{"code", "token", "id_token"},
-				"subject_types_supported":  []string{"public"},
+				"issuer":                                "https://accounts.example.com",
+				"authorization_endpoint":                "https://accounts.example.com/o/oauth2/v2/auth",
+				"token_endpoint":                        "https://oauth2.googleapis.com/token",
+				"jwks_uri":                              "https://www.googleapis.com/oauth2/v3/certs",
+				"userinfo_endpoint":                     "https://openidconnect.googleapis.com/v1/userinfo",
+				"response_types_supported":              []string{"code", "token", "id_token"},
+				"subject_types_supported":               []string{"public"},
 				"id_token_signing_alg_values_supported": []string{"RS256"},
-				"scopes_supported":        []string{"openid", "email", "profile"},
+				"scopes_supported":                      []string{"openid", "email", "profile"},
 			},
 			expectValid: true,
 			description: "All required OIDC discovery fields present",
@@ -71,9 +71,9 @@ func TestOIDCDiscoveryDocument(t *testing.T) {
 			name:   "Unsupported response type",
 			issuer: "https://accounts.example.com",
 			document: map[string]interface{}{
-				"issuer":                 "https://accounts.example.com",
-				"authorization_endpoint": "https://accounts.example.com/o/oauth2/v2/auth",
-				"token_endpoint":         "https://oauth2.googleapis.com/token",
+				"issuer":                   "https://accounts.example.com",
+				"authorization_endpoint":   "https://accounts.example.com/o/oauth2/v2/auth",
+				"token_endpoint":           "https://oauth2.googleapis.com/token",
 				"response_types_supported": []string{"token"}, // Only implicit flow
 			},
 			expectValid: false,
@@ -211,13 +211,13 @@ func TestOIDCUserInfoEndpoint(t *testing.T) {
 		{
 			name: "Standard UserInfo response",
 			response: map[string]interface{}{
-				"sub":           "123456789",
-				"name":          "John Doe",
-				"given_name":    "John",
-				"family_name":   "Doe",
-				"email":         "john.doe@example.com",
+				"sub":            "123456789",
+				"name":           "John Doe",
+				"given_name":     "John",
+				"family_name":    "Doe",
+				"email":          "john.doe@example.com",
 				"email_verified": true,
-				"picture":       "https://example.com/avatar.jpg",
+				"picture":        "https://example.com/avatar.jpg",
 			},
 			expectUser:  "123456789",
 			expectEmail: "john.doe@example.com",
@@ -408,11 +408,11 @@ func TestOIDCResponseTypeValidation(t *testing.T) {
 // TestOIDCPKCESupport tests PKCE (Proof Key for Code Exchange) validation
 func TestOIDCPKCESupport(t *testing.T) {
 	tests := []struct {
-		name            string
-		codeChallenge   string
+		name                string
+		codeChallenge       string
 		codeChallengeMethod string
-		expectValid     bool
-		description     string
+		expectValid         bool
+		description         string
 	}{
 		{
 			name:                "Valid S256 code challenge",
@@ -681,8 +681,8 @@ func validateOIDCScopes(scopes []string) bool {
 
 func validateOIDCResponseType(responseType string) bool {
 	validTypes := map[string]bool{
-		"code": true,
-		"code id_token": true,
+		"code":                true,
+		"code id_token":       true,
 		"code token id_token": true,
 	}
 

@@ -153,9 +153,9 @@ func SetupModuleProviderTestData(t *testing.T, db *sqldb.Database) {
 
 	// Create beta and unpublished versions for fullypopulated
 	_ = integrationTestUtils.CreatePublishedBetaModuleVersion(t, db, fullyPopulatedMp.ID, "1.7.0-beta") // Beta
-	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.0") // Unpublished
-	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.1-beta") // Unpublished Beta
-	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0-beta") // Unpublished beta
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.0")                   // Unpublished
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.6.1-beta")              // Unpublished Beta
+	_ = integrationTestUtils.CreateModuleVersion(t, db, fullyPopulatedMp.ID, "1.0.0-beta")              // Unpublished beta
 
 	// Create module details with full content for fullypopulated
 	readmeContent := `# Fully Populated Module

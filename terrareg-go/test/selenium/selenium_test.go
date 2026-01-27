@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultTimeout = 30 * time.Second
-	pollInterval  = 100 * time.Millisecond
+	pollInterval   = 100 * time.Millisecond
 )
 
 // SeleniumTest provides base functionality for Selenium tests.
@@ -27,12 +27,12 @@ const (
 //
 // Python reference: /app/test/selenium/__init__.py - SeleniumTest class
 type SeleniumTest struct {
-	t              *testing.T
-	server         *TestServer
-	baseURL        string
-	AllocCtx       context.Context // Exported chromedp allocator context
-	allocCancel    context.CancelFunc
-	ctxCancel      context.CancelFunc // Context cancel function for chromedp context
+	t           *testing.T
+	server      *TestServer
+	baseURL     string
+	AllocCtx    context.Context // Exported chromedp allocator context
+	allocCancel context.CancelFunc
+	ctxCancel   context.CancelFunc // Context cancel function for chromedp context
 }
 
 // NewSeleniumTest creates a new Selenium test instance.
@@ -97,7 +97,7 @@ func (st *SeleniumTest) setupBrowser() {
 	// This is the standard chromedp pattern - the allocator is inherited from the parent
 	ctx, cancel := chromedp.NewContext(allocatorCtx, chromedp.WithLogf(log.Printf))
 	st.AllocCtx = ctx
-	chromedpCancel := cancel  // Save the chromedp cancel function
+	chromedpCancel := cancel // Save the chromedp cancel function
 
 	// Set a 60-second timeout for all chromedp operations
 	// This must be longer than the longest individual wait (e.g., WaitForURL uses 30s)
@@ -105,7 +105,7 @@ func (st *SeleniumTest) setupBrowser() {
 	st.AllocCtx = ctx
 	st.ctxCancel = func() {
 		timeoutCancel()  // Cancel the timeout context
-		chromedpCancel()  // Cancel the chromedp context
+		chromedpCancel() // Cancel the chromedp context
 	}
 
 	// Allocate the browser by running an initial task
@@ -288,12 +288,11 @@ func (st *SeleniumTest) AssertTextContent(selector, expectedText string) {
 	assert.Contains(st.t, text, expectedText, "Element text does not contain expected value")
 }
 
-
 // AssertElementVisible asserts that an element is visible.
 // It waits up to the default timeout for the element to become visible.
 // This uses the existing WaitForElement with ensureDisplayed=true.
 func (st *SeleniumTest) AssertElementVisible(selector string) {
-	st.WaitForElement(selector)  // ensureDisplayed=true by default
+	st.WaitForElement(selector) // ensureDisplayed=true by default
 }
 
 // AssertElementNotVisible asserts that an element either doesn't exist or is not visible.

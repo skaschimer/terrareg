@@ -70,7 +70,7 @@ func (c *ProviderSourceConfig) validateGitHubConfig() error {
 		"client_id":         c.ClientID,
 		"client_secret":     c.ClientSecret,
 		"login_button_text": c.LoginButtonText,
-		"private_key_path":   c.PrivateKeyPath,
+		"private_key_path":  c.PrivateKeyPath,
 		"app_id":            c.AppID,
 	}
 

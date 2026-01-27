@@ -348,17 +348,17 @@ func ReconstructProviderVersionDocumentation(
 }
 
 // Getters
-func (d *ProviderVersionDocumentation) ID() int                 { return d.id }
-func (d *ProviderVersionDocumentation) ProviderVersionID() int  { return d.providerVersionID }
-func (d *ProviderVersionDocumentation) Name() string            { return d.name }
-func (d *ProviderVersionDocumentation) Slug() string            { return d.slug }
-func (d *ProviderVersionDocumentation) Title() *string          { return d.title }
-func (d *ProviderVersionDocumentation) Description() []byte     { return d.description }
-func (d *ProviderVersionDocumentation) Language() string        { return d.language }
-func (d *ProviderVersionDocumentation) Subcategory() *string     { return d.subcategory }
-func (d *ProviderVersionDocumentation) Filename() string        { return d.filename }
+func (d *ProviderVersionDocumentation) ID() int                   { return d.id }
+func (d *ProviderVersionDocumentation) ProviderVersionID() int    { return d.providerVersionID }
+func (d *ProviderVersionDocumentation) Name() string              { return d.name }
+func (d *ProviderVersionDocumentation) Slug() string              { return d.slug }
+func (d *ProviderVersionDocumentation) Title() *string            { return d.title }
+func (d *ProviderVersionDocumentation) Description() []byte       { return d.description }
+func (d *ProviderVersionDocumentation) Language() string          { return d.language }
+func (d *ProviderVersionDocumentation) Subcategory() *string      { return d.subcategory }
+func (d *ProviderVersionDocumentation) Filename() string          { return d.filename }
 func (d *ProviderVersionDocumentation) DocumentationType() string { return d.documentationType }
-func (d *ProviderVersionDocumentation) Content() []byte          { return d.content }
+func (d *ProviderVersionDocumentation) Content() []byte           { return d.content }
 
 // GetDisplayTitle returns the title or a derived title from the name
 func (d *ProviderVersionDocumentation) GetDisplayTitle() string {
@@ -380,17 +380,25 @@ func (d *ProviderVersionDocumentation) GetDisplayTitle() string {
 }
 
 // Setters for repository operations
-func (d *ProviderVersionDocumentation) SetID(id int)                            { d.id = id }
-func (d *ProviderVersionDocumentation) SetProviderVersionID(versionID int)      { d.providerVersionID = versionID }
-func (d *ProviderVersionDocumentation) SetName(name string)                    { d.name = name }
-func (d *ProviderVersionDocumentation) SetSlug(slug string)                    { d.slug = slug }
-func (d *ProviderVersionDocumentation) SetTitle(title *string)                 { d.title = title }
-func (d *ProviderVersionDocumentation) SetDescription(description []byte)      { d.description = description }
-func (d *ProviderVersionDocumentation) SetLanguage(language string)            { d.language = language }
-func (d *ProviderVersionDocumentation) SetSubcategory(subcategory *string)      { d.subcategory = subcategory }
-func (d *ProviderVersionDocumentation) SetFilename(filename string)            { d.filename = filename }
-func (d *ProviderVersionDocumentation) SetDocumentationType(docType string)    { d.documentationType = docType }
-func (d *ProviderVersionDocumentation) SetContent(content []byte)              { d.content = content }
+func (d *ProviderVersionDocumentation) SetID(id int) { d.id = id }
+func (d *ProviderVersionDocumentation) SetProviderVersionID(versionID int) {
+	d.providerVersionID = versionID
+}
+func (d *ProviderVersionDocumentation) SetName(name string)    { d.name = name }
+func (d *ProviderVersionDocumentation) SetSlug(slug string)    { d.slug = slug }
+func (d *ProviderVersionDocumentation) SetTitle(title *string) { d.title = title }
+func (d *ProviderVersionDocumentation) SetDescription(description []byte) {
+	d.description = description
+}
+func (d *ProviderVersionDocumentation) SetLanguage(language string) { d.language = language }
+func (d *ProviderVersionDocumentation) SetSubcategory(subcategory *string) {
+	d.subcategory = subcategory
+}
+func (d *ProviderVersionDocumentation) SetFilename(filename string) { d.filename = filename }
+func (d *ProviderVersionDocumentation) SetDocumentationType(docType string) {
+	d.documentationType = docType
+}
+func (d *ProviderVersionDocumentation) SetContent(content []byte) { d.content = content }
 
 // GenerateSlugFromName generates a URL-friendly slug from a documentation name
 // Python reference: provider_version_documentation_model.py::generate_slug_from_name

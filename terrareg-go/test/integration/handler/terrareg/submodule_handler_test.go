@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	moduleQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 

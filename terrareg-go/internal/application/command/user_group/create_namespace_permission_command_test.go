@@ -6,25 +6,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
-	
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/testutils/mocks"
 )
 
 func TestCreateUserGroupNamespacePermissionCommand_Success(t *testing.T) {
 	tests := []struct {
-		name          string
+		name           string
 		permissionType string
 	}{
 		{
-			name:          "Create FULL permission",
+			name:           "Create FULL permission",
 			permissionType: "FULL",
 		},
 		{
-			name:          "Create MODIFY permission",
+			name:           "Create MODIFY permission",
 			permissionType: "MODIFY",
 		},
 	}
@@ -81,19 +80,19 @@ func TestCreateUserGroupNamespacePermissionCommand_Success(t *testing.T) {
 
 func TestCreateUserGroupNamespacePermissionCommand_InvalidPermissionType(t *testing.T) {
 	tests := []struct {
-		name          string
+		name           string
 		permissionType string
 	}{
 		{
-			name:          "Invalid permission type READ",
+			name:           "Invalid permission type READ",
 			permissionType: "READ",
 		},
 		{
-			name:          "Invalid permission type INVALID",
+			name:           "Invalid permission type INVALID",
 			permissionType: "INVALID",
 		},
 		{
-			name:          "Invalid permission type empty",
+			name:           "Invalid permission type empty",
 			permissionType: "",
 		},
 	}

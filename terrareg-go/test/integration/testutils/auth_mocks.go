@@ -21,8 +21,8 @@ import (
 	"github.com/crewjam/saml"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	providerSourceModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
-	providerSourceRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider_source"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	providerSourceRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider_source"
 	"golang.org/x/oauth2"
 )
 
@@ -81,15 +81,15 @@ func NewMockOIDCServer() *MockOIDCServer {
 func (s *MockOIDCServer) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"issuer":                 s.Server.URL,
-		"authorization_endpoint": fmt.Sprintf("%s/oauth/auth", s.Server.URL),
-		"token_endpoint":         s.TokenURL,
-		"userinfo_endpoint":      s.UserInfoURL,
-		"jwks_uri":               fmt.Sprintf("%s/keys", s.Server.URL),
-		"response_types_supported": []string{"code"},
-		"subject_types_supported":  []string{"public"},
+		"issuer":                                s.Server.URL,
+		"authorization_endpoint":                fmt.Sprintf("%s/oauth/auth", s.Server.URL),
+		"token_endpoint":                        s.TokenURL,
+		"userinfo_endpoint":                     s.UserInfoURL,
+		"jwks_uri":                              fmt.Sprintf("%s/keys", s.Server.URL),
+		"response_types_supported":              []string{"code"},
+		"subject_types_supported":               []string{"public"},
 		"id_token_signing_alg_values_supported": []string{"RS256"},
-		"scopes_supported":        []string{"openid", "profile", "email"},
+		"scopes_supported":                      []string{"openid", "profile", "email"},
 	})
 }
 
@@ -109,10 +109,10 @@ func (s *MockOIDCServer) handleToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"access_token": "mock-access-token",
-		"token_type":   "Bearer",
-		"expires_in":   3600,
-		"id_token":     s.generateMockIDToken(),
+		"access_token":  "mock-access-token",
+		"token_type":    "Bearer",
+		"expires_in":    3600,
+		"id_token":      s.generateMockIDToken(),
 		"refresh_token": "mock-refresh-token",
 	})
 }
@@ -179,20 +179,20 @@ func (s *MockOIDCServer) Close() {
 
 // MockSAMLServer provides a mock SAML IDP server for testing
 type MockSAMLServer struct {
-	Server        *httptest.Server
-	MetadataURL   string
-	SSOURL        string
-	EntityID      string
-	SPEntityID    string
+	Server      *httptest.Server
+	MetadataURL string
+	SSOURL      string
+	EntityID    string
+	SPEntityID  string
 
 	// Test configuration
-	TestUsername  string
-	TestEmail     string
-	TestName      string
-	TestGroups    []string
+	TestUsername string
+	TestEmail    string
+	TestName     string
+	TestGroups   []string
 
 	// SAML keys
-	privateKey *rsa.PrivateKey
+	privateKey  *rsa.PrivateKey
 	certificate *x509.Certificate
 
 	// Optional: custom handlers
@@ -460,22 +460,22 @@ func (s *MockSAMLServer) Close() {
 
 // MockGitHubOAuthServer provides a mock GitHub OAuth server for testing
 type MockGitHubOAuthServer struct {
-	Server        *httptest.Server
-	AuthorizeURL  string
-	TokenURL      string
-	UserURL       string
-	OrgsURL       string // Organizations endpoint URL
-	ClientID      string
-	ClientSecret  string
+	Server       *httptest.Server
+	AuthorizeURL string
+	TokenURL     string
+	UserURL      string
+	OrgsURL      string // Organizations endpoint URL
+	ClientID     string
+	ClientSecret string
 
 	// Test data that will be returned
 	TestUserInfo *GitHubUserInfo
-	TestOrgs      []string // Test organizations to return
+	TestOrgs     []string // Test organizations to return
 
 	// Optional: custom handlers
-	CustomTokenHandler    http.HandlerFunc
-	CustomUserHandler     http.HandlerFunc
-	CustomOrgsHandler     http.HandlerFunc
+	CustomTokenHandler http.HandlerFunc
+	CustomUserHandler  http.HandlerFunc
+	CustomOrgsHandler  http.HandlerFunc
 }
 
 // GitHubUserInfo represents GitHub user information
@@ -618,12 +618,12 @@ func (s *MockGitHubOAuthServer) handleOrgs(w http.ResponseWriter, r *http.Reques
 
 	// Build mock organization memberships
 	type OrgMembership struct {
-		Login     string `json:"login"`
-		ID        int64  `json:"id"`
-		NodeID    string `json:"node_id"`
-		URL       string `json:"url"`
-		Role      string `json:"role"`
-		State     string `json:"state"`
+		Login  string `json:"login"`
+		ID     int64  `json:"id"`
+		NodeID string `json:"node_id"`
+		URL    string `json:"url"`
+		Role   string `json:"role"`
+		State  string `json:"state"`
 	}
 
 	type Response struct {
@@ -633,12 +633,12 @@ func (s *MockGitHubOAuthServer) handleOrgs(w http.ResponseWriter, r *http.Reques
 	orgs := make([]OrgMembership, len(s.TestOrgs))
 	for i, orgName := range s.TestOrgs {
 		orgs[i] = OrgMembership{
-			Login:     orgName,
-			ID:        int64(1000 + i),
-			NodeID:    fmt.Sprintf("org_%d", i),
-			URL:       fmt.Sprintf("https://api.github.com/orgs/%s", orgName),
-			Role:      "admin",
-			State:     "active",
+			Login:  orgName,
+			ID:     int64(1000 + i),
+			NodeID: fmt.Sprintf("org_%d", i),
+			URL:    fmt.Sprintf("https://api.github.com/orgs/%s", orgName),
+			Role:   "admin",
+			State:  "active",
 		}
 	}
 
@@ -683,12 +683,12 @@ func MockAuthConfigWithOIDC(oidcServer *MockOIDCServer) map[string]interface{} {
 // MockAuthConfigWithSAML returns a mock auth configuration for SAML testing
 func MockAuthConfigWithSAML(samlServer *MockSAMLServer) map[string]interface{} {
 	return map[string]interface{}{
-		"SAML2_ENTITY_ID":         "https://sp.example.com/saml",
-		"SAML2_IDP_METADATA_URL":  samlServer.MetadataURL,
-		"SAML2_PRIVATE_KEY":       "", // Mock server handles signing
-		"SAML2_PUBLIC_KEY":        "", // Mock server handles verification
-		"PUBLIC_URL":              "https://test.example.com",
-		"SECRET_KEY":              "test-secret-key",
+		"SAML2_ENTITY_ID":        "https://sp.example.com/saml",
+		"SAML2_IDP_METADATA_URL": samlServer.MetadataURL,
+		"SAML2_PRIVATE_KEY":      "", // Mock server handles signing
+		"SAML2_PUBLIC_KEY":       "", // Mock server handles verification
+		"PUBLIC_URL":             "https://test.example.com",
+		"SECRET_KEY":             "test-secret-key",
 	}
 }
 

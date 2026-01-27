@@ -3,10 +3,10 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockNamespaceRepository is a mock for NamespaceRepository

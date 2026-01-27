@@ -36,7 +36,7 @@ func WrapNotFound(base error, details string) error {
 
 // NotFoundError represents a not-found error with additional details
 type NotFoundError struct {
-	Base   error
+	Base    error
 	Details string
 }
 

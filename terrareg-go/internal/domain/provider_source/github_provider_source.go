@@ -46,7 +46,7 @@ type GithubProviderSource struct {
 	*BaseProviderSource
 	httpClient             *http.Client
 	privateKeyContent      []byte
-	privateKeyContentMutex  sync.RWMutex
+	privateKeyContentMutex sync.RWMutex
 	db                     *sqldb.Database
 }
 
@@ -1464,9 +1464,9 @@ func (g *GithubProviderSource) GetUserRepositories(ctx context.Context, sessionI
 		}
 
 		var repos []struct {
-			ID          *int64   `json:"id"`
-			FullName    string  `json:"full_name"`
-			Owner       struct {
+			ID       *int64 `json:"id"`
+			FullName string `json:"full_name"`
+			Owner    struct {
 				Login string `json:"login"`
 				Type  string `json:"type"`
 			} `json:"owner"`

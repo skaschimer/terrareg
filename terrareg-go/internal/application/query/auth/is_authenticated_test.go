@@ -92,18 +92,18 @@ func TestIsAuthenticatedResponse_JSONSerialization(t *testing.T) {
 		{
 			name: "Unauthenticated response",
 			response: dto.IsAuthenticatedResponse{
-				Authenticated: false,
-				ReadAccess:    false,
-				SiteAdmin:     false,
+				Authenticated:        false,
+				ReadAccess:           false,
+				SiteAdmin:            false,
 				NamespacePermissions: map[string]string{},
 			},
 		},
 		{
 			name: "Authenticated without permissions",
 			response: dto.IsAuthenticatedResponse{
-				Authenticated: true,
-				ReadAccess:    false,
-				SiteAdmin:     false,
+				Authenticated:        true,
+				ReadAccess:           false,
+				SiteAdmin:            false,
 				NamespacePermissions: nil,
 			},
 		},

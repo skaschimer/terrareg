@@ -252,8 +252,8 @@ func testModuleSearchResultRelevancyOrdering(t *testing.T) {
 
 // terraformVersionCompatibilityTest represents a single test case for terraform version compatibility.
 type terraformVersionCompatibilityTest struct {
-	inputTerraformVersion       string
-	expectedCompatibilityTexts  []string
+	inputTerraformVersion      string
+	expectedCompatibilityTexts []string
 }
 
 // terraformVersionCompatibilityTests contains all test cases from Python's @pytest.mark.parametrize.

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	providerSourceImpl "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider_source"
@@ -59,9 +59,9 @@ func TestGetProviderClasses(t *testing.T) {
 // Python reference: test_provider_source_factory.py::test_get_provider_source_class_by_type
 func TestGetProviderSourceClassByType(t *testing.T) {
 	tests := []struct {
-		name         string
-		type_        model.ProviderSourceType
-		expectNil    bool
+		name      string
+		type_     model.ProviderSourceType
+		expectNil bool
 	}{
 		{
 			name:      "github type",
@@ -100,10 +100,10 @@ func TestGetProviderSourceClassByType(t *testing.T) {
 // Python reference: test_provider_source_factory.py::test_get_provider_source_by_name
 func TestGetProviderSourceByName(t *testing.T) {
 	tests := []struct {
-		name           string
-		providerName   string
-		callName       string
-		expectFound    bool
+		name         string
+		providerName string
+		callName     string
+		expectFound  bool
 	}{
 		{
 			name:         "exists",
@@ -160,10 +160,10 @@ func TestGetProviderSourceByName(t *testing.T) {
 // Python reference: test_provider_source_factory.py::test_get_provider_source_by_api_name
 func TestGetProviderSourceByApiName(t *testing.T) {
 	tests := []struct {
-		name              string
-		providerApiName   string
-		callApiName       string
-		expectFound       bool
+		name            string
+		providerApiName string
+		callApiName     string
+		expectFound     bool
 	}{
 		{
 			name:            "exists",
@@ -398,9 +398,9 @@ func TestInitialiseFromConfig_Create(t *testing.T) {
 // Python reference: test_provider_source_factory.py::test_initialise_from_config_invalid_config
 func TestInitialiseFromConfig_InvalidConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		configJSON     string
-		expectedError  string
+		name          string
+		configJSON    string
+		expectedError string
 	}{
 		{
 			name: "invalid type",
@@ -441,19 +441,19 @@ func TestInitialiseFromConfig_InvalidConfig(t *testing.T) {
 			expectedError: "Provider source config does not contain required attribute: name",
 		},
 		{
-			name:           "invalid JSON",
-			configJSON:     `{"invalid JSON"`,
-			expectedError:  "Provider source config is not a valid JSON list of objects",
+			name:          "invalid JSON",
+			configJSON:    `{"invalid JSON"`,
+			expectedError: "Provider source config is not a valid JSON list of objects",
 		},
 		{
-			name:           "not a list",
-			configJSON:     `{}`,
-			expectedError:  "Provider source config is not a valid JSON list of objects",
+			name:          "not a list",
+			configJSON:    `{}`,
+			expectedError: "Provider source config is not a valid JSON list of objects",
 		},
 		{
-			name:           "not a list of objects",
-			configJSON:     `[[\"Hi\"]]`,
-			expectedError:  "Provider source config is not a valid JSON list of objects",
+			name:          "not a list of objects",
+			configJSON:    `[[\"Hi\"]]`,
+			expectedError: "Provider source config is not a valid JSON list of objects",
 		},
 	}
 

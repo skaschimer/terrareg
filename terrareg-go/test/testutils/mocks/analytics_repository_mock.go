@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	analyticscmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockAnalyticsRepository is a mock for AnalyticsRepository

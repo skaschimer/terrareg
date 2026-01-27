@@ -325,9 +325,9 @@ func TestAnalyticsHandler_HandleModuleDownloadsSummary_Success(t *testing.T) {
 	assert.Contains(t, attributes, "year")
 	assert.Contains(t, attributes, "total")
 	assert.Equal(t, float64(25), attributes["total"])
-	assert.Equal(t, float64(25), attributes["week"])   // All downloads are recent
-	assert.Equal(t, float64(25), attributes["month"])  // All downloads are recent
-	assert.Equal(t, float64(25), attributes["year"])   // All downloads are recent
+	assert.Equal(t, float64(25), attributes["week"])  // All downloads are recent
+	assert.Equal(t, float64(25), attributes["month"]) // All downloads are recent
+	assert.Equal(t, float64(25), attributes["year"])  // All downloads are recent
 }
 
 // TestAnalyticsHandler_HandleModuleDownloadsSummary_NotFound tests with non-existent module

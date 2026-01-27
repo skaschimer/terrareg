@@ -19,11 +19,11 @@ import (
 // Python reference: test_refresh_namespace_repositories
 func TestRefreshNamespaceRepositories(t *testing.T) {
 	tests := []struct {
-		name              string
-		namespaceType     string
-		resultCount       int
-		expectedAddRepos  int
-		expectedEndpoint  string
+		name             string
+		namespaceType    string
+		resultCount      int
+		expectedAddRepos int
+		expectedEndpoint string
 	}{
 		{
 			name:             "organisation with no results",
@@ -84,8 +84,8 @@ func TestRefreshNamespaceRepositories(t *testing.T) {
 					for i := 0; i < count; i++ {
 						repoID := startIdx + i
 						results = append(results, map[string]interface{}{
-							"id":        float64(repoID),
-							"name":      fmt.Sprintf("terraform-provider-test-%d", repoID),
+							"id":   float64(repoID),
+							"name": fmt.Sprintf("terraform-provider-test-%d", repoID),
 							"owner": map[string]interface{}{
 								"login": "test-owner",
 							},
@@ -103,14 +103,14 @@ func TestRefreshNamespaceRepositories(t *testing.T) {
 			defer server.Close()
 
 			expectedConfig := &provider_source_model.ProviderSourceConfig{
-				BaseURL:             server.URL,
-				ApiURL:              server.URL,
-				ClientID:            "test-client-id",
-				ClientSecret:        "test-client-secret",
-				LoginButtonText:     "Test Login",
-				PrivateKeyPath:      "",
-				AppID:               "123",
-				DefaultAccessToken:  "test-default-token",
+				BaseURL:            server.URL,
+				ApiURL:             server.URL,
+				ClientID:           "test-client-id",
+				ClientSecret:       "test-client-secret",
+				LoginButtonText:    "Test Login",
+				PrivateKeyPath:     "",
+				AppID:              "123",
+				DefaultAccessToken: "test-default-token",
 			}
 
 			mockPSRepo := &MockProviderSourceRepository{
@@ -128,8 +128,8 @@ func TestRefreshNamespaceRepositories(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
@@ -187,8 +187,8 @@ func TestRefreshNamespaceRepositoriesNoAccessToken(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	err = gh.RefreshNamespaceRepositories(context.Background(), "test-namespace")
@@ -217,14 +217,14 @@ func TestRefreshNamespaceRepositoriesNoType(t *testing.T) {
 	defer server.Close()
 
 	expectedConfig := &provider_source_model.ProviderSourceConfig{
-		BaseURL:             server.URL,
-		ApiURL:              server.URL,
-		ClientID:            "test-client-id",
-		ClientSecret:        "test-client-secret",
-		LoginButtonText:     "Test Login",
-		PrivateKeyPath:      "",
-		AppID:               "123",
-		DefaultAccessToken:  "test-default-token",
+		BaseURL:            server.URL,
+		ApiURL:             server.URL,
+		ClientID:           "test-client-id",
+		ClientSecret:       "test-client-secret",
+		LoginButtonText:    "Test Login",
+		PrivateKeyPath:     "",
+		AppID:              "123",
+		DefaultAccessToken: "test-default-token",
 	}
 
 	mockPSRepo := &MockProviderSourceRepository{
@@ -273,14 +273,14 @@ func TestRefreshNamespaceRepositoriesInvalidResponse(t *testing.T) {
 	defer server.Close()
 
 	expectedConfig := &provider_source_model.ProviderSourceConfig{
-		BaseURL:             server.URL,
-		ApiURL:              server.URL,
-		ClientID:            "test-client-id",
-		ClientSecret:        "test-client-secret",
-		LoginButtonText:     "Test Login",
-		PrivateKeyPath:      "",
-		AppID:               "123",
-		DefaultAccessToken:  "test-default-token",
+		BaseURL:            server.URL,
+		ApiURL:             server.URL,
+		ClientID:           "test-client-id",
+		ClientSecret:       "test-client-secret",
+		LoginButtonText:    "Test Login",
+		PrivateKeyPath:     "",
+		AppID:              "123",
+		DefaultAccessToken: "test-default-token",
 	}
 
 	mockPSRepo := &MockProviderSourceRepository{

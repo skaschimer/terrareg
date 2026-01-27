@@ -21,10 +21,10 @@ func TestLoginNoProviderSources(t *testing.T) {
 
 // loginNoAuthWarningTest represents a single test case for no auth warning.
 type loginNoAuthWarningTest struct {
-	adminToken     string
-	openidEnabled  bool
-	samlEnabled    bool
-	warningShown   bool
+	adminToken    string
+	openidEnabled bool
+	samlEnabled   bool
+	warningShown  bool
 }
 
 // loginNoAuthWarningTests contains all test cases from Python's @pytest.mark.parametrize.
@@ -435,11 +435,11 @@ func testEnsureProviderSourceButtonsNotShown(t *testing.T) {
 
 // githubLoginTest represents a single test case for GitHub provider source login.
 type githubLoginTest struct {
-	enableAccessControls                      bool
-	autoGenerateGithubOrganisationNamespaces  bool
-	groupMemberships                          []string
-	hasSiteAdmin                              bool
-	canCreateModule                           bool
+	enableAccessControls                     bool
+	autoGenerateGithubOrganisationNamespaces bool
+	groupMemberships                         []string
+	hasSiteAdmin                             bool
+	canCreateModule                          bool
 }
 
 // githubLoginTests contains all test cases from Python's @pytest.mark.parametrize.

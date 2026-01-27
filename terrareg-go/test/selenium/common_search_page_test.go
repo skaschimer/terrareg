@@ -36,9 +36,9 @@ func ConfigForCommonSearchPageTests() map[string]string {
 	base := getDefaultTestConfig()
 	return mergeMaps(base, map[string]string{
 		"CONTRIBUTED_NAMESPACE_LABEL": "unittest contributed module",
-		"TRUSTED_NAMESPACE_LABEL":      "unittest trusted namespace",
-		"VERIFIED_MODULE_LABEL":        "unittest verified label",
-		"TRUSTED_NAMESPACES":           "modulesearch-trusted,relevancysearch",
+		"TRUSTED_NAMESPACE_LABEL":     "unittest trusted namespace",
+		"VERIFIED_MODULE_LABEL":       "unittest verified label",
+		"TRUSTED_NAMESPACES":          "modulesearch-trusted,relevancysearch",
 	})
 }
 
@@ -48,7 +48,7 @@ func testSearchFromHomepageCommonSearch(t *testing.T) {
 	testCases := []struct {
 		searchString string
 	}{
-		{""},  // Test string that will match modules and providers
+		{""}, // Test string that will match modules and providers
 		{"mixed"},
 	}
 

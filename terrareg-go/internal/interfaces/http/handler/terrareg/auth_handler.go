@@ -11,11 +11,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/auth"
 	userGroupCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/user_group"
 	authQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/auth"
 	userGroupQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/user_group"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"

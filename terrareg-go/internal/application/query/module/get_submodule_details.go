@@ -35,21 +35,21 @@ func NewGetSubmoduleDetailsQuery(
 // SubmoduleDetails represents submodule details
 // Python reference: /app/terrareg/models.py BaseSubmodule.get_terrareg_api_details()
 type SubmoduleDetails struct {
-	Path                      string              `json:"path"`
-	Readme                    string              `json:"readme"`
-	Empty                     bool                `json:"empty"`
-	Inputs                    []Input             `json:"inputs"`
-	Outputs                   []Output            `json:"outputs"`
-	Dependencies              []Dependency        `json:"dependencies"`
-	ProviderDependencies      []ProviderDependency `json:"provider_dependencies"`
-	Resources                 []Resource          `json:"resources"`
-	Modules                   []Module            `json:"modules"`
-	DisplaySourceURL          string              `json:"display_source_url,omitempty"`
-	SecurityFailures          int                 `json:"security_failures"`
-	SecurityResults           []SecurityResult    `json:"security_results,omitempty"`
-	GraphURL                  string              `json:"graph_url,omitempty"`
-	UsageExample              string              `json:"usage_example,omitempty"`
-	TerraformVersionConstraint *string             `json:"terraform_version_constraint,omitempty"`
+	Path                       string               `json:"path"`
+	Readme                     string               `json:"readme"`
+	Empty                      bool                 `json:"empty"`
+	Inputs                     []Input              `json:"inputs"`
+	Outputs                    []Output             `json:"outputs"`
+	Dependencies               []Dependency         `json:"dependencies"`
+	ProviderDependencies       []ProviderDependency `json:"provider_dependencies"`
+	Resources                  []Resource           `json:"resources"`
+	Modules                    []Module             `json:"modules"`
+	DisplaySourceURL           string               `json:"display_source_url,omitempty"`
+	SecurityFailures           int                  `json:"security_failures"`
+	SecurityResults            []SecurityResult     `json:"security_results,omitempty"`
+	GraphURL                   string               `json:"graph_url,omitempty"`
+	UsageExample               string               `json:"usage_example,omitempty"`
+	TerraformVersionConstraint *string              `json:"terraform_version_constraint,omitempty"`
 }
 
 // Input represents a terraform input variable
@@ -101,11 +101,11 @@ type Module struct {
 
 // SecurityResult represents a tfsec security result
 type SecurityResult struct {
-	RuleID    string `json:"rule_id"`
-	Severity  string `json:"severity"`
-	Title     string `json:"title"`
+	RuleID      string `json:"rule_id"`
+	Severity    string `json:"severity"`
+	Title       string `json:"title"`
 	Description string `json:"description,omitempty"`
-	Location  string `json:"location,omitempty"`
+	Location    string `json:"location,omitempty"`
 }
 
 // Execute retrieves submodule details
@@ -177,20 +177,20 @@ func (q *GetSubmoduleDetailsQuery) Execute(ctx context.Context, namespace, modul
 	}
 
 	return &SubmoduleDetails{
-		Path:                      specs.Path,
-		Readme:                    specs.Readme,
-		Empty:                     specs.Empty,
-		Inputs:                    convertInputs(specs.Inputs),
-		Outputs:                   convertOutputs(specs.Outputs),
-		Dependencies:              convertDependencies(specs.Dependencies),
-		ProviderDependencies:      convertProviderDependencies(specs.ProviderDependencies),
-		Resources:                 convertResources(specs.Resources),
-		Modules:                   convertModules(specs.Modules),
-		DisplaySourceURL:          displaySourceURL,
-		SecurityFailures:          securityFailures,
-		SecurityResults:           securityResults,
-		GraphURL:                  graphURL,
-		UsageExample:              usageExample,
+		Path:                       specs.Path,
+		Readme:                     specs.Readme,
+		Empty:                      specs.Empty,
+		Inputs:                     convertInputs(specs.Inputs),
+		Outputs:                    convertOutputs(specs.Outputs),
+		Dependencies:               convertDependencies(specs.Dependencies),
+		ProviderDependencies:       convertProviderDependencies(specs.ProviderDependencies),
+		Resources:                  convertResources(specs.Resources),
+		Modules:                    convertModules(specs.Modules),
+		DisplaySourceURL:           displaySourceURL,
+		SecurityFailures:           securityFailures,
+		SecurityResults:            securityResults,
+		GraphURL:                   graphURL,
+		UsageExample:               usageExample,
 		TerraformVersionConstraint: terraformVersionConstraint,
 	}, nil
 }
@@ -221,9 +221,9 @@ func (q *GetSubmoduleDetailsQuery) getSecurityResults(submodule *model.Submodule
 		}
 
 		securityResult := SecurityResult{
-			RuleID:    getStringValue(resultMap, "rule_id"),
-			Severity:  getStringValue(resultMap, "severity"),
-			Title:     getStringValue(resultMap, "title"),
+			RuleID:      getStringValue(resultMap, "rule_id"),
+			Severity:    getStringValue(resultMap, "severity"),
+			Title:       getStringValue(resultMap, "title"),
 			Description: getStringValue(resultMap, "description"),
 		}
 

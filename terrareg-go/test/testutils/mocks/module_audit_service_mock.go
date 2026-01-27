@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
 	auditservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/service"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockModuleAuditService is a mock for ModuleAuditServiceInterface

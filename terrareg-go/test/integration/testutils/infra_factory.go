@@ -3,16 +3,16 @@ package testutils
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
+	authRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
-	authRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/repository"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	sqldbModule "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
-	sqldbAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/auth"
-	sqldbAnalytics "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
-	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	sqldbAnalytics "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
+	sqldbAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/auth"
+	sqldbModule "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
+	"github.com/stretchr/testify/require"
 )
 
 // ConfigOption modifies DomainConfig during test setup

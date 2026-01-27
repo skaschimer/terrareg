@@ -28,8 +28,8 @@ func NewListUserGroupsQuery(
 // UserGroupResponse represents a user group in the API response
 // Matches Python format: {name, site_admin, namespace_permissions}
 type UserGroupResponse struct {
-	Name               string                      `json:"name"`
-	SiteAdmin          bool                        `json:"site_admin"`
+	Name                 string                        `json:"name"`
+	SiteAdmin            bool                          `json:"site_admin"`
 	NamespacePermissions []NamespacePermissionResponse `json:"namespace_permissions"`
 }
 

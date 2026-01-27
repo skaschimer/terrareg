@@ -411,11 +411,11 @@ func CreateProviderWithGPGKey(t *testing.T, db *sqldb.Database, namespaceID int,
 	t.Helper()
 
 	provider := sqldb.ProviderDB{
-		NamespaceID:         namespaceID,
-		Name:                name,
-		Description:         description,
-		Tier:                tier,
-		ProviderCategoryID:  categoryID,
+		NamespaceID:        namespaceID,
+		Name:               name,
+		Description:        description,
+		Tier:               tier,
+		ProviderCategoryID: categoryID,
 	}
 
 	err := db.DB.Create(&provider).Error
@@ -515,14 +515,14 @@ func SetupFullyPopulatedModule(t *testing.T, db *sqldb.Database) (sqldb.Namespac
 
 	// Create all versions from Python test_data.py
 	versions := []struct {
-		version   string
-		published *bool
-		beta      *bool
-		internal  *bool
-		owner     *string
+		version     string
+		published   *bool
+		beta        *bool
+		internal    *bool
+		owner       *string
 		description *string
 		repoBaseURL *string
-		readme     *string
+		readme      *string
 		varTemplate *string
 	}{
 		// Older version
@@ -595,11 +595,11 @@ func SetupFullyPopulatedModule(t *testing.T, db *sqldb.Database) (sqldb.Namespac
 			}
 
 			moduleDetails := sqldb.ModuleDetailsDB{
-				ReadmeContent:  readmeContent,
-				TerraformDocs:  []byte("{}"),
-				Tfsec:          []byte("{}"),
-				Infracost:      []byte("{}"),
-				TerraformGraph: []byte("{}"),
+				ReadmeContent:    readmeContent,
+				TerraformDocs:    []byte("{}"),
+				Tfsec:            []byte("{}"),
+				Infracost:        []byte("{}"),
+				TerraformGraph:   []byte("{}"),
 				TerraformModules: []byte("{}"),
 				TerraformVersion: []byte("1.0.0"),
 			}
@@ -842,4 +842,3 @@ func CreateModuleVersionWithSecurityIssues(t *testing.T, db *sqldb.Database, mod
 	require.NoError(t, err, "Failed to find created module version")
 	return moduleVersion
 }
-

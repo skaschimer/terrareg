@@ -51,7 +51,7 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 		nil, // get provider not used
 		nil, // list providers not used
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -108,7 +108,7 @@ func TestModuleHandler_HandleModuleList_Empty(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -159,7 +159,7 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -212,7 +212,7 @@ func TestModuleHandler_HandleNamespaceModules_NotFound(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -266,7 +266,7 @@ func TestModuleHandler_HandleModuleDetails_Success(t *testing.T) {
 		nil, // get provider not used
 		listModuleProvidersQuery,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -512,7 +512,7 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 		getModuleProviderQuery,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -570,7 +570,7 @@ func TestModuleHandler_HandleModuleSearch_Success(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with query parameters
@@ -646,8 +646,8 @@ func TestModuleHandler_HandleModuleSearch_WithFilters(t *testing.T) {
 				nil,
 				nil,
 				analyticsRepository,
-			nil, // versionPresenter not needed
-	)
+				nil, // versionPresenter not needed
+			)
 
 			// Create request with query parameters
 			req := httptest.NewRequest("GET", "/v1/modules/search"+tt.queryString, nil)
@@ -691,7 +691,7 @@ func TestModuleHandler_HandleModuleSearch_EmptyResults(t *testing.T) {
 		nil,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request
@@ -742,7 +742,7 @@ func TestModuleHandler_HandleModuleProviderDetails_WithVersion(t *testing.T) {
 		getModuleProviderQuery,
 		nil,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request with chi context
@@ -889,7 +889,7 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 		nil,
 		listModuleProvidersQuery,
 		analyticsRepository,
-			nil, // versionPresenter not needed
+		nil, // versionPresenter not needed
 	)
 
 	// Create request

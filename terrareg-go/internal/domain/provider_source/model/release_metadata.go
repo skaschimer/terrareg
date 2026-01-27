@@ -13,19 +13,19 @@ var tagRegex = regexp.MustCompile(`^v([0-9]+\.[0-9]+\.[0-9]+(:?-[a-z0-9]+)?)$`)
 // RepositoryReleaseMetadata holds metadata for a repository release
 // Python reference: repository_release_metadata.py::RepositoryReleaseMetadata
 type RepositoryReleaseMetadata struct {
-	Name            string
-	Tag             string
-	ArchiveURL      string
-	CommitHash      string
-	ProviderID      int
-	Repository      sqldb.RepositoryDB
+	Name             string
+	Tag              string
+	ArchiveURL       string
+	CommitHash       string
+	ProviderID       int
+	Repository       sqldb.RepositoryDB
 	ReleaseArtifacts []*ReleaseArtifactMetadata
 }
 
 // ReleaseArtifactMetadata holds metadata for a release artifact
 // Python reference: repository_release_metadata.py::ReleaseArtifactMetadata
 type ReleaseArtifactMetadata struct {
-	Name      string
+	Name       string
 	ProviderID int
 }
 
@@ -77,7 +77,7 @@ func NewRepositoryReleaseMetadata(
 // NewReleaseArtifactMetadata creates a new release artifact metadata
 func NewReleaseArtifactMetadata(name string, providerID int) *ReleaseArtifactMetadata {
 	return &ReleaseArtifactMetadata{
-		Name:      name,
+		Name:       name,
 		ProviderID: providerID,
 	}
 }

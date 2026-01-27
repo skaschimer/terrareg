@@ -20,11 +20,11 @@ import (
 // TestGetCommitHashByRelease tests the GetCommitHashByRelease method
 func TestGetCommitHashByRelease(t *testing.T) {
 	tests := []struct {
-		name           string
-		responseCode   int
-		responseBody   map[string]interface{}
-		expectedHash   string
-		expectError    bool
+		name         string
+		responseCode int
+		responseBody map[string]interface{}
+		expectedHash string
+		expectError  bool
 	}{
 		{
 			name:         "valid commit hash",
@@ -80,8 +80,8 @@ func TestGetCommitHashByRelease(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -162,8 +162,8 @@ func TestGetReleaseArtifactsMetadata(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -239,8 +239,8 @@ func TestGetReleaseArtifact(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -318,8 +318,8 @@ func TestGetReleaseArchive(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -364,8 +364,8 @@ func TestAddRepository(t *testing.T) {
 		{
 			name: "valid repository",
 			repositoryMetadata: map[string]interface{}{
-				"id":          float64(12345),
-				"name":        "terraform-provider-test",
+				"id":   float64(12345),
+				"name": "terraform-provider-test",
 				"owner": map[string]interface{}{
 					"login": "test-owner",
 				},
@@ -406,8 +406,8 @@ func TestAddRepository(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-source-name", mockPSRepo, ghClass, sqldbDB)
 
 			err = gh.AddRepository(context.Background(), sqldbDB, tt.repositoryMetadata)
@@ -453,8 +453,8 @@ func TestUpdateRepositories(t *testing.T) {
 				for i := 0; i < count; i++ {
 					repoID := startIdx + i
 					results = append(results, map[string]interface{}{
-						"id":        float64(repoID),
-						"name":      "terraform-provider-test",
+						"id":   float64(repoID),
+						"name": "terraform-provider-test",
 						"owner": map[string]interface{}{
 							"login": "test-owner",
 						},
@@ -493,8 +493,8 @@ func TestUpdateRepositories(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			err = gh.UpdateRepositories(context.Background(), sqldbDB, "test-token")
@@ -557,8 +557,8 @@ func TestUpdateRepositoriesInvalidResponse(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	// Call UpdateRepositories - should return error without adding repositories
@@ -578,23 +578,23 @@ func TestUpdateRepositoriesInvalidResponse(t *testing.T) {
 // Python reference: test__process_release
 func TestProcessRelease(t *testing.T) {
 	tests := []struct {
-		name                      string
-		githubReleaseMetadata     map[string]interface{}
-		commitHashResponse        map[string]interface{}
-		commitHashStatusCode      int
-		artifactsResponse         []map[string]interface{}
-		expectNilResult           bool
-		expectedReleaseName       string
-		expectedTag               string
-		expectedArchiveURL        string
-		expectedCommitHash        string
+		name                  string
+		githubReleaseMetadata map[string]interface{}
+		commitHashResponse    map[string]interface{}
+		commitHashStatusCode  int
+		artifactsResponse     []map[string]interface{}
+		expectNilResult       bool
+		expectedReleaseName   string
+		expectedTag           string
+		expectedArchiveURL    string
+		expectedCommitHash    string
 	}{
 		{
 			name: "valid release with semver tag",
 			githubReleaseMetadata: map[string]interface{}{
-				"id":         float64(12345),
-				"name":       "Test Release v1.0.0",
-				"tag_name":   "v1.0.0",
+				"id":          float64(12345),
+				"name":        "Test Release v1.0.0",
+				"tag_name":    "v1.0.0",
 				"tarball_url": "https://example.com/archive.tar.gz",
 			},
 			commitHashResponse: map[string]interface{}{
@@ -616,8 +616,8 @@ func TestProcessRelease(t *testing.T) {
 		{
 			name: "release missing id field",
 			githubReleaseMetadata: map[string]interface{}{
-				"name":       "Test Release",
-				"tag_name":   "v1.0.0",
+				"name":        "Test Release",
+				"tag_name":    "v1.0.0",
 				"tarball_url": "https://example.com/archive.tar.gz",
 			},
 			expectNilResult: true,
@@ -625,8 +625,8 @@ func TestProcessRelease(t *testing.T) {
 		{
 			name: "release missing name field",
 			githubReleaseMetadata: map[string]interface{}{
-				"id":         float64(12345),
-				"tag_name":   "v1.0.0",
+				"id":          float64(12345),
+				"tag_name":    "v1.0.0",
 				"tarball_url": "https://example.com/archive.tar.gz",
 			},
 			expectNilResult: true,
@@ -634,9 +634,9 @@ func TestProcessRelease(t *testing.T) {
 		{
 			name: "release with non-semver tag",
 			githubReleaseMetadata: map[string]interface{}{
-				"id":         float64(12345),
-				"name":       "Test Release",
-				"tag_name":   "not-a-version",
+				"id":          float64(12345),
+				"name":        "Test Release",
+				"tag_name":    "not-a-version",
 				"tarball_url": "https://example.com/archive.tar.gz",
 			},
 			commitHashResponse: map[string]interface{}{
@@ -651,9 +651,9 @@ func TestProcessRelease(t *testing.T) {
 		{
 			name: "release with empty commit hash",
 			githubReleaseMetadata: map[string]interface{}{
-				"id":         float64(12345),
-				"name":       "Test Release",
-				"tag_name":   "v1.0.0",
+				"id":          float64(12345),
+				"name":        "Test Release",
+				"tag_name":    "v1.0.0",
 				"tarball_url": "https://example.com/archive.tar.gz",
 			},
 			commitHashResponse:   map[string]interface{}{},
@@ -706,8 +706,8 @@ func TestProcessRelease(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -842,8 +842,8 @@ func TestGetNewReleases(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 			owner := "test-owner"
@@ -933,8 +933,8 @@ func TestGetNewReleasesSkipInvalidReleases(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	owner := "test-owner"
@@ -988,8 +988,8 @@ func TestGetNewReleasesInvalidResponse(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
 	owner := "test-owner"
@@ -1139,15 +1139,15 @@ func TestGetNewReleasesBreakIfAlreadyExists(t *testing.T) {
 			// Return two releases - the first will be mocked as "already exists"
 			releases := []map[string]interface{}{
 				{
-					"id":         float64(1),
-					"name":       "v1.5.2",
-					"tag_name":   "v1.5.2",
+					"id":          float64(1),
+					"name":        "v1.5.2",
+					"tag_name":    "v1.5.2",
 					"tarball_url": "https://example.com/v1.5.2.tar.gz",
 				},
 				{
-					"id":         float64(2),
-					"name":       "v2.0.0",
-					"tag_name":   "v2.0.0",
+					"id":          float64(2),
+					"name":        "v2.0.0",
+					"tag_name":    "v2.0.0",
 					"tarball_url": "https://example.com/v2.0.0.tar.gz",
 				},
 			}
@@ -1183,8 +1183,8 @@ func TestGetNewReleasesBreakIfAlreadyExists(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-		err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
-		require.NoError(t, err)
+	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	require.NoError(t, err)
 
 	// Create the base GithubProviderSource
 	baseGH := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)

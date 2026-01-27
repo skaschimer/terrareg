@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	provider_source_model "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
+	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // MockProviderSourceRepository is a mock implementation of ProviderSourceRepository
@@ -107,11 +107,11 @@ func TestGitHubAuthMethod_IsEnabled(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_Success(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations": map[string]string{
-			"test-user":   string(sqldb.NamespaceTypeGithubUser),
-			"test-org-1":  string(sqldb.NamespaceTypeGithubOrg),
-			"test-org-2":  string(sqldb.NamespaceTypeGithubOrg),
+			"test-user":  string(sqldb.NamespaceTypeGithubUser),
+			"test-org-1": string(sqldb.NamespaceTypeGithubOrg),
+			"test-org-2": string(sqldb.NamespaceTypeGithubOrg),
 		},
 	}
 
@@ -199,7 +199,7 @@ func TestGitHubAuthMethod_Authenticate_MissingUsername(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_MissingOrganizations(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 	}
 
 	repo := &MockProviderSourceRepository{}
@@ -229,7 +229,7 @@ func TestGitHubAuthMethod_Authenticate_MissingOrganizations(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_InvalidOrganizationsType(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations":   "not-a-map", // Invalid type
 	}
 
@@ -260,7 +260,7 @@ func TestGitHubAuthMethod_Authenticate_InvalidOrganizationsType(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_EmptyOrganizationsMap(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations":   map[string]string{},
 	}
 
@@ -289,23 +289,23 @@ func TestGitHubAuthMethod_Authenticate_EmptyOrganizationsMap(t *testing.T) {
 // TestGitHubAuthMethod_Authenticate_CheckNamespacePermissions tests namespace permission checking
 func TestGitHubAuthMethod_Authenticate_CheckNamespacePermissions(t *testing.T) {
 	tests := []struct {
-		name            string
-		namespace       string
+		name             string
+		namespace        string
 		shouldHaveAccess bool
 	}{
 		{
-			name:            "user has access to own namespace",
-			namespace:       "test-user",
+			name:             "user has access to own namespace",
+			namespace:        "test-user",
 			shouldHaveAccess: true,
 		},
 		{
-			name:            "user has access to organization namespace",
-			namespace:       "test-org-1",
+			name:             "user has access to organization namespace",
+			namespace:        "test-org-1",
 			shouldHaveAccess: true,
 		},
 		{
-			name:            "user does not have access to other namespace",
-			namespace:       "other-org",
+			name:             "user does not have access to other namespace",
+			namespace:        "other-org",
 			shouldHaveAccess: false,
 		},
 	}
@@ -314,7 +314,7 @@ func TestGitHubAuthMethod_Authenticate_CheckNamespacePermissions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sessionData := map[string]interface{}{
 				"provider_source": "test-github",
-				"github_username":  "test-user",
+				"github_username": "test-user",
 				"organisations": map[string]interface{}{
 					"test-user":  string(sqldb.NamespaceTypeGithubUser),
 					"test-org-1": string(sqldb.NamespaceTypeGithubOrg),
@@ -344,7 +344,7 @@ func TestGitHubAuthMethod_Authenticate_CheckNamespacePermissions(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_GetAllNamespacePermissions(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations": map[string]interface{}{
 			"test-user":  string(sqldb.NamespaceTypeGithubUser),
 			"test-org-1": string(sqldb.NamespaceTypeGithubOrg),
@@ -389,23 +389,23 @@ func TestGitHubAuthMethod_Authenticate_GetAllNamespacePermissions(t *testing.T) 
 // TestGitHubAuthMethod_Authenticate_CanPublishModuleVersion tests publish permissions
 func TestGitHubAuthMethod_Authenticate_CanPublishModuleVersion(t *testing.T) {
 	tests := []struct {
-		name            string
-		namespace       string
+		name             string
+		namespace        string
 		shouldHaveAccess bool
 	}{
 		{
-			name:            "user can publish to own namespace",
-			namespace:       "test-user",
+			name:             "user can publish to own namespace",
+			namespace:        "test-user",
 			shouldHaveAccess: true,
 		},
 		{
-			name:            "user can publish to organization namespace",
-			namespace:       "test-org-1",
+			name:             "user can publish to organization namespace",
+			namespace:        "test-org-1",
 			shouldHaveAccess: true,
 		},
 		{
-			name:            "user cannot publish to other namespace",
-			namespace:       "other-org",
+			name:             "user cannot publish to other namespace",
+			namespace:        "other-org",
 			shouldHaveAccess: false,
 		},
 	}
@@ -414,7 +414,7 @@ func TestGitHubAuthMethod_Authenticate_CanPublishModuleVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sessionData := map[string]interface{}{
 				"provider_source": "test-github",
-				"github_username":  "test-user",
+				"github_username": "test-user",
 				"organisations": map[string]interface{}{
 					"test-user":  string(sqldb.NamespaceTypeGithubUser),
 					"test-org-1": string(sqldb.NamespaceTypeGithubOrg),
@@ -444,7 +444,7 @@ func TestGitHubAuthMethod_Authenticate_CanPublishModuleVersion(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_ProviderData(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations": map[string]string{
 			"test-user":  string(sqldb.NamespaceTypeGithubUser),
 			"test-org-1": string(sqldb.NamespaceTypeGithubOrg),
@@ -485,7 +485,7 @@ func TestGitHubAuthMethod_Authenticate_ProviderData(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_NotAdmin(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations": map[string]string{
 			"test-user": string(sqldb.NamespaceTypeGithubUser),
 		},
@@ -575,17 +575,17 @@ func TestGitHubAuthMethod_Authenticate_ProviderSourceNotFound(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name:        "provider source returns nil",
-			returnNil:   true,
-			returnError: nil,
-			expectError: true,
+			name:          "provider source returns nil",
+			returnNil:     true,
+			returnError:   nil,
+			expectError:   true,
 			errorContains: "provider source not found",
 		},
 		{
-			name:        "provider source returns error",
-			returnNil:   false,
-			returnError: errors.New("test error"),
-			expectError: true,
+			name:          "provider source returns error",
+			returnNil:     false,
+			returnError:   errors.New("test error"),
+			expectError:   true,
 			errorContains: "provider source not found",
 		},
 	}
@@ -594,7 +594,7 @@ func TestGitHubAuthMethod_Authenticate_ProviderSourceNotFound(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sessionData := map[string]interface{}{
 				"provider_source": "nonexistent-github",
-				"github_username":  "test-user",
+				"github_username": "test-user",
 			}
 
 			repo := &MockProviderSourceRepositoryWithError{
@@ -646,7 +646,7 @@ func TestGitHubAuthMethod_Authenticate_ProviderSourceTypeMismatch(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			sessionData := map[string]interface{}{
 				"provider_source": "wrong-type-provider",
-				"github_username":  "test-user",
+				"github_username": "test-user",
 			}
 
 			repo := &MockProviderSourceRepositoryWithError{
@@ -675,9 +675,9 @@ func TestGitHubAuthMethod_Authenticate_ProviderSourceTypeMismatch(t *testing.T) 
 // TestGitHubAuthContext_CaseInsensitiveNamespaceMatching tests case-insensitive namespace matching
 func TestGitHubAuthContext_CaseInsensitiveNamespaceMatching(t *testing.T) {
 	tests := []struct {
-		name          string
-		namespace     string
-		organizations map[string]sqldb.NamespaceType
+		name             string
+		namespace        string
+		organizations    map[string]sqldb.NamespaceType
 		shouldHaveAccess bool
 	}{
 		{
@@ -724,8 +724,8 @@ func TestGitHubAuthContext_CaseInsensitiveNamespaceMatching(t *testing.T) {
 			name:      "multiple orgs with different cases",
 			namespace: "My-Company",
 			organizations: map[string]sqldb.NamespaceType{
-				"test-user": sqldb.NamespaceTypeGithubUser,
-				"my-company": sqldb.NamespaceTypeGithubOrg,
+				"test-user":   sqldb.NamespaceTypeGithubUser,
+				"my-company":  sqldb.NamespaceTypeGithubOrg,
 				"Another-Org": sqldb.NamespaceTypeGithubOrg,
 			},
 			shouldHaveAccess: true,
@@ -753,7 +753,7 @@ func TestGitHubAuthContext_CaseInsensitiveNamespaceMatching(t *testing.T) {
 func TestGitHubAuthMethod_Authenticate_NilFactory(t *testing.T) {
 	sessionData := map[string]interface{}{
 		"provider_source": "test-github",
-		"github_username":  "test-user",
+		"github_username": "test-user",
 		"organisations": map[string]string{
 			"test-user": string(sqldb.NamespaceTypeGithubUser),
 		},

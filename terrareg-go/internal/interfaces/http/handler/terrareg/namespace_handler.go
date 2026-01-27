@@ -138,7 +138,7 @@ func (h *NamespaceHandler) HandleNamespaceList(w http.ResponseWriter, r *http.Re
 		}
 
 		response := map[string]interface{}{
-			"meta":      meta,
+			"meta":       meta,
 			"namespaces": dtos,
 		}
 		RespondJSON(w, http.StatusOK, response)

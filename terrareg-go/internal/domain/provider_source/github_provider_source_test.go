@@ -17,16 +17,16 @@ import (
 // TestGithubProviderSource_Config tests that the config is loaded correctly
 func TestGithubProviderSource_Config(t *testing.T) {
 	expectedConfig := &model.ProviderSourceConfig{
-		BaseURL:                  "https://github.example-test.com",
-		ApiURL:                   "https://api.github.example-test.com",
-		ClientID:                 "unittest-github-client-id",
-		ClientSecret:             "unittest-github-client-secret",
-		LoginButtonText:          "Unit Test Github Login",
-		PrivateKeyPath:           "./unittest-path-to-private-key.pem",
-		AppID:                    "954956",
-		DefaultAccessToken:        "",
-		DefaultInstallationID:     "",
-		AutoGenerateNamespaces:   false,
+		BaseURL:                "https://github.example-test.com",
+		ApiURL:                 "https://api.github.example-test.com",
+		ClientID:               "unittest-github-client-id",
+		ClientSecret:           "unittest-github-client-secret",
+		LoginButtonText:        "Unit Test Github Login",
+		PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+		AppID:                  "954956",
+		DefaultAccessToken:     "",
+		DefaultInstallationID:  "",
+		AutoGenerateNamespaces: false,
 	}
 
 	mockPSRepo := &MockProviderSourceRepository{
@@ -57,13 +57,13 @@ func TestGithubProviderSource_Config(t *testing.T) {
 // TestGithubProviderSource_LoginButtonText tests the LoginButtonText method
 func TestGithubProviderSource_LoginButtonText(t *testing.T) {
 	expectedConfig := &model.ProviderSourceConfig{
-		BaseURL:                  "https://github.example-test.com",
-		ApiURL:                   "https://api.github.example-test.com",
-		ClientID:                 "unittest-github-client-id",
-		ClientSecret:             "unittest-github-client-secret",
-		LoginButtonText:          "Unit Test Github Login",
-		PrivateKeyPath:           "./unittest-path-to-private-key.pem",
-		AppID:                    "954956",
+		BaseURL:         "https://github.example-test.com",
+		ApiURL:          "https://api.github.example-test.com",
+		ClientID:        "unittest-github-client-id",
+		ClientSecret:    "unittest-github-client-secret",
+		LoginButtonText: "Unit Test Github Login",
+		PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+		AppID:           "954956",
 	}
 
 	mockPSRepo := &MockProviderSourceRepository{
@@ -130,28 +130,28 @@ func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testin
 		{
 			name: "enabled true",
 			config: &model.ProviderSourceConfig{
-				BaseURL:                  "https://github.example-test.com",
-				ApiURL:                   "https://api.github.example-test.com",
-				ClientID:                 "unittest-github-client-id",
-				ClientSecret:             "unittest-github-client-secret",
-				LoginButtonText:          "Unit Test Github Login",
-				PrivateKeyPath:           "./unittest-path-to-private-key.pem",
-				AppID:                    "954956",
-				AutoGenerateNamespaces:   true,
+				BaseURL:                "https://github.example-test.com",
+				ApiURL:                 "https://api.github.example-test.com",
+				ClientID:               "unittest-github-client-id",
+				ClientSecret:           "unittest-github-client-secret",
+				LoginButtonText:        "Unit Test Github Login",
+				PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+				AppID:                  "954956",
+				AutoGenerateNamespaces: true,
 			},
 			expected: true,
 		},
 		{
 			name: "enabled false",
 			config: &model.ProviderSourceConfig{
-				BaseURL:                  "https://github.example-test.com",
-				ApiURL:                   "https://api.github.example-test.com",
-				ClientID:                 "unittest-github-client-id",
-				ClientSecret:             "unittest-github-client-secret",
-				LoginButtonText:          "Unit Test Github Login",
-				PrivateKeyPath:           "./unittest-path-to-private-key.pem",
-				AppID:                    "954956",
-				AutoGenerateNamespaces:   false,
+				BaseURL:                "https://github.example-test.com",
+				ApiURL:                 "https://api.github.example-test.com",
+				ClientID:               "unittest-github-client-id",
+				ClientSecret:           "unittest-github-client-secret",
+				LoginButtonText:        "Unit Test Github Login",
+				PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+				AppID:                  "954956",
+				AutoGenerateNamespaces: false,
 			},
 			expected: false,
 		},
@@ -367,7 +367,7 @@ type mockProviderVersionImpl struct {
 }
 
 func (m *mockProviderVersionImpl) Repository() (Repository, error) { return m.repo, nil }
-func (m *mockProviderVersionImpl) GitTag() (string, error)        { return m.gitTag, nil }
+func (m *mockProviderVersionImpl) GitTag() (string, error)         { return m.gitTag, nil }
 
 // TestGithubProviderSource_GetUserAccessToken tests the GetUserAccessToken method
 // Python reference: test_get_user_access_token
@@ -424,7 +424,7 @@ func TestGithubProviderSource_GetUserAccessToken(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:   "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
 				AppID:           "954956",
 			}
 
@@ -460,8 +460,8 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 		expectedResult string
 	}{
 		{
-			name:        "valid username",
-			accessToken: "test-token",
+			name:         "valid username",
+			accessToken:  "test-token",
 			responseCode: 200,
 			responseData: map[string]interface{}{
 				"login": "testuser",
@@ -483,8 +483,8 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 			expectedResult: "",
 		},
 		{
-			name:        "missing login in response",
-			accessToken: "test-token",
+			name:         "missing login in response",
+			accessToken:  "test-token",
 			responseCode: 200,
 			responseData: map[string]interface{}{
 				"id": 12345,
@@ -515,7 +515,7 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:   "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
 				AppID:           "954956",
 			}
 
@@ -551,8 +551,8 @@ func TestGithubProviderSource_GetUserOrganisations(t *testing.T) {
 		expectedOrgs []string
 	}{
 		{
-			name:        "multiple organisations with active admin membership",
-			accessToken: "test-token",
+			name:         "multiple organisations with active admin membership",
+			accessToken:  "test-token",
 			responseCode: 200,
 			responseData: []map[string]interface{}{
 				{
@@ -623,7 +623,7 @@ func TestGithubProviderSource_GetUserOrganisations(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:   "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
 				AppID:           "954956",
 			}
 
@@ -688,7 +688,7 @@ func TestGithubProviderSource_GetDefaultAccessToken(t *testing.T) {
 				PrivateKeyPath:        "./unittest-path-to-private-key.pem",
 				AppID:                 "954956",
 				DefaultInstallationID: tt.defaultInstallationID,
-				DefaultAccessToken:     tt.defaultAccessToken,
+				DefaultAccessToken:    tt.defaultAccessToken,
 			}
 
 			mockPSRepo := &MockProviderSourceRepository{
@@ -716,53 +716,53 @@ func TestGithubProviderSource_GetDefaultAccessToken(t *testing.T) {
 // Python reference: test_generate_app_installation_token
 func TestGithubProviderSource_GenerateAppInstallationToken(t *testing.T) {
 	tests := []struct {
-		name                string
-		installationID      string
-		responseCode        int
-		responseBody        map[string]interface{}
-		providePrivateKey   bool
-		expectedToken       string
-		expectedError       bool
+		name              string
+		installationID    string
+		responseCode      int
+		responseBody      map[string]interface{}
+		providePrivateKey bool
+		expectedToken     string
+		expectedError     bool
 	}{
 		{
-			name:           "valid token generation",
-			installationID: "unittest-installation-id1",
-			responseCode:   201,
-			responseBody:   map[string]interface{}{"token": "unittest-access-token"},
+			name:              "valid token generation",
+			installationID:    "unittest-installation-id1",
+			responseCode:      201,
+			responseBody:      map[string]interface{}{"token": "unittest-access-token"},
 			providePrivateKey: true,
-			expectedToken:  "unittest-access-token",
+			expectedToken:     "unittest-access-token",
 		},
 		{
-			name:           "no token in response",
-			installationID: "unittest-installation-id2",
-			responseCode:   201,
-			responseBody:   map[string]interface{}{},
+			name:              "no token in response",
+			installationID:    "unittest-installation-id2",
+			responseCode:      201,
+			responseBody:      map[string]interface{}{},
 			providePrivateKey: true,
-			expectedToken:  "",
+			expectedToken:     "",
 		},
 		{
-			name:           "invalid response code",
-			installationID: "unittest-installation-id3",
-			responseCode:   403,
-			responseBody:   map[string]interface{}{},
+			name:              "invalid response code",
+			installationID:    "unittest-installation-id3",
+			responseCode:      403,
+			responseBody:      map[string]interface{}{},
 			providePrivateKey: true,
-			expectedError:  true,
+			expectedError:     true,
 		},
 		{
-			name:           "no installation ID",
-			installationID: "",
-			responseCode:   201,
-			responseBody:   map[string]interface{}{"token": "unittest-access-token"},
+			name:              "no installation ID",
+			installationID:    "",
+			responseCode:      201,
+			responseBody:      map[string]interface{}{"token": "unittest-access-token"},
 			providePrivateKey: true,
-			expectedToken:  "",
+			expectedToken:     "",
 		},
 		{
-			name:           "no private key",
-			installationID: "unittest-installation-id4",
-			responseCode:   201,
-			responseBody:   map[string]interface{}{"token": "unittest-access-token"},
+			name:              "no private key",
+			installationID:    "unittest-installation-id4",
+			responseCode:      201,
+			responseBody:      map[string]interface{}{"token": "unittest-access-token"},
 			providePrivateKey: false,
-			expectedToken:  "",
+			expectedToken:     "",
 		},
 	}
 
@@ -911,9 +911,9 @@ func TestGithubProviderSource_GetAppMetadata(t *testing.T) {
 				"name": "test-org",
 			},
 			providePrivateKey: true,
-			expectedError:    false,
-			expectedID:       "abcd-1234",
-			expectedName:     "test-org",
+			expectedError:     false,
+			expectedID:        "abcd-1234",
+			expectedName:      "test-org",
 		},
 		{
 			name:         "invalid response code",
@@ -1049,9 +1049,9 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 		expectedError     bool
 	}{
 		{
-			name:      "organization installation",
-			namespace: "some-organisation",
-			orgResponseCode: 200,
+			name:             "organization installation",
+			namespace:        "some-organisation",
+			orgResponseCode:  200,
 			userResponseCode: 404,
 			responseBody: map[string]interface{}{
 				"id": float64(12345), // Must be float64 for JSON unmarshaling to int
@@ -1060,9 +1060,9 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 			expectedID:        "12345",
 		},
 		{
-			name:      "user installation (org fails, user succeeds)",
-			namespace: "some-organisation",
-			orgResponseCode: 404,
+			name:             "user installation (org fails, user succeeds)",
+			namespace:        "some-organisation",
+			orgResponseCode:  404,
 			userResponseCode: 200,
 			responseBody: map[string]interface{}{
 				"id": float64(67890),
@@ -1071,27 +1071,27 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 			expectedID:        "67890",
 		},
 		{
-			name:      "404 not found",
-			namespace: "some-organisation",
-			orgResponseCode: 404,
-			userResponseCode: 404,
-			responseBody: map[string]interface{}{},
+			name:              "404 not found",
+			namespace:         "some-organisation",
+			orgResponseCode:   404,
+			userResponseCode:  404,
+			responseBody:      map[string]interface{}{},
 			providePrivateKey: true,
 			expectedError:     true,
 		},
 		{
-			name:      "500 server error",
-			namespace: "some-organisation",
-			orgResponseCode: 500,
-			userResponseCode: 500,
-			responseBody: map[string]interface{}{},
+			name:              "500 server error",
+			namespace:         "some-organisation",
+			orgResponseCode:   500,
+			userResponseCode:  500,
+			responseBody:      map[string]interface{}{},
 			providePrivateKey: true,
 			expectedError:     true,
 		},
 		{
-			name:      "invalid response data (id is nil)",
-			namespace: "some-organisation",
-			orgResponseCode: 200,
+			name:             "invalid response data (id is nil)",
+			namespace:        "some-organisation",
+			orgResponseCode:  200,
 			userResponseCode: 200,
 			responseBody: map[string]interface{}{
 				"id": nil,
@@ -1100,18 +1100,18 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 			expectedError:     true,
 		},
 		{
-			name:      "invalid response data (missing id)",
-			namespace: "some-organisation",
-			orgResponseCode: 200,
-			userResponseCode: 200,
-			responseBody: map[string]interface{}{},
+			name:              "invalid response data (missing id)",
+			namespace:         "some-organisation",
+			orgResponseCode:   200,
+			userResponseCode:  200,
+			responseBody:      map[string]interface{}{},
 			providePrivateKey: true,
 			expectedError:     true,
 		},
 		{
-			name:      "no private key",
-			namespace: "some-organisation",
-			orgResponseCode: 200,
+			name:             "no private key",
+			namespace:        "some-organisation",
+			orgResponseCode:  200,
 			userResponseCode: 200,
 			responseBody: map[string]interface{}{
 				"id": float64(12345),
@@ -1186,40 +1186,40 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 // Python reference: test__get_access_token_for_provider
 func TestGithubProviderSource_GetAccessTokenForProvider(t *testing.T) {
 	tests := []struct {
-		name                        string
-		namespace                   string
-		orgResponseCode             int
-		userResponseCode            int
-		providePrivateKey           bool
-		defaultAccessToken          string
-		expectedToken               string
+		name               string
+		namespace          string
+		orgResponseCode    int
+		userResponseCode   int
+		providePrivateKey  bool
+		defaultAccessToken string
+		expectedToken      string
 	}{
 		{
-			name:              "installation token succeeds",
-			namespace:         "test-namespace",
-			orgResponseCode:   200,
-			userResponseCode:  404,
-			providePrivateKey: true,
+			name:               "installation token succeeds",
+			namespace:          "test-namespace",
+			orgResponseCode:    200,
+			userResponseCode:   404,
+			providePrivateKey:  true,
 			defaultAccessToken: "",
-			expectedToken:     "unittest-installation-token",
+			expectedToken:      "unittest-installation-token",
 		},
 		{
-			name:              "fallback to default access token",
-			namespace:         "test-namespace",
-			orgResponseCode:   404,
-			userResponseCode:  404,
-			providePrivateKey: false,
+			name:               "fallback to default access token",
+			namespace:          "test-namespace",
+			orgResponseCode:    404,
+			userResponseCode:   404,
+			providePrivateKey:  false,
 			defaultAccessToken: "default-auth-access-token",
-			expectedToken:     "default-auth-access-token",
+			expectedToken:      "default-auth-access-token",
 		},
 		{
-			name:              "no installation and no default token",
-			namespace:         "test-namespace",
-			orgResponseCode:   404,
-			userResponseCode:  404,
-			providePrivateKey: false,
+			name:               "no installation and no default token",
+			namespace:          "test-namespace",
+			orgResponseCode:    404,
+			userResponseCode:   404,
+			providePrivateKey:  false,
 			defaultAccessToken: "",
-			expectedToken:     "",
+			expectedToken:      "",
 		},
 	}
 
@@ -1256,14 +1256,14 @@ func TestGithubProviderSource_GetAccessTokenForProvider(t *testing.T) {
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
-				BaseURL:             server.URL,
-				ApiURL:              server.URL,
-				ClientID:            "test-client-id",
-				ClientSecret:        "test-client-secret",
-				LoginButtonText:     "Test Login",
-				PrivateKeyPath:      privateKeyPath,
-				AppID:               "954956",
-				DefaultAccessToken:  tt.defaultAccessToken,
+				BaseURL:            server.URL,
+				ApiURL:             server.URL,
+				ClientID:           "test-client-id",
+				ClientSecret:       "test-client-secret",
+				LoginButtonText:    "Test Login",
+				PrivateKeyPath:     privateKeyPath,
+				AppID:              "954956",
+				DefaultAccessToken: tt.defaultAccessToken,
 			}
 
 			mockPSRepo := &MockProviderSourceRepository{
@@ -1299,8 +1299,8 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 		expectedType string
 	}{
 		{
-			name:     "user type",
-			identity: "unit-test-identity-name",
+			name:         "user type",
+			identity:     "unit-test-identity-name",
 			responseCode: 200,
 			responseBody: map[string]interface{}{
 				"type": "User",
@@ -1308,8 +1308,8 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 			expectedType: "GITHUB_USER",
 		},
 		{
-			name:     "organization type",
-			identity: "unit-test-identity-name",
+			name:         "organization type",
+			identity:     "unit-test-identity-name",
 			responseCode: 200,
 			responseBody: map[string]interface{}{
 				"type": "Organization",
@@ -1317,8 +1317,8 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 			expectedType: "GITHUB_ORGANISATION",
 		},
 		{
-			name:     "invalid response code",
-			identity: "unit-test-identity-name",
+			name:         "invalid response code",
+			identity:     "unit-test-identity-name",
 			responseCode: 404,
 			responseBody: map[string]interface{}{
 				"type": "Organization",
@@ -1326,8 +1326,8 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 			expectedType: "",
 		},
 		{
-			name:     "invalid type",
-			identity: "unit-test-identity-name",
+			name:         "invalid type",
+			identity:     "unit-test-identity-name",
 			responseCode: 200,
 			responseBody: map[string]interface{}{
 				"type": "SomethingElse",
@@ -1335,8 +1335,8 @@ func TestGithubProviderSource_IsEntityOrgOrUser(t *testing.T) {
 			expectedType: "",
 		},
 		{
-			name:     "type is nil",
-			identity: "unit-test-identity-name",
+			name:         "type is nil",
+			identity:     "unit-test-identity-name",
 			responseCode: 200,
 			responseBody: map[string]interface{}{
 				"type": nil,
