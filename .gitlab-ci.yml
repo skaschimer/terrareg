@@ -215,7 +215,7 @@ golang-unit-tests:
   extends: .before_script_golang
   script:
     # Run only non-integration, non-selenium tests with coverage
-    - go test -short -timeout 10m -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
+    - go test -short -tags='!selenium' -timeout 10m -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
     # Only show coverage summary, not full function-by-function output
     - go tool cover -func=coverage.out | grep total: | tee coverage.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < test-report.txt > junit-report.xml
@@ -243,8 +243,8 @@ golang-integration-tests-sqlite:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    # Run integration tests excluding selenium (using -short)
-    - go test -short ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
+    # Run integration tests excluding selenium (using build tags)
+    - go test -short -tags='!selenium' ./test/integration/... -timeout 10m 2>&1 | tee integration-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-test-report.txt > junit-integration-report.xml
   artifacts:
     reports:
@@ -301,8 +301,8 @@ golang-integration-tests-postgres:
     POSTGRES_PASSWORD: terrareg
     POSTGRES_DATABASE: terrareg
   script:
-    # Run integration tests with race detector (excluding selenium via -short)
-    - go test -short -v -race ./test/integration/... -timeout 15m 2>&1 | tee integration-postgres-test-report.txt
+    # Run integration tests with race detector (excluding selenium via build tags)
+    - go test -short -v -race -tags='!selenium' ./test/integration/... -timeout 15m 2>&1 | tee integration-postgres-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < integration-postgres-test-report.txt > junit-integration-postgres-report.xml
   artifacts:
     reports:
@@ -326,8 +326,18 @@ golang-selenium-tests-sqlite:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    # Run selenium tests (without -short flag)
-    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-test-report.txt
+    # Run selenium tests with progress indicator
+    # Show timestamp every 30s during test execution
+    - >
+      (
+        while true; do
+          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
+          sleep 30
+        done
+      ) &
+      PROGRESS_PID=$!
+    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
+    - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-test-report.txt > junit-selenium-report.xml
   artifacts:
     reports:
@@ -355,8 +365,17 @@ golang-selenium-tests-mysql:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    # Run selenium tests (without -short flag)
-    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-mysql-test-report.txt
+    # Run selenium tests with progress indicator
+    - >
+      (
+        while true; do
+          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
+          sleep 30
+        done
+      ) &
+      PROGRESS_PID=$!
+    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
+    - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-mysql-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-mysql-test-report.txt > junit-selenium-mysql-report.xml
   artifacts:
     reports:
@@ -386,8 +405,17 @@ golang-selenium-tests-postgres:
     POSTGRES_PASSWORD: terrareg
     POSTGRES_DATABASE: terrareg
   script:
-    # Run selenium tests (without -short flag)
-    - go test -v ./test/selenium/... -timeout 30m 2>&1 | tee selenium-postgres-test-report.txt
+    # Run selenium tests with progress indicator
+    - >
+      (
+        while true; do
+          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
+          sleep 30
+        done
+      ) &
+      PROGRESS_PID=$!
+    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
+    - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-postgres-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-postgres-test-report.txt > junit-selenium-postgres-report.xml
   artifacts:
     reports:

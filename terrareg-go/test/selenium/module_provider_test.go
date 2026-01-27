@@ -1,3 +1,5 @@
+//go:build selenium
+
 package selenium
 
 import (
