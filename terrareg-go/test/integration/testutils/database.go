@@ -100,6 +100,7 @@ func CreateTestInfraConfigWithPublicURL(t *testing.T, publicURL string) *config.
 		AdminAuthenticationToken: "test-admin-api-key",
 		UploadApiKeys:            []string{"test-upload-key"},
 		AdminSessionExpiryMins:   60, // 1 hour for admin sessions
+		TerraformLockTimeoutSeconds: 1800, // 30 minutes default (required for terraform operations)
 	}
 }
 

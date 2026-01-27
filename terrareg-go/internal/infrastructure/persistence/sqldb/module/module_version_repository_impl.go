@@ -147,7 +147,15 @@ func (r *ModuleVersionRepositoryImpl) FindByID(ctx context.Context, id int) (*mo
 // FindByModuleProviderAndVersion retrieves a specific module version
 func (r *ModuleVersionRepositoryImpl) FindByModuleProviderAndVersion(ctx context.Context, moduleProviderID int, version string) (*model.ModuleVersion, error) {
 	var dbVersion sqldb.ModuleVersionDB
-	err := r.GetDBFromContext(ctx).
+
+	// Use background context for DB query to avoid HTTP request timeout issues
+	dbCtx := context.Background()
+	if _, hasTx := sqldb.GetTxFromContext(ctx); hasTx {
+		// If in a transaction, keep the original context
+		dbCtx = ctx
+	}
+
+	err := r.GetDBFromContext(dbCtx).
 		Where("module_provider_id = ? AND version = ?", moduleProviderID, version).
 		First(&dbVersion).Error
 

@@ -701,6 +701,7 @@ func NewContainer(
 	c.WebhookService = moduleService.NewWebhookService(
 		c.ModuleImporterService,
 		c.ModuleProviderRepo,
+		c.ModuleVersionRepo,
 		infraConfig,
 		savepointHelper,
 		moduleCreationWrapper,

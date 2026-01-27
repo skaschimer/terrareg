@@ -553,7 +553,14 @@ func (r *ModuleProviderRepositoryImpl) toDomain(ctx context.Context, db *sqldb.M
 func (r *ModuleProviderRepositoryImpl) loadVersions(ctx context.Context, moduleProviderID int) ([]*model.ModuleVersion, error) {
 	var dbVersions []sqldb.ModuleVersionDB
 
-	err := r.GetDBFromContext(ctx).
+	// Use background context for DB query to avoid HTTP request timeout issues
+	dbCtx := context.Background()
+	if _, hasTx := sqldb.GetTxFromContext(ctx); hasTx {
+		// If in a transaction, keep the original context
+		dbCtx = ctx
+	}
+
+	err := r.GetDBFromContext(dbCtx).
 		Where("module_provider_id = ?", moduleProviderID).
 		Preload("ModuleDetails").
 		Order("version DESC").

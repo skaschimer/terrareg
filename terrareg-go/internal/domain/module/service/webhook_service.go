@@ -17,15 +17,18 @@ import (
 
 // WebhookResult represents the result of webhook processing
 type WebhookResult struct {
-	Success      bool   `json:"success"`
-	Message      string `json:"message"`
-	TriggerBuild bool   `json:"trigger_build,omitempty"`
+	Success      bool                      `json:"success"`
+	Message      string                    `json:"message"`
+	TriggerBuild bool                      `json:"trigger_build,omitempty"`
+	Tag          string                    `json:"tag,omitempty"`      // Tag name (GitHub webhooks)
+	Versions     map[string]interface{}    `json:"tags,omitempty"`    // Multiple versions (Bitbucket webhooks)
 }
 
 // WebhookService handles webhook processing for modules
 type WebhookService struct {
 	moduleImporterService *ModuleImporterService
 	moduleProviderRepo    repository.ModuleProviderRepository
+	moduleVersionRepo     repository.ModuleVersionRepository
 	config                *infraConfig.InfrastructureConfig
 	savepointHelper       *transaction.SavepointHelper
 	moduleCreationWrapper *ModuleCreationWrapperService
@@ -35,6 +38,7 @@ type WebhookService struct {
 func NewWebhookService(
 	moduleImporterService *ModuleImporterService,
 	moduleProviderRepo repository.ModuleProviderRepository,
+	moduleVersionRepo repository.ModuleVersionRepository,
 	config *infraConfig.InfrastructureConfig,
 	savepointHelper *transaction.SavepointHelper,
 	moduleCreationWrapper *ModuleCreationWrapperService,
@@ -42,6 +46,7 @@ func NewWebhookService(
 	return &WebhookService{
 		moduleImporterService: moduleImporterService,
 		moduleProviderRepo:    moduleProviderRepo,
+		moduleVersionRepo:     moduleVersionRepo,
 		config:                config,
 		savepointHelper:       savepointHelper,
 		moduleCreationWrapper: moduleCreationWrapper,
@@ -126,6 +131,7 @@ func (ws *WebhookService) CreateModuleVersionFromTag(ctx context.Context, namesp
 		return &WebhookResult{
 			Success: false,
 			Message: fmt.Sprintf("Failed to import module version %s: %v", version, err),
+			Tag:     version, // Include tag in all responses for Python API parity
 		}, nil
 	} else if !result.Success {
 		errorMsg := ""
@@ -135,6 +141,7 @@ func (ws *WebhookService) CreateModuleVersionFromTag(ctx context.Context, namesp
 		return &WebhookResult{
 			Success: false,
 			Message: fmt.Sprintf("Failed to import module version %s: %s", version, errorMsg),
+			Tag:     version, // Include tag in all responses for Python API parity
 		}, nil
 	}
 
@@ -142,6 +149,60 @@ func (ws *WebhookService) CreateModuleVersionFromTag(ctx context.Context, namesp
 		Success:      true,
 		Message:      fmt.Sprintf("Successfully imported module version %s for %s/%s/%s", version, namespace, moduleName, provider),
 		TriggerBuild: true,
+		Tag:          version, // Include tag in all responses for Python API parity
+	}, nil
+}
+
+// DeleteModuleVersion deletes a module version (matching Python behavior for deleted/unpublished actions)
+func (ws *WebhookService) DeleteModuleVersion(ctx context.Context, namespace, moduleName, provider, version string) (*WebhookResult, error) {
+	// Find the module provider
+	moduleProvider, err := ws.moduleProviderRepo.FindByNamespaceModuleProvider(ctx, namespace, moduleName, provider)
+	if err != nil {
+		return &WebhookResult{
+			Success: false,
+			Message: fmt.Sprintf("Module provider not found: %s/%s/%s - %v", namespace, moduleName, provider, err),
+		}, nil
+	}
+
+	if moduleProvider == nil {
+		return &WebhookResult{
+			Success: false,
+			Message: fmt.Sprintf("Module provider not found: %s/%s/%s", namespace, moduleName, provider),
+		}, nil
+	}
+
+	// Find the module version by module provider ID and version
+	moduleVersion, err := ws.moduleVersionRepo.FindByModuleProviderAndVersion(ctx, moduleProvider.ID(), version)
+	if err != nil {
+		// Python's delete() is idempotent - returns success even if version doesn't exist
+		// Log the error but still return success
+		return &WebhookResult{
+			Success: true,
+			Message: "Success",
+		}, nil
+	}
+
+	if moduleVersion == nil {
+		// Version doesn't exist - Python returns success (idempotent)
+		return &WebhookResult{
+			Success: true,
+			Message: "Success",
+		}, nil
+	}
+
+	// Delete the module version
+	err = ws.moduleVersionRepo.Delete(ctx, moduleVersion.ID())
+	if err != nil {
+		return &WebhookResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to delete module version: %v", err),
+		}, nil
+	}
+
+	// Python returns just {"status": "Success"} for delete/unpublished
+	return &WebhookResult{
+		Success: true,
+		Message: "Success",
 	}, nil
 }
 

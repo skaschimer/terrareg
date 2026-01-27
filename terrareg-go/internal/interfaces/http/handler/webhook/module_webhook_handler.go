@@ -93,17 +93,32 @@ func (h *ModuleWebhookHandler) HandleModuleWebhook(gitProvider string) http.Hand
 			return
 		}
 
-		// Return success response
+		// Return success response - match Python API format exactly
+		// Python: {"status": "Success", "message": "...", "tag": "..."}
 		if result.Success {
-			terrareg.RespondJSON(w, http.StatusOK, map[string]interface{}{
-				"status":  "success",
+			response := map[string]interface{}{
+				"status":  "Success", // Capitalized to match Python
 				"message": result.Message,
-			})
+			}
+			// Add tag field if present (for GitHub webhooks)
+			if result.Tag != "" {
+				response["tag"] = result.Tag
+			}
+			// Add tags field for Bitbucket multi-version processing
+			if result.Versions != nil {
+				response["tags"] = result.Versions
+			}
+			terrareg.RespondJSON(w, http.StatusOK, response)
 		} else {
-			terrareg.RespondJSON(w, http.StatusBadRequest, map[string]interface{}{
-				"status":  "error",
+			response := map[string]interface{}{
+				"status":  "Error", // Capitalized to match Python
 				"message": result.Message,
-			})
+			}
+			// Add tag field if present (for GitHub webhooks) - even in error responses
+			if result.Tag != "" {
+				response["tag"] = result.Tag
+			}
+			terrareg.RespondJSON(w, http.StatusBadRequest, response)
 		}
 	}
 }
@@ -150,21 +165,14 @@ type GitHubReleaseWebhookPayload struct {
 
 // Bitbucket webhook payload structures (matching Python implementation)
 type BitbucketPushWebhookPayload struct {
-	Push struct {
-		Changes []struct {
-			Type string `json:"type"`
-			Old  struct {
-				Type string `json:"type"`
-			} `json:"old"`
-			New struct {
-				Type string `json:"type"`
-				Name string `json:"name"`
-			} `json:"new"`
-		} `json:"changes"`
-	} `json:"push"`
-	Repository struct {
-		FullName string `json:"full_name"`
-	} `json:"repository"`
+	Changes []struct {
+		Ref struct {
+			ID         string `json:"id"`         // refs/tags/v4.0.6
+			DisplayID  string `json:"displayId"`  // v4.0.6
+			Type       string `json:"type"`       // TAG
+		} `json:"ref"`
+		Type string `json:"type"` // ADD or UPDATE
+	} `json:"changes"`
 }
 
 // processGitHubWebhook processes GitHub webhook events (release events only, matching Python)
@@ -177,27 +185,38 @@ func (h *ModuleWebhookHandler) processGitHubWebhook(ctx context.Context, namespa
 		}, nil
 	}
 
-	// Only process release events (matching Python behavior)
-	if payload.Action != "published" && payload.Action != "created" {
-		return &moduleService.WebhookResult{
-			Success: true,
-			Message: fmt.Sprintf("Ignoring non-release action: %s", payload.Action),
-		}, nil
-	}
-
 	// Extract version from tag
-	version := payload.Release.TagName
-	if version == "" {
+	tag := payload.Release.TagName
+	if tag == "" {
 		return &moduleService.WebhookResult{
 			Success: false,
 			Message: "No tag found in release payload",
 		}, nil
 	}
 
-	// Trigger module version creation for the tag
-	fmt.Printf("GitHub webhook: Processing release %s for module %s/%s/%s\n", version, namespace, moduleName, provider)
+	// Handle delete/unpublished actions (matching Python behavior)
+	if payload.Action == "deleted" || payload.Action == "unpublished" {
+		result, err := h.deleteModuleVersion(ctx, namespace, moduleName, provider, tag)
+		if err != nil {
+			return result, err
+		}
+		// Python returns just {'status': 'Success'} for delete/unpublished (no tag field)
+		return result, nil
+	}
 
-	return h.triggerModuleVersionCreation(ctx, namespace, moduleName, provider, version)
+	// Only process published/created events (matching Python behavior)
+	if payload.Action != "published" && payload.Action != "created" {
+		return &moduleService.WebhookResult{
+			Success: true,
+			Message: fmt.Sprintf("Ignoring non-release action: %s", payload.Action),
+			Tag:     tag, // Include tag even for ignored actions
+		}, nil
+	}
+
+	// Trigger module version creation for the tag
+	fmt.Printf("GitHub webhook: Processing release %s for module %s/%s/%s\n", tag, namespace, moduleName, provider)
+
+	return h.triggerModuleVersionCreation(ctx, namespace, moduleName, provider, tag)
 }
 
 // processBitbucketWebhook processes Bitbucket webhook events with savepoint isolation (matching Python pattern)
@@ -212,30 +231,33 @@ func (h *ModuleWebhookHandler) processBitbucketWebhook(ctx context.Context, name
 
 	// Collect all versions to process
 	var versionRequests []moduleService.VersionImportRequest
-	for _, change := range payload.Push.Changes {
-		// Only process TAG type changes with ADD or UPDATE
-		if change.Type != "TAG" {
+	for _, change := range payload.Changes {
+		// Only process TAG type refs
+		if change.Ref.Type != "TAG" {
 			continue
 		}
 
-		if change.Old.Type != "" && change.New.Type == "" {
-			// Tag deletion - ignore for now
+		// Only process ADD or UPDATE types
+		if change.Type != "ADD" && change.Type != "UPDATE" {
 			continue
 		}
 
-		if change.New.Type == "TAG" && change.New.Name != "" {
-			version := change.New.Name
-			importRequest := module.ImportModuleVersionRequest{
-				Namespace: namespace,
-				Module:    moduleName,
-				Provider:  provider,
-				GitTag:    &version,
-			}
-			versionRequests = append(versionRequests, moduleService.VersionImportRequest{
-				Version: version,
-				Request: importRequest,
-			})
+		// Extract version from ref.id (remove "refs/tags/" prefix if present)
+		version := strings.TrimPrefix(change.Ref.ID, "refs/tags/")
+		if version == "" {
+			continue
 		}
+
+		importRequest := module.ImportModuleVersionRequest{
+			Namespace: namespace,
+			Module:    moduleName,
+			Provider:  provider,
+			GitTag:    &version,
+		}
+		versionRequests = append(versionRequests, moduleService.VersionImportRequest{
+			Version: version,
+			Request: importRequest,
+		})
 	}
 
 	if len(versionRequests) == 0 {
@@ -257,32 +279,68 @@ func (h *ModuleWebhookHandler) processBitbucketWebhook(ctx context.Context, name
 
 	// Convert MultiVersionResult to WebhookResult for backward compatibility
 	if multiResult.HasFailures {
+		// Convert versions map to format expected by Python API
+		versions := make(map[string]interface{})
+		for version, result := range multiResult.VersionsProcessed {
+			versions[version] = map[string]interface{}{
+				"status": result.Status,
+			}
+		}
 		return &moduleService.WebhookResult{
-			Success: false,
-			Message: multiResult.FailureSummary,
+			Success:  false,
+			Message:  multiResult.FailureSummary,
+			Versions: versions,
 		}, nil
 	} else {
+		// Convert versions map to format expected by Python API
+		versions := make(map[string]interface{})
+		for version, result := range multiResult.VersionsProcessed {
+			versions[version] = map[string]interface{}{
+				"status": result.Status,
+			}
+		}
 		return &moduleService.WebhookResult{
-			Success: true,
-			Message: fmt.Sprintf("Successfully processed all %d versions", multiResult.SuccessCount),
+			Success:  true,
+			Message:  "Imported all provided tags", // Python: "Imported all provided tags"
+			Versions: versions,
 		}, nil
 	}
 }
 
 // triggerModuleVersionCreation triggers module version creation (matching Python workflow)
-func (h *ModuleWebhookHandler) triggerModuleVersionCreation(ctx context.Context, namespace, moduleName, provider, version string) (*moduleService.WebhookResult, error) {
+func (h *ModuleWebhookHandler) triggerModuleVersionCreation(ctx context.Context, namespace, moduleName, provider, tag string) (*moduleService.WebhookResult, error) {
 	// Integrate with the module service to:
 	// 1. Get the module provider and validate git tag format regex
 	// 2. Create ImportModuleVersionRequest
 	// 3. Call webhookService.CreateModuleVersionFromTag()
 
-	result, err := h.webhookService.CreateModuleVersionFromTag(ctx, namespace, moduleName, provider, version)
+	result, err := h.webhookService.CreateModuleVersionFromTag(ctx, namespace, moduleName, provider, tag)
 	if err != nil {
 		return &moduleService.WebhookResult{
 			Success: false,
 			Message: fmt.Sprintf("Failed to create module version: %v", err),
+			Tag:     tag,
 		}, nil
 	}
 
+	// Add tag to result for Python API parity
+	result.Tag = tag
+	return result, nil
+}
+
+// deleteModuleVersion deletes a module version (matching Python behavior for deleted/unpublished actions)
+func (h *ModuleWebhookHandler) deleteModuleVersion(ctx context.Context, namespace, moduleName, provider, version string) (*moduleService.WebhookResult, error) {
+	// Call webhook service to delete module version
+	result, err := h.webhookService.DeleteModuleVersion(ctx, namespace, moduleName, provider, version)
+	if err != nil {
+		return &moduleService.WebhookResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to delete module version: %v", err),
+			Tag:     version,
+		}, nil
+	}
+
+	// Add tag to result for Python API parity
+	result.Tag = version
 	return result, nil
 }
