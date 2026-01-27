@@ -40,9 +40,23 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 			description: "All required SAML fields present",
 		},
 		{
+			name: "Missing Public URL",
+			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
+				return &config.InfrastructureConfig{
+					SAML2EntityID:       "https://terrareg.example.com",
+					SAML2IDPMetadataURL: mockServer.MetadataURL,
+					SAML2PrivateKey:     testPrivateKey,
+					SAML2PublicKey:      testPublicKey,
+				}
+			},
+			expectError: true,
+			description: "Public URL is required",
+		},
+		{
 			name: "Missing entity ID",
 			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
 				return &config.InfrastructureConfig{
+					PublicURL:           "https://localhost",
 					SAML2IDPMetadataURL: mockServer.MetadataURL,
 					SAML2PrivateKey:     testPrivateKey,
 					SAML2PublicKey:      testPublicKey,
@@ -55,6 +69,7 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 			name: "Missing IDP metadata URL",
 			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
 				return &config.InfrastructureConfig{
+					PublicURL:       "https://localhost",
 					SAML2EntityID:   "https://terrareg.example.com",
 					SAML2PrivateKey: testPrivateKey,
 					SAML2PublicKey:  testPublicKey,
@@ -67,6 +82,7 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 			name: "Missing private key",
 			config: func(t *testing.T, mockServer *testutils.MockSAMLServer) *config.InfrastructureConfig {
 				return &config.InfrastructureConfig{
+					PublicURL:           "https://localhost",
 					SAML2EntityID:       "https://terrareg.example.com",
 					SAML2IDPMetadataURL: mockServer.MetadataURL,
 					SAML2PublicKey:      testPublicKey,

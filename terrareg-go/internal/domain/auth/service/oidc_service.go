@@ -369,14 +369,12 @@ func getOIDCScopes(configuredScopes []string) []string {
 
 // getOIDCRedirectURL constructs the OIDC redirect URL
 func getOIDCRedirectURL(config *config.InfrastructureConfig) string {
-	if config.PublicURL != "" {
-		redirectURL, _ := url.Parse(config.PublicURL)
-		redirectURL.Path = "/openid/callback"
-		return redirectURL.String()
+	if config.PublicURL == "" {
+		return ""
 	}
-
-	// Fallback URL
-	return "http://localhost:5000/openid/callback"
+	redirectURL, _ := url.Parse(config.PublicURL)
+	redirectURL.Path = "/openid/callback"
+	return redirectURL.String()
 }
 
 // generatePKCE generates PKCE code verifier and challenge for enhanced security

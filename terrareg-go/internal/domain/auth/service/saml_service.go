@@ -209,13 +209,9 @@ func (s *SAMLService) getIDPSSOURL() string {
 
 // getACSURLRaw returns the ACS URL as a string
 func (s *SAMLService) getACSURLRaw() string {
-	if s.config.PublicURL != "" {
-		acsURL, _ := url.Parse(s.config.PublicURL)
-		acsURL.Path = "/v1/terrareg/auth/saml/acs"
-		return acsURL.String()
-	}
-
-	return "http://localhost:5000/v1/terrareg/auth/saml/acs"
+	acsURL, _ := url.Parse(s.config.PublicURL)
+	acsURL.Path = "/v1/terrareg/auth/saml/acs"
+	return acsURL.String()
 }
 
 // Helper functions
@@ -223,7 +219,8 @@ func (s *SAMLService) getACSURLRaw() string {
 func isSAMLConfigured(config *config.InfrastructureConfig) bool {
 	return config != nil &&
 		config.SAML2EntityID != "" &&
-		config.SAML2IDPMetadataURL != ""
+		config.SAML2IDPMetadataURL != "" &&
+		config.PublicURL != ""
 }
 
 func loadPrivateKey(config *config.InfrastructureConfig) *rsa.PrivateKey {
@@ -263,35 +260,20 @@ func loadCertificate(config *config.InfrastructureConfig) *x509.Certificate {
 }
 
 func getMetadataURL(config *config.InfrastructureConfig) *url.URL {
-	if config.PublicURL != "" {
-		metadataURL, _ := url.Parse(config.PublicURL)
-		metadataURL.Path = "/v1/terrareg/auth/saml/metadata"
-		return metadataURL
-	}
-
-	metadataURL, _ := url.Parse("http://localhost:5000/v1/terrareg/auth/saml/metadata")
+	metadataURL, _ := url.Parse(config.PublicURL)
+	metadataURL.Path = "/v1/terrareg/auth/saml/metadata"
 	return metadataURL
 }
 
 func getACSURL(config *config.InfrastructureConfig) *url.URL {
-	if config.PublicURL != "" {
-		acsURL, _ := url.Parse(config.PublicURL)
-		acsURL.Path = "/v1/terrareg/auth/saml/acs"
-		return acsURL
-	}
-
-	acsURL, _ := url.Parse("http://localhost:5000/v1/terrareg/auth/saml/acs")
+	acsURL, _ := url.Parse(config.PublicURL)
+	acsURL.Path = "/v1/terrareg/auth/saml/acs"
 	return acsURL
 }
 
 func getSLOURL(config *config.InfrastructureConfig) *url.URL {
-	if config.PublicURL != "" {
-		sloURL, _ := url.Parse(config.PublicURL)
-		sloURL.Path = "/v1/terrareg/auth/saml/slo"
-		return sloURL
-	}
-
-	sloURL, _ := url.Parse("http://localhost:5000/v1/terrareg/auth/saml/slo")
+	sloURL, _ := url.Parse(config.PublicURL)
+	sloURL.Path = "/v1/terrareg/auth/saml/slo"
 	return sloURL
 }
 
@@ -337,7 +319,7 @@ func (s *SAMLService) validateResponse(response *saml.Response) error {
 		return fmt.Errorf("SAML response is not signed")
 	}
 
-	// Note: Full signature validation would be done using the service provider's
+	// @TODO Note: Full signature validation would be done using the service provider's
 	// private key and the IDP's public key. For production deployment,
 	// you should implement proper signature verification.
 
@@ -498,10 +480,7 @@ func (s *SAMLService) validateSessionConstraints(response *saml.Response) error 
 
 // IsConfigured checks if SAML is properly configured
 func (s *SAMLService) IsConfigured() bool {
-	return s != nil &&
-		s.config != nil &&
-		s.config.SAML2EntityID != "" &&
-		s.config.SAML2IDPMetadataURL != ""
+	return isSAMLConfigured(s.config)
 }
 
 // SAMLAuthRequest represents a SAML authentication request
