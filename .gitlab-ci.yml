@@ -305,6 +305,8 @@ stop_review:
 deploy_main_demo:
   extends: deploy_review
   rules:
+    # Disable temporarily
+    - when: never
     - if: $CI_PIPELINE_SOURCE == 'push' && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   environment:
     name: main-demo
