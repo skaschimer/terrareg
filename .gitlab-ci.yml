@@ -227,6 +227,8 @@ build-pr-image:
   tags: [nomad]
 
   rules:
+    # Temporarily disable this job
+    - when: never
     - if: '$CI_COMMIT_REF_NAME =~ /renovate\//'
       when: never
     - if: $CI_PIPELINE_SOURCE == 'push'
@@ -245,6 +247,8 @@ deploy_review:
   tags: [nomad]
   needs: [ build-pr-image ]
   rules:
+    # Temporarily disable this job
+    - when: never
     - if: '$CI_COMMIT_REF_NAME =~ /renovate\//'
       when: never
     - if: $CI_PIPELINE_SOURCE == 'push' && $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
@@ -277,6 +281,8 @@ stop_review:
   extends: .pr_deployment
   tags: [nomad]
   rules:
+    # Temporarily disable this job
+    - when: never
     - if: $CI_PIPELINE_SOURCE == 'push' && $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
       when: manual
   image:
