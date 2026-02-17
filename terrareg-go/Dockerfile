@@ -37,6 +37,17 @@ FROM debian:bookworm-slim
 
 ARG VERSION
 
+# renovate: datasource=github-releases depName=terraform-docs/terraform-docs
+ARG TERRAFORM_DOCS_VERSION=v0.21.0
+# renovate: datasource=github-releases depName=aquasecurity/tfsec
+ARG TFSEC_VERSION=v1.28.14
+# renovate: datasource=github-releases depName=infracost/infracost
+ARG INFRACOST_VERSION=v0.10.43
+# renovate: datasource=github-releases depName=warrensbox/terraform-switcher
+ARG TERRAFORM_SWITCHER_VERSION=1.13.0
+# renovate: datasource=github-releases depName=hashicorp/terraform-plugin-docs
+ARG TFPLUGINDOCS_VERSION=0.24.0
+
 # Install runtime dependencies
 RUN apt-get update && \
     apt-get install --assume-yes \
@@ -48,33 +59,33 @@ RUN apt-get update && \
 # Download terraform-docs
 RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
     then arch=arm64; else arch=amd64; fi; \
-    wget https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-${arch}.tar.gz && \
-    tar -zxvf terraform-docs-v0.19.0-linux-${arch}.tar.gz && \
+    wget https://github.com/terraform-docs/terraform-docs/releases/download/${TERRAFORM_DOCS_VERSION}/terraform-docs-${TERRAFORM_DOCS_VERSION}-linux-${arch}.tar.gz && \
+    tar -zxvf terraform-docs-${TERRAFORM_DOCS_VERSION}-linux-${arch}.tar.gz && \
     chmod +x terraform-docs && mv terraform-docs /usr/local/bin/ && \
-    rm terraform-docs-v0.19.0-linux-${arch}.tar.gz'
+    rm terraform-docs-${TERRAFORM_DOCS_VERSION}-linux-${arch}.tar.gz'
 
 # Download tfsec
 RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
     then arch=arm64; else arch=amd64; fi; \
-    wget https://github.com/aquasecurity/tfsec/releases/download/v1.28.4/tfsec-linux-${arch} -O /usr/local/bin/tfsec && \
+    wget https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/tfsec-linux-${arch} -O /usr/local/bin/tfsec && \
     chmod +x /usr/local/bin/tfsec'
 
 # Download Infracost
 RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
     then arch=arm64; else arch=amd64; fi; \
-    wget https://github.com/infracost/infracost/releases/download/v0.10.22/infracost-linux-${arch}.tar.gz -O /tmp/infracost.tar.gz && \
+    wget https://github.com/infracost/infracost/releases/download/${INFRACOST_VERSION}/infracost-linux-${arch}.tar.gz -O /tmp/infracost.tar.gz && \
     tar -zxvf /tmp/infracost.tar.gz infracost-linux-${arch} && \
     mv infracost-linux-${arch} /usr/local/bin/infracost && \
     chmod +x /usr/local/bin/infracost && \
     rm /tmp/infracost.tar.gz'
 
 # Download tfswitch
-RUN bash -c 'curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/master/install.sh | bash /dev/stdin 1.2.2'
+RUN bash -c 'curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/master/install.sh | bash /dev/stdin ${TERRAFORM_SWITCHER_VERSION}'
 
 # Download tfplugindocs
 RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
     then arch=arm64; else arch=amd64; fi; \
-    wget https://github.com/hashicorp/terraform-plugin-docs/releases/download/v0.16.0/tfplugindocs_0.16.0_linux_${arch}.zip -O /tmp/tfplugindocs.zip && \
+    wget https://github.com/hashicorp/terraform-plugin-docs/releases/download/v${TFPLUGINDOCS_VERSION}/tfplugindocs_${TFPLUGINDOCS_VERSION}_linux_${arch}.zip -O /tmp/tfplugindocs.zip && \
     unzip /tmp/tfplugindocs.zip tfplugindocs && \
     mv tfplugindocs /usr/local/bin/ && \
     chmod +x /usr/local/bin/tfplugindocs && \
@@ -94,6 +105,10 @@ COPY LICENSE .
 
 # Create licenses directory
 RUN mkdir -p licenses
+
+# Copy licenses for deb packages
+RUN mkdir licenses/deb
+RUN bash -c 'pushd /usr/share/doc; for i in *; do mkdir /app/licenses/deb/$i; cp $i/{LICENSE,NOTICE,copyright} /app/licenses/deb/$i/; done; rmdir /app/licenses/deb/*; popd'
 
 # Download licenses for installed binaries
 RUN mkdir -p licenses/terraform-docs && \
