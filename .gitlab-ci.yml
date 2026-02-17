@@ -268,7 +268,7 @@ golang-integration-tests-mysql:
       alias: minio
       command: ["server", "/data", "--console-address", ":9001"]
   variables:
-    INTEGRATION_DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true
+    DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
@@ -294,7 +294,7 @@ golang-integration-tests-postgres:
       alias: minio
       command: ["server", "/data", "--console-address", ":9001"]
   variables:
-    INTEGRATION_DATABASE_URL: postgres://terrareg:terrareg@postgres:5432/terrareg?sslmode=disable
+    DATABASE_URL: postgres://terrareg:terrareg@postgres:5432/terrareg?sslmode=disable
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
     POSTGRES_USER: terrareg
@@ -326,17 +326,6 @@ golang-selenium-tests-sqlite:
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    # Run selenium tests with progress indicator
-    # Show timestamp every 30s during test execution
-    - >
-      (
-        while true; do
-          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
-          sleep 30
-        done
-      ) &
-      PROGRESS_PID=$!
-    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
     - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-test-report.txt > junit-selenium-report.xml
   artifacts:
@@ -361,20 +350,11 @@ golang-selenium-tests-mysql:
       alias: minio
       command: ["server", "/data", "--console-address", ":9001"]
   variables:
-    INTEGRATION_DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true
+    DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
   script:
-    # Run selenium tests with progress indicator
-    - >
-      (
-        while true; do
-          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
-          sleep 30
-        done
-      ) &
-      PROGRESS_PID=$!
-    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
+    # Run selenium tests
     - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-mysql-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-mysql-test-report.txt > junit-selenium-mysql-report.xml
   artifacts:
@@ -398,23 +378,14 @@ golang-selenium-tests-postgres:
       alias: minio
       command: ["server", "/data", "--console-address", ":9001"]
   variables:
-    INTEGRATION_DATABASE_URL: postgres://terrareg:terrareg@postgres:5432/terrareg?sslmode=disable
+    DATABASE_URL: postgres://terrareg:terrareg@postgres:5432/terrareg?sslmode=disable
     MINIO_ACCESS_KEY: $AWS_ACCESS_KEY_ID
     MINIO_SECRET_KEY: $AWS_SECRET_ACCESS_KEY
     POSTGRES_USER: terrareg
     POSTGRES_PASSWORD: terrareg
     POSTGRES_DATABASE: terrareg
   script:
-    # Run selenium tests with progress indicator
-    - >
-      (
-        while true; do
-          echo "[$(date +%H:%M:%S)] Selenium test in progress..."
-          sleep 30
-        done
-      ) &
-      PROGRESS_PID=$!
-    - trap "kill $PROGRESS_PID 2>/dev/null || true" EXIT
+    # Run selenium tests
     - go test -v -tags=selenium ./test/selenium/... -timeout 30m 2>&1 | tee selenium-postgres-test-report.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < selenium-postgres-test-report.txt > junit-selenium-postgres-report.xml
   artifacts:
