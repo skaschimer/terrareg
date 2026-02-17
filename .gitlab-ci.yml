@@ -217,7 +217,7 @@ golang-unit-tests:
     # Run only non-integration, non-selenium tests with coverage
     - go test -short -tags='!selenium' -timeout 10m -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-report.txt
     # Only show coverage summary, not full function-by-function output
-    - go tool cover -func=coverage.out | grep total: | tee coverage.txt
+    - go tool cover -func=coverage.out | grep "total:" | tee coverage.txt
     - go install github.com/jstemmer/go-junit-report/v2@latest && go-junit-report -set-exit-code < test-report.txt > junit-report.xml
   coverage: '/total:\s+\(statements\)\s+(\d+\.\d+)%/'
   artifacts:
