@@ -18,9 +18,23 @@ type ProviderDetails struct {
 }
 
 // TerraregProviderDetails extends ProviderDetails with UI-specific fields
-// Similar to Python's get_terrareg_api_details()
+// Used for ModuleProvider-level terrareg API responses
 type TerraregProviderDetails struct {
 	ProviderDetails
+	ModuleProviderID      string  `json:"module_provider_id"`
+	GitProviderID         *int    `json:"git_provider_id"`
+	GitTagFormat          *string `json:"git_tag_format"`
+	GitPath               *string `json:"git_path"`
+	ArchiveGitPath        bool    `json:"archive_git_path"`
+	RepoBaseURLTemplate   *string `json:"repo_base_url_template"`
+	RepoCloneURLTemplate  *string `json:"repo_clone_url_template"`
+	RepoBrowseURLTemplate *string `json:"repo_browse_url_template"`
+}
+
+// TerraregProviderFields contains UI-specific ModuleProvider fields as a pure mixin
+// Does NOT embed ProviderBase/ProviderDetails to avoid duplicate JSON tags when used with VersionDetails
+// Similar to Python's ModuleProvider.get_terrareg_api_details() additions
+type TerraregProviderFields struct {
 	ModuleProviderID      string  `json:"module_provider_id"`
 	GitProviderID         *int    `json:"git_provider_id"`
 	GitTagFormat          *string `json:"git_tag_format"`
@@ -54,10 +68,10 @@ type VersionDetails struct {
 }
 
 // TerraregVersionDetails extends VersionDetails with UI-specific fields
-// Similar to Python's get_terrareg_api_details()
+// Similar to Python's ModuleVersion.get_terrareg_api_details()
 type TerraregVersionDetails struct {
 	VersionDetails
-	TerraregProviderDetails
+	TerraregProviderFields    // Mixin: ModuleProvider terrareg fields (no base fields - avoids dupes)
 	Beta                       bool        `json:"beta"`
 	Published                  bool        `json:"published"`
 	TerraformVersionConstraint *string     `json:"terraform_version_constraint"`
