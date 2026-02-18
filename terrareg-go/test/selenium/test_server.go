@@ -72,6 +72,7 @@ type TestServer struct {
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
 	originalWd      string // Original working directory to restore on shutdown
+	testDataSetup   func(*sqldb.Database) // Optional test data setup function
 }
 
 // TestServerOption is a function that configures the test server after container creation.
@@ -96,11 +97,18 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	}
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
 
-	ts.setup()
-
-	// Apply test server options (e.g., mock repositories)
+	// Apply pre-setup options (test data setup) BEFORE setup
 	for _, opt := range opts {
 		opt(ts)
+	}
+
+	ts.setup()
+
+	// Call test data setup AFTER setup but before returning
+	// This is done here because testDataSetup needs the database to exist,
+	// but it should happen before the server handles requests
+	if ts.testDataSetup != nil {
+		ts.testDataSetup(ts.db)
 	}
 
 	return ts

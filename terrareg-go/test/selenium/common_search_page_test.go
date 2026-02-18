@@ -11,6 +11,8 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // TestCommonSearchPage tests the common search page.
@@ -27,7 +29,15 @@ func TestCommonSearchPage(t *testing.T) {
 // Python reference: /app/test/selenium/test_common_search_page.py - setup_class
 func newCommonSearchPageTest(t *testing.T) *SeleniumTest {
 	config := ConfigForCommonSearchPageTests()
-	return NewSeleniumTestWithConfig(t, config)
+	return NewSeleniumTestWithConfig(t, config, WithCommonSearchPageTestData)
+}
+
+// WithCommonSearchPageTestData is a TestServerOption that sets up test data for common search page tests.
+// This setup happens before the HTTP server starts to avoid database connection conflicts.
+var WithCommonSearchPageTestData TestServerOption = func(ts *TestServer) {
+	ts.testDataSetup = func(db *sqldb.Database) {
+		SetupCommonSearchPageTestData(ts.t, db)
+	}
 }
 
 // ConfigForCommonSearchPageTests returns config for common search page tests.

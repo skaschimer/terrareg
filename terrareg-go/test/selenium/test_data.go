@@ -303,3 +303,28 @@ func SetupLoginTestData(t *testing.T, db *sqldb.Database) {
 	// Just creating a namespace for basic testing
 	_ = integrationTestUtils.CreateNamespace(t, db, "login-test", nil)
 }
+
+// SetupCommonSearchPageTestData creates test data for common search page tests.
+// This creates modules and providers needed for the homepage search redirect tests.
+// Python reference: /app/test/selenium/test_data.py - selenium_test_data
+func SetupCommonSearchPageTestData(t *testing.T, db *sqldb.Database) {
+	// Create "fullypopulated" module for module-only search test
+	// This ensures that searching "fullypopulated" only matches modules
+	integrationTestUtils.SetupFullyPopulatedModule(t, db)
+
+	// Setup comprehensive module search test data for the "mixed" search test
+	integrationTestUtils.SetupComprehensiveModuleSearchTestData(t, db)
+
+	// Setup comprehensive provider search test data for the "mixed" search test
+	integrationTestUtils.SetupComprehensiveProviderSearchTestData(t, db)
+
+	// Create "initial-providers" provider for provider-only search test
+	// This ensures that searching "initial-providers" only matches providers
+	var providersearchNs sqldb.NamespaceDB
+	err := db.DB.Where("namespace = ?", "providersearch").First(&providersearchNs).Error
+	require.NoError(t, err, "Failed to find providersearch namespace")
+
+	description := "Initial provider for search tests"
+	_ = integrationTestUtils.CreateProvider(t, db, providersearchNs.ID, "initial-providers",
+		&description, sqldb.ProviderTierCommunity, nil)
+}

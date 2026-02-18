@@ -51,12 +51,12 @@ func NewSeleniumTest(t *testing.T) *SeleniumTest {
 // NewSeleniumTestWithConfig creates a new Selenium test instance with custom config.
 // This allows individual test classes to override configuration like Python's setup_class.
 // Python reference: /app/test/selenium/test_homepage.py - TestHomepage.setup_class
-func NewSeleniumTestWithConfig(t *testing.T, configOverrides map[string]string) *SeleniumTest {
+func NewSeleniumTestWithConfig(t *testing.T, configOverrides map[string]string, opts ...TestServerOption) *SeleniumTest {
 	st := &SeleniumTest{
 		t: t,
 	}
 
-	st.server = NewTestServer(st.t, configOverrides)
+	st.server = NewTestServer(st.t, configOverrides, opts...)
 	st.baseURL = st.server.baseURL
 	st.setupBrowser()
 
