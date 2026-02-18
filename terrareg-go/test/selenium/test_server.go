@@ -32,6 +32,9 @@ import (
 // This mutex ensures only one test uses the database at a time
 var testDbMutex sync.Mutex
 
+// testCounter generates unique IDs for test database files
+var testCounter int64
+
 // generateTestSigningKey generates a test RSA signing key and saves it to a file.
 // This is required for Terraform OIDC tests.
 func generateTestSigningKey(t *testing.T) string {
@@ -90,12 +93,27 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 		logger:          zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger(),
 	}
 
+	// Generate unique database file name for this test to ensure isolation
+	// This prevents test pollution when tests run sequentially
+	testCounter++
+	dbFileName := fmt.Sprintf("temp-selenium-%d.db", testCounter)
+
 	// Generate test signing key for Terraform OIDC
 	signingKeyPath := generateTestSigningKey(t)
 	if ts.configOverrides == nil {
 		ts.configOverrides = make(map[string]string)
 	}
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
+
+	// Override DATABASE_URL with unique database file
+	if ts.configOverrides["DATABASE_URL"] == "" || ts.configOverrides["DATABASE_URL"] == "sqlite:///temp-selenium.db" {
+		ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
+	}
+
+	// Clean up the database file when test completes
+	t.Cleanup(func() {
+		os.Remove(dbFileName)
+	})
 
 	// Apply pre-setup options (test data setup) BEFORE setup
 	for _, opt := range opts {
@@ -239,9 +257,21 @@ func (ts *TestServer) bootstrap() {
 	// Python tests run sequentially, so this emulates that behavior
 	testDbMutex.Lock()
 
-	// Clean up old database file if it exists (matching Python test behavior)
-	// Python tests reuse the same database file, so each test needs to handle cleanup
-	dbPath := "temp-selenium.db"
+	// Extract database file path from DATABASE_URL config
+	// Format: sqlite:///path/to/file.db or sqlite://./path/to/file.db
+	dbPath := "temp-selenium.db" // default fallback
+	if dbURL, ok := ts.configOverrides["DATABASE_URL"]; ok {
+		// Parse sqlite:// prefix to get the actual file path
+		// Remove "sqlite:///" or "sqlite://" prefix
+		if len(dbURL) > 10 && dbURL[:10] == "sqlite://" {
+			path := dbURL[10:]
+			if len(path) > 0 && path[0] == '/' {
+				path = path[1:] // remove leading slash
+			}
+			// Get just the filename, not the full path
+			dbPath = filepath.Base(path)
+		}
+	}
 
 	// Remove all database-related files atomically
 	for _, ext := range []string{"", "-wal", "-shm"} {
@@ -250,6 +280,8 @@ func (ts *TestServer) bootstrap() {
 	}
 
 	// Register cleanup function to delete database after test completes
+	// This cleanup is done here in bootstrap() which is called from setup()
+	// Note: NewTestServer also registers cleanup, but both will safely attempt to delete
 	ts.t.Cleanup(func() {
 		os.Remove(dbPath)
 		os.Remove(dbPath + "-wal")
