@@ -429,6 +429,7 @@ func (h *ModuleHandler) HandleNamespaceModules(w http.ResponseWriter, r *http.Re
 }
 
 // HandleModuleProviderCreate handles POST /v1/terrareg/modules/{namespace}/{name}/{provider}/create
+// Python reference: /app/server/api/terrareg_module_provider_create.py
 func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -437,11 +438,37 @@ func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *htt
 	name := types.ModuleName(chi.URLParam(r, "name"))
 	provider := types.ModuleProviderName(chi.URLParam(r, "provider"))
 
+	// Parse JSON body (optional)
+	var body struct {
+		GitProviderID         *int    `json:"git_provider_id"`
+		RepoBaseURLTemplate   *string `json:"repo_base_url_template"`
+		RepoCloneURLTemplate  *string `json:"repo_clone_url_template"`
+		RepoBrowseURLTemplate *string `json:"repo_browse_url_template"`
+		GitTagFormat          *string `json:"git_tag_format"`
+		GitPath               *string `json:"git_path"`
+		ArchiveGitPath        *bool   `json:"archive_git_path"`
+	}
+	// Only decode body if it has content
+	if r.Body != http.NoBody && r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil && err.Error() != "EOF" {
+			// Ignore EOF - empty body is valid
+			RespondError(w, http.StatusBadRequest, "Invalid JSON body")
+			return
+		}
+	}
+
 	// Create command request
 	cmdReq := moduleCmd.CreateModuleProviderRequest{
-		Namespace: namespace,
-		Module:    name,
-		Provider:  provider,
+		Namespace:              namespace,
+		Module:                 name,
+		Provider:               provider,
+		GitProviderID:           body.GitProviderID,
+		RepoBaseURLTemplate:     body.RepoBaseURLTemplate,
+		RepoCloneURLTemplate:    body.RepoCloneURLTemplate,
+		RepoBrowseURLTemplate:   body.RepoBrowseURLTemplate,
+		GitTagFormat:            body.GitTagFormat,
+		GitPath:                 body.GitPath,
+		ArchiveGitPath:          body.ArchiveGitPath,
 	}
 
 	// Execute command
@@ -459,6 +486,12 @@ func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *htt
 		case errors.Is(err, shared.ErrNotFound):
 			RespondError(w, http.StatusBadRequest, "Namespace does not exist")
 		default:
+			// Check for git model errors by message content
+			// (InvalidGitTagFormatError has no dedicated error type)
+			if strings.Contains(err.Error(), "Invalid git tag format") {
+				RespondError(w, http.StatusBadRequest, err.Error())
+				return
+			}
 			// Internal error - don't expose details
 			RespondError(w, http.StatusInternalServerError, "Internal Server Error")
 		}
