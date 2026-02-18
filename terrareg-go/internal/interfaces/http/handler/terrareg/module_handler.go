@@ -922,7 +922,13 @@ func (h *ModuleHandler) HandleModuleProviderSettingsUpdate(w http.ResponseWriter
 	}
 
 	if err := h.updateModuleProviderSettingsCmd.Execute(ctx, cmdReq); err != nil {
-		RespondError(w, http.StatusInternalServerError, err.Error())
+		// Check for git model errors (InvalidGitTagFormatError)
+		if strings.Contains(err.Error(), "Invalid git tag format") {
+			RespondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// Internal error - don't expose details
+		RespondError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 

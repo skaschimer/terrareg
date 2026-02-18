@@ -88,6 +88,27 @@ func (c *CreateModuleProviderCommand) Execute(ctx context.Context, req CreateMod
 		return nil, fmt.Errorf("failed to create module provider: %w", err)
 	}
 
+	// Set Git configuration if provided
+	// Python reference: /app/server/api/terrareg_module_provider_create.py:114-164
+	if req.GitProviderID != nil || req.RepoBaseURLTemplate != nil || req.RepoCloneURLTemplate != nil ||
+		req.RepoBrowseURLTemplate != nil || req.GitTagFormat != nil || req.GitPath != nil || req.ArchiveGitPath != nil {
+
+		archiveGitPath := false
+		if req.ArchiveGitPath != nil {
+			archiveGitPath = *req.ArchiveGitPath
+		}
+
+		moduleProvider.SetGitConfiguration(
+			req.GitProviderID,
+			req.RepoBaseURLTemplate,
+			req.RepoCloneURLTemplate,
+			req.RepoBrowseURLTemplate,
+			req.GitTagFormat,
+			req.GitPath,
+			archiveGitPath,
+		)
+	}
+
 	// Persist to repository
 	if err := c.moduleProviderRepo.Save(ctx, moduleProvider); err != nil {
 		return nil, fmt.Errorf("failed to save module provider: %w", err)

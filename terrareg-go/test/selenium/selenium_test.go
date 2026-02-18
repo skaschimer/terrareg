@@ -669,3 +669,14 @@ func (st *SeleniumTest) WaitForTitle(expectedTitle string) {
 		}
 	}
 }
+
+// ClearInput clears the value of an input element.
+// This is the Go equivalent of Python's element.clear() method.
+// Python reference: /app/test/selenium/test_create_module_provider.py - input_field.clear()
+func (st *SeleniumTest) ClearInput(selector string) {
+	err := st.runChromedp(
+		chromedp.Focus(selector, chromedp.ByQuery),
+		chromedp.Clear(selector, chromedp.ByQuery),
+	)
+	require.NoError(st.t, err, "Failed to clear input: %s", selector)
+}

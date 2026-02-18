@@ -22,26 +22,34 @@ func TestCreateModuleProvider(t *testing.T) {
 	t.Run("test_create_basic", testCreateModuleProviderBasic)
 	t.Run("test_create_against_namespace_with_display_name", testCreateModuleProviderWithDisplayName)
 	t.Run("test_with_git_path", testCreateModuleProviderWithGitPath)
+	// Leave default value (None - don't touch the field)
 	t.Run("test_with_git_tag_format_none", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "", false, false, "v{version}")
+		testCreateModuleProviderGitTagFormat(t, nil, false, false, "v{version}")
 	})
+	// Test empty value (clear the field)
 	t.Run("test_with_git_tag_format_empty", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "", true, false, "{version}")
+		emptyStr := ""
+		testCreateModuleProviderGitTagFormat(t, &emptyStr, true, false, "{version}")
 	})
 	t.Run("test_with_git_tag_format_invalid", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "testgittag", false, true, "")
+		invalidStr := "testgittag"
+		testCreateModuleProviderGitTagFormat(t, &invalidStr, false, true, "")
 	})
 	t.Run("test_with_git_tag_format_custom", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "unittestvalue{version}", false, false, "unittestvalue{version}")
+		customStr := "unittestvalue{version}"
+		testCreateModuleProviderGitTagFormat(t, &customStr, false, false, "unittestvalue{version}")
 	})
 	t.Run("test_with_git_tag_format_major", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "releases/v{major}", false, false, "releases/v{major}")
+		majorStr := "releases/v{major}"
+		testCreateModuleProviderGitTagFormat(t, &majorStr, false, false, "releases/v{major}")
 	})
 	t.Run("test_with_git_tag_format_minor", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "releases/v{minor}", false, false, "releases/v{minor}")
+		minorStr := "releases/v{minor}"
+		testCreateModuleProviderGitTagFormat(t, &minorStr, false, false, "releases/v{minor}")
 	})
 	t.Run("test_with_git_tag_format_patch", func(t *testing.T) {
-		testCreateModuleProviderGitTagFormat(t, "releases/v{patch}", false, false, "releases/v{patch}")
+		patchStr := "releases/v{patch}"
+		testCreateModuleProviderGitTagFormat(t, &patchStr, false, false, "releases/v{patch}")
 	})
 	t.Run("test_unauthenticated", testCreateModuleProviderUnauthenticated)
 	t.Run("test_duplicate_module", testCreateModuleProviderDuplicate)
@@ -57,15 +65,12 @@ func newCreateModuleProviderTest(t *testing.T) *SeleniumTest {
 	// Setup test data - create namespaces that exist in Python's integration_test_data
 	// Python reference: /app/test/selenium/test_data.py - integration_test_data
 	db := st.server.GetDB()
-	testmodulecreationNs := integrationTestUtils.CreateNamespace(t, db, "testmodulecreation", nil)
+	_ = integrationTestUtils.CreateNamespace(t, db, "testmodulecreation", nil)
 	moduledetailsNs := integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
 
 	// Create "fullypopulated" module provider for duplicate test
 	// Python: integration_test_data['moduledetails']['modules']['fullypopulated']['testprovider']
 	_ = integrationTestUtils.CreateModuleProvider(t, db, moduledetailsNs.ID, "fullypopulated", "testprovider")
-
-	// Create "with-git-path" module provider for git tag format tests
-	_ = integrationTestUtils.CreateModuleProvider(t, db, testmodulecreationNs.ID, "with-git-path", "testprovider")
 
 	// Create namespace with display name (for test_create_against_namespace_with_display_name)
 	// Python: 'withdisplayname': {'display_name': 'A Display Name'}
@@ -109,6 +114,18 @@ func testCreateModuleProviderBasic(t *testing.T) {
 	st := newCreateModuleProviderTest(t)
 	defer st.TearDown()
 
+	// Pre-test cleanup: remove any leftover module provider from a previous timed-out test
+	db := st.server.GetDB()
+	var existingModuleProvider sqldb.ModuleProviderDB
+	err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+		Where("namespace.namespace = ?", "testmodulecreation").
+		Where("module_provider.module = ?", "minimal-module").
+		Where("module_provider.provider = ?", "testprovider").
+		First(&existingModuleProvider).Error
+	if err == nil {
+		db.DB.Unscoped().Delete(&existingModuleProvider)
+	}
+
 	performAdminAuthentication(st, "test-admin-token")
 
 	st.NavigateTo("/create-module")
@@ -132,6 +149,22 @@ func testCreateModuleProviderBasic(t *testing.T) {
 	st.WaitForURL("/modules/testmodulecreation/minimal-module/testprovider")
 	currentURL := st.GetCurrentURL()
 	assert.Equal(t, st.GetURL("/modules/testmodulecreation/minimal-module/testprovider"), currentURL)
+
+	// Clean up - delete module provider to avoid affecting subsequent tests
+	// Python: with self._patch_audit_event_creation(): module_provider.delete()
+	// Use t.Cleanup() to ensure cleanup runs even on timeout
+	t.Cleanup(func() {
+		db := st.server.GetDB()
+		var moduleProviderDB sqldb.ModuleProviderDB
+		err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+			Where("namespace.namespace = ?", "testmodulecreation").
+			Where("module_provider.module = ?", "minimal-module").
+			Where("module_provider.provider = ?", "testprovider").
+			First(&moduleProviderDB).Error
+		if err == nil {
+			db.DB.Unscoped().Delete(&moduleProviderDB)
+		}
+	})
 }
 
 // testCreateModuleProviderWithDisplayName tests creating against namespace with display name.
@@ -157,6 +190,22 @@ func testCreateModuleProviderWithDisplayName(t *testing.T) {
 	st.WaitForURL("/modules/withdisplayname/minimal-module/testprovider")
 	currentURL := st.GetCurrentURL()
 	assert.Equal(t, st.GetURL("/modules/withdisplayname/minimal-module/testprovider"), currentURL)
+
+	// Clean up - delete module provider to avoid affecting subsequent tests
+	// Python: with self._patch_audit_event_creation(): module_provider.delete()
+	// Use t.Cleanup() to ensure cleanup runs even on timeout
+	t.Cleanup(func() {
+		db := st.server.GetDB()
+		var moduleProviderDB sqldb.ModuleProviderDB
+		err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+			Where("namespace.namespace = ?", "withdisplayname").
+			Where("module_provider.module = ?", "minimal-module").
+			Where("module_provider.provider = ?", "testprovider").
+			First(&moduleProviderDB).Error
+		if err == nil {
+			db.DB.Unscoped().Delete(&moduleProviderDB)
+		}
+	})
 }
 
 // testCreateModuleProviderWithGitPath tests creating module provider with custom git path.
@@ -181,6 +230,22 @@ func testCreateModuleProviderWithGitPath(t *testing.T) {
 	st.WaitForURL("/modules/testmodulecreation/with-git-path/testprovider")
 	currentURL := st.GetCurrentURL()
 	assert.Equal(t, st.GetURL("/modules/testmodulecreation/with-git-path/testprovider"), currentURL)
+
+	// Clean up - delete module provider to avoid affecting subsequent tests
+	// Python: with self._patch_audit_event_creation(): module_provider.delete()
+	// Use t.Cleanup() to ensure cleanup runs even on timeout
+	t.Cleanup(func() {
+		db := st.server.GetDB()
+		var moduleProviderDB sqldb.ModuleProviderDB
+		err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+			Where("namespace.namespace = ?", "testmodulecreation").
+			Where("module_provider.module = ?", "with-git-path").
+			Where("module_provider.provider = ?", "testprovider").
+			First(&moduleProviderDB).Error
+		if err == nil {
+			db.DB.Unscoped().Delete(&moduleProviderDB)
+		}
+	})
 }
 
 // gitTagFormatTestCase represents a test case for git tag format.
@@ -193,9 +258,23 @@ type gitTagFormatTestCase struct {
 
 // testCreateModuleProviderGitTagFormat tests git tag format validation.
 // Python reference: /app/test/selenium/test_create_module_provider.py - TestCreateModuleProvider.test_with_git_tag_format
-func testCreateModuleProviderGitTagFormat(t *testing.T, gitTagFormat string, shouldShowValidationError, shouldError bool, expectedGitTagFormat string) {
+// gitTagFormat is a pointer: nil means "don't touch the field", "" means "clear the field", other values mean "set this value"
+func testCreateModuleProviderGitTagFormat(t *testing.T, gitTagFormat *string, shouldShowValidationError, shouldError bool, expectedGitTagFormat string) {
 	st := newCreateModuleProviderTest(t)
 	defer st.TearDown()
+
+	// Clean up any leftover module provider from a previous timed-out test
+	// This ensures test isolation even if a previous test was interrupted
+	db := st.server.GetDB()
+	var existingModuleProvider sqldb.ModuleProviderDB
+	err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+		Where("namespace.namespace = ?", "testmodulecreation").
+		Where("module_provider.module = ?", "with-git-path").
+		Where("module_provider.provider = ?", "testprovider").
+		First(&existingModuleProvider).Error
+	if err == nil {
+		db.DB.Unscoped().Delete(&existingModuleProvider)
+	}
 
 	performAdminAuthentication(st, "test-admin-token")
 
@@ -205,9 +284,31 @@ func testCreateModuleProviderGitTagFormat(t *testing.T, gitTagFormat string, sho
 	fillOutModuleFieldByLabel(st, "Module Name", "with-git-path")
 	fillOutModuleFieldByLabel(st, "Provider", "testprovider")
 
-	if gitTagFormat != "" {
-		fillOutModuleFieldByLabel(st, "Git tag format", gitTagFormat)
+	if gitTagFormat != nil {
+		if *gitTagFormat != "" {
+			fillOutModuleFieldByLabel(st, "Git tag format", *gitTagFormat)
+		} else {
+			// Clear the field to trigger HTML5 required validation
+			st.ClearInput("#create-module-git-tag-format")
+		}
 	}
+	// If gitTagFormat is nil, don't touch the field (leave default value)
+
+	// Clean up module provider at the end of the test (like Python's finally block)
+	// Python: finally: module_provider.delete()
+	// Use t.Cleanup() instead of defer to ensure cleanup runs even on timeout/panic
+	// Note: db is already declared above for pre-test cleanup
+	t.Cleanup(func() {
+		var moduleProviderDB sqldb.ModuleProviderDB
+		err := db.DB.Joins("JOIN namespace ON namespace.id = module_provider.namespace_id").
+			Where("namespace.namespace = ?", "testmodulecreation").
+			Where("module_provider.module = ?", "with-git-path").
+			Where("module_provider.provider = ?", "testprovider").
+			First(&moduleProviderDB).Error
+		if err == nil {
+			db.DB.Unscoped().Delete(&moduleProviderDB)
+		}
+	})
 
 	clickCreateModuleButton(st)
 
@@ -219,7 +320,7 @@ func testCreateModuleProviderGitTagFormat(t *testing.T, gitTagFormat string, sho
 		currentURL := st.GetCurrentURL()
 		assert.Equal(t, st.GetURL("/create-module"), currentURL)
 	} else if shouldError {
-		// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'create-error').is_displayed(), True)
+		// Python: self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, 'create-error').is_displayed()), True)
 		// Python: assert error.text == "Invalid git tag format. Must contain one placeholder: {version}, {major}, {minor}, {patch}."
 		st.AssertElementVisible("#create-error")
 		st.AssertTextContent("#create-error", "Invalid git tag format. Must contain one placeholder: {version}, {major}, {minor}, {patch}.")

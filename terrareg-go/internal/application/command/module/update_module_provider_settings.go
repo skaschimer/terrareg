@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	gitModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 )
@@ -45,6 +46,15 @@ func (c *UpdateModuleProviderSettingsCommand) Execute(ctx context.Context, req U
 	moduleProvider, err := c.moduleProviderRepo.FindByNamespaceModuleProvider(ctx, types.NamespaceName(req.Namespace), types.ModuleName(req.Module), types.ModuleProviderName(req.Provider))
 	if err != nil {
 		return fmt.Errorf("module provider not found: %w", err)
+	}
+
+	// Validate git_tag_format if provided
+	// Uses same validation as create - GitTagFormat.Validate()
+	if req.GitTagFormat != nil && *req.GitTagFormat != "" {
+		gitTagFormat := gitModel.NewGitTagFormat(*req.GitTagFormat)
+		if err := gitTagFormat.Validate(); err != nil {
+			return err
+		}
 	}
 
 	// Update Git configuration if provided
