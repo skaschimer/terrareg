@@ -3,6 +3,7 @@ package terrareg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
@@ -445,7 +447,21 @@ func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *htt
 	// Execute command
 	moduleProvider, err := h.createModuleProviderCmd.Execute(ctx, cmdReq)
 	if err != nil {
-		RespondError(w, http.StatusInternalServerError, err.Error())
+		// Check for validation errors - these are safe to expose to users
+		// Python reference: /app/server/api/terrareg_module_provider_create.py
+		switch {
+		case errors.Is(err, shared.ErrInvalidProvider):
+			RespondError(w, http.StatusBadRequest, "Module provider name is invalid")
+		case errors.Is(err, shared.ErrInvalidName):
+			RespondError(w, http.StatusBadRequest, "Module name is invalid")
+		case errors.Is(err, shared.ErrAlreadyExists):
+			RespondError(w, http.StatusBadRequest, "Module provider already exists")
+		case errors.Is(err, shared.ErrNotFound):
+			RespondError(w, http.StatusBadRequest, "Namespace does not exist")
+		default:
+			// Internal error - don't expose details
+			RespondError(w, http.StatusInternalServerError, "Internal Server Error")
+		}
 		return
 	}
 

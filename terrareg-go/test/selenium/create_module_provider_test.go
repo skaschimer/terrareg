@@ -57,8 +57,15 @@ func newCreateModuleProviderTest(t *testing.T) *SeleniumTest {
 	// Setup test data - create namespaces that exist in Python's integration_test_data
 	// Python reference: /app/test/selenium/test_data.py - integration_test_data
 	db := st.server.GetDB()
-	_ = integrationTestUtils.CreateNamespace(t, db, "testmodulecreation", nil)
-	_ = integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
+	testmodulecreationNs := integrationTestUtils.CreateNamespace(t, db, "testmodulecreation", nil)
+	moduledetailsNs := integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
+
+	// Create "fullypopulated" module provider for duplicate test
+	// Python: integration_test_data['moduledetails']['modules']['fullypopulated']['testprovider']
+	_ = integrationTestUtils.CreateModuleProvider(t, db, moduledetailsNs.ID, "fullypopulated", "testprovider")
+
+	// Create "with-git-path" module provider for git tag format tests
+	_ = integrationTestUtils.CreateModuleProvider(t, db, testmodulecreationNs.ID, "with-git-path", "testprovider")
 
 	// Create namespace with display name (for test_create_against_namespace_with_display_name)
 	// Python: 'withdisplayname': {'display_name': 'A Display Name'}

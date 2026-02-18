@@ -26,8 +26,10 @@ func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 }
 
 // RespondError sends an error response with the given status code and message.
+// Matches Python response format which uses 'message' key
+// Python reference: /app/server/api/terrareg_module_provider_create.py
 func RespondError(w http.ResponseWriter, status int, message string) {
-	RespondJSON(w, status, map[string]string{"error": message})
+	RespondJSON(w, status, map[string]string{"message": message})
 }
 
 // RespondInternalServerError sends a generic 500 Internal Server Error.

@@ -46,7 +46,8 @@ func (c *CreateModuleProviderCommand) Execute(ctx context.Context, req CreateMod
 	namespace, err := c.namespaceRepo.FindByName(ctx, req.Namespace)
 	if err != nil {
 		if errors.Is(err, shared.ErrNotFound) {
-			return nil, fmt.Errorf("namespace %s not found", req.Namespace)
+			// Python reference: /app/server/api/terrareg_module_provider_create.py:94
+			return nil, fmt.Errorf("%w: Namespace does not exist", shared.ErrNotFound)
 		}
 		return nil, fmt.Errorf("failed to find namespace: %w", err)
 	}
@@ -57,7 +58,8 @@ func (c *CreateModuleProviderCommand) Execute(ctx context.Context, req CreateMod
 		return nil, fmt.Errorf("failed to check module provider existence: %w", err)
 	}
 	if existing != nil {
-		return nil, fmt.Errorf("module provider %s/%s/%s already exists", req.Namespace, req.Module, req.Provider)
+		// Python reference: /app/server/api/terrareg_module_provider_create.py:100
+		return nil, fmt.Errorf("%w: Module provider already exists", shared.ErrAlreadyExists)
 	}
 
 	// Create module provider domain model
