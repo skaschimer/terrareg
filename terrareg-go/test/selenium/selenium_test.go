@@ -151,7 +151,9 @@ func (st *SeleniumTest) runChromedp(actions ...chromedp.Action) error {
 // NavigateTo navigates the browser to a specific path.
 func (st *SeleniumTest) NavigateTo(path string) {
 	url := st.GetURL(path)
-	err := st.runChromedp(chromedp.Navigate(url))
+	err := st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+		return st.runChromedp(chromedp.Navigate(url))
+	}), 50, 3)
 	require.NoError(st.t, err, "Failed to navigate to %s", url)
 }
 
