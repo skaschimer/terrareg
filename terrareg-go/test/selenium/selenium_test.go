@@ -414,14 +414,14 @@ func (e *Element) SendKeys(keys string) {
 
 // WaitForURL waits for the current URL to match the expected path.
 func (st *SeleniumTest) WaitForURL(expectedPath string) {
-	timeout := time.After(30 * time.Second)
+	timeout := time.After(2 * time.Second)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-timeout:
-			require.Fail(st.t, "URL did not change to expected path")
+			require.Fail(st.t, fmt.Sprintf("URL did not change to expected path: %s, Current: %s", expectedPath, st.GetCurrentURL()))
 		case <-ticker.C:
 			currentURL := st.GetCurrentURL()
 			if strings.HasSuffix(currentURL, expectedPath) {
