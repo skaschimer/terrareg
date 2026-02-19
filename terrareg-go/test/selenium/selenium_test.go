@@ -468,24 +468,55 @@ func (st *SeleniumTest) SelectOption(selector, value string) {
 	require.NoError(st.t, err)
 }
 
+func (st *SeleniumTest) Retry(callback chromedp.ActionFunc, retries int, sleepTimeMillis int) error {
+	var err error
+	for i := 0; i < retries; i++ {
+		err = st.runChromedp(callback)
+		if err == nil {
+			return nil
+		}
+		chromedp.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
+	}
+	return err
+}
+
+// WaitForDropdownOptions waits for a select dropdown to be populated with options.
+// This is needed because dropdowns are populated asynchronously via AJAX.
+func (st *SeleniumTest) WaitForDropdownOptions(selector string, minOptions int) {
+	err := st.Retry(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var count int
+			err := chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					if (!select || !select.options) {
+						return 0;
+					}
+					return select.options.length;
+				})()
+			`, selector), &count).Do(ctx)
+			if err != nil {
+				return err
+			}
+			if count >= minOptions {
+				return nil
+			}
+			return fmt.Errorf("only %d options available, need at least %d", count, minOptions)
+		}),
+		5,
+		500,
+	)
+	require.NoError(st.t, err, "Dropdown %s did not get populated with at least %d options", selector, minOptions)
+}
+
 // SelectOptionByVisibleText selects an option in a select dropdown by visible text.
 // Matches Python: select.select_by_visible_text(text)
 func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
-	// First wait for the select element to have options populated
-	err := st.runChromedp(
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			return chromedp.Evaluate(fmt.Sprintf(`
-				(function() {
-					var select = document.querySelector(%q);
-					return select && select.options && select.options.length > 0;
-				})()
-			`, selector), nil).Do(ctx)
-		}),
-	)
-	require.NoError(st.t, err, "Select element has no options")
+	// Wait for dropdown to be populated with options (async AJAX)
+	st.WaitForDropdownOptions(selector, 3)
 
 	// Then select the option by visible text
-	err = st.runChromedp(
+	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(fmt.Sprintf(`
 				(function() {
