@@ -453,6 +453,8 @@ func (e *Element) GetAttribute(attr string) string {
 
 // SelectOption selects an option in a select dropdown by value attribute.
 func (st *SeleniumTest) SelectOption(selector, value string) {
+	// Wait for dropdown to be populated with options (async AJAX)
+	st.WaitForDropdownOptions(selector, 3)
 	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(fmt.Sprintf(`
@@ -475,7 +477,8 @@ func (st *SeleniumTest) Retry(callback chromedp.ActionFunc, retries int, sleepTi
 		if err == nil {
 			return nil
 		}
-		chromedp.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
+		// chromedp.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
+		time.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
 	}
 	return err
 }
