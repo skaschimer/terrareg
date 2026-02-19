@@ -443,6 +443,17 @@ func (st *SeleniumTest) GetAttribute(selector, attr string) string {
 	return value
 }
 
+// GetValue retrieves the current value of an input element (DOM property, not HTML attribute).
+// This is different from GetAttribute which returns the initial HTML attribute value.
+func (st *SeleniumTest) GetValue(selector string) string {
+	var value string
+	err := st.runChromedp(chromedp.Value(selector, &value, nil))
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
 // GetElementAttribute retrieves an attribute value from an element (on Element).
 func (e *Element) GetAttribute(attr string) string {
 	var value string

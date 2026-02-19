@@ -137,8 +137,15 @@ func testSearchFromHomepageRedirectTypeSearch(t *testing.T) {
 			assert.Equal(t, tc.expectedTitle, title)
 
 			// Python: assert self.selenium_instance.find_element(By.ID, 'search-query-string').get_attribute('value') == search_string
-			searchQueryString := st.GetAttribute("#search-query-string", "value")
-			assert.Equal(t, tc.searchString, searchQueryString)
+			var actualValue string
+			st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+				actualValue = st.GetValue("#search-query-string")
+				if tc.searchString == actualValue {
+					return nil
+				}
+				return fmt.Errorf("%s does not match %s", tc.searchString, actualValue)
+			}), 1000, 5)
+			assert.Equal(t, tc.searchString, actualValue)
 		})
 	}
 }
