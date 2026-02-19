@@ -454,6 +454,15 @@ func createProviderVersion(t *testing.T, db *sqldb.Database, providerID int, ver
 func createProviderCategory(t *testing.T, db *sqldb.Database, name, slug string, userSelectable bool) sqldb.ProviderCategoryDB {
 	t.Helper()
 
+	// First, try to find existing category by slug
+	var existingCategory sqldb.ProviderCategoryDB
+	err := db.DB.Where("slug = ?", slug).First(&existingCategory).Error
+	if err == nil {
+		// Category already exists, return it
+		return existingCategory
+	}
+
+	// Category doesn't exist, create it
 	namePtr := &name
 	category := sqldb.ProviderCategoryDB{
 		Name:           namePtr,
@@ -461,7 +470,7 @@ func createProviderCategory(t *testing.T, db *sqldb.Database, name, slug string,
 		UserSelectable: userSelectable,
 	}
 
-	err := db.DB.Create(&category).Error
+	err = db.DB.Create(&category).Error
 	require.NoError(t, err)
 
 	return category
