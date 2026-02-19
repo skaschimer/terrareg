@@ -56,6 +56,9 @@ func generateTestSigningKey(t *testing.T) string {
 	err = os.WriteFile(keyPath, privateKeyBytes, 0600)
 	require.NoError(t, err, "Failed to write signing key file")
 
+	// Note: Go's testing framework will clean up tmpDir automatically
+	// To inspect signing key on failure, check the temporary directory path
+
 	return keyPath
 }
 
@@ -110,10 +113,11 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 		ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
 	}
 
-	// Clean up the database file when test completes
-	t.Cleanup(func() {
-		os.Remove(dbFileName)
-	})
+	// Clean up old database files at test start (ignore errors if they don't exist)
+	// This handles any leftover files from previous runs
+	os.Remove(dbFileName)
+	os.Remove(dbFileName + "-wal")
+	os.Remove(dbFileName + "-shm")
 
 	// Apply pre-setup options (test data setup) BEFORE setup
 	for _, opt := range opts {
@@ -121,6 +125,9 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	}
 
 	ts.setup()
+
+	// Note: Database files are kept after test for inspection
+	// Each test uses a unique database name, so no cleanup needed
 
 	// Call test data setup AFTER setup but before returning
 	// This is done here because testDataSetup needs the database to exist,
@@ -279,14 +286,9 @@ func (ts *TestServer) bootstrap() {
 		os.Remove(path) // Ignore errors if file doesn't exist
 	}
 
-	// Register cleanup function to delete database after test completes
-	// This cleanup is done here in bootstrap() which is called from setup()
-	// Note: NewTestServer also registers cleanup, but both will safely attempt to delete
+	// Register cleanup function to unlock mutex after test completes
+	// Note: Database file deletion is handled by NewTestServer cleanup
 	ts.t.Cleanup(func() {
-		os.Remove(dbPath)
-		os.Remove(dbPath + "-wal")
-		os.Remove(dbPath + "-shm")
-		// Unlock mutex for next test
 		testDbMutex.Unlock()
 	})
 
