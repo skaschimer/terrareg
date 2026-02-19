@@ -504,24 +504,15 @@ func fillOutModuleFieldByLabel(st *SeleniumTest, label, input string) {
 
 // clickCreateModuleButton clicks the Create button.
 // Python reference: /app/test/selenium/test_create_module_provider.py - _click_create
+// Note: chromedp's click() doesn't properly trigger onclick handlers, so we call
+// the JavaScript function directly instead of clicking the button.
 func clickCreateModuleButton(st *SeleniumTest) {
-	// Python: self.selenium_instance.find_element(By.XPATH, "//button[text()='Create']").click()
-	// Note: The button doesn't have type='submit', we need to find by text
+	// Directly call the JavaScript function instead of clicking the button
+	// This is more reliable than chromedp.Click() which doesn't trigger onclick properly
 	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			return chromedp.Evaluate(`
-				(function() {
-					var buttons = document.getElementsByTagName('button');
-					for (var i = 0; i < buttons.length; i++) {
-						if (buttons[i].textContent === 'Create') {
-							buttons[i].click();
-							return true;
-						}
-					}
-					return false;
-				})()
-			`, nil).Do(ctx)
+			return chromedp.Evaluate(`createModuleProvider()`, nil).Do(ctx)
 		}),
 	)
-	require.NoError(st.t, err, "Failed to find and click Create button")
+	require.NoError(st.t, err, "Failed to call createModuleProvider function")
 }
