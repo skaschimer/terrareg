@@ -30,6 +30,11 @@ func fromDBNamespace(db *sqldb.NamespaceDB) *model.Namespace {
 	)
 }
 
+// Public for provider usage
+func FromDBNamespace(db *sqldb.NamespaceDB) *model.Namespace {
+	return fromDBNamespace(db)
+}
+
 // toDBModuleProvider converts domain ModuleProvider to database model
 func toDBModuleProvider(mp *model.ModuleProvider) sqldb.ModuleProviderDB {
 	var verified *bool

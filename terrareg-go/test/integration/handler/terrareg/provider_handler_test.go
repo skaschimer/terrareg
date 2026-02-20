@@ -419,8 +419,8 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "namespace")
-	// Note: Handler returns placeholder "namespace-{id}" format, not actual namespace name
-	assert.Equal(t, "namespace-1", response["namespace"])
+	// Handler now returns actual namespace name (not placeholder)
+	assert.Equal(t, "test-namespace", response["namespace"])
 	assert.Contains(t, response, "name")
 	assert.Equal(t, "test-provider", response["name"])
 	assert.Contains(t, response, "tier")
@@ -519,8 +519,8 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "namespace")
-	// Note: Handler returns placeholder "namespace-{id}" format, not actual namespace name
-	assert.Equal(t, "namespace-1", response["namespace"])
+	// Handler now returns actual namespace name (not placeholder)
+	assert.Equal(t, "test-namespace", response["namespace"])
 	assert.Contains(t, response, "name")
 	assert.Equal(t, "new-provider", response["name"])
 	assert.Contains(t, response, "tier")

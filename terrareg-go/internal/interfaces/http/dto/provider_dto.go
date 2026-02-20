@@ -61,10 +61,9 @@ type ProviderVersion struct {
 func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[int]string, versionDataMap map[int]providerRepo.VersionData, total, offset, limit int, includeCount bool) ProviderListResponse {
 	providerData := make([]ProviderData, 0, len(providers))
 	for _, p := range providers {
-		namespace := ""
-		if ns, ok := namespaceNames[p.ID()]; ok {
-			namespace = ns
-		}
+		// Get namespace name from provider's namespace entity
+		// The namespace should be populated by the repository
+		namespace := string(p.Namespace().Name())
 
 		// Get version data for this provider
 		versionData, hasVersion := versionDataMap[p.ID()]
@@ -79,7 +78,6 @@ func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[
 		// ID is in format {namespace}/{provider}/{version} (Python: ProviderVersion.id property)
 		// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
 		// Use domain method Provider.VersionID() to generate the formatted ID
-		// TODO: Once repository populates Provider.namespace, use p.Namespace().Name() directly
 		data := ProviderData{
 			ID:          p.VersionID(namespace, versionData.Version),
 			Owner:       derefString(versionData.RepositoryOwner),
@@ -157,9 +155,17 @@ func getPublicSourceURL(cloneURL *string) *string {
 
 // NewProviderDetailResponse creates a provider detail response from domain model
 func NewProviderDetailResponse(p *provider.Provider) ProviderDetailResponse {
+	// Get namespace name from provider's namespace entity
+	// The namespace should be populated by the repository's toDomainProvider conversion
+	// Data integrity: provider without namespace indicates database corruption
+	ns := p.Namespace()
+	if ns == nil {
+		panic(fmt.Sprintf("data integrity error: provider %d has nil namespace - ensure repository populates namespace", p.ID()))
+	}
+
 	return ProviderDetailResponse{
 		ID:          fmt.Sprintf("%d", p.ID()),
-		Namespace:   fmt.Sprintf("namespace-%d", p.NamespaceID()), // Placeholder
+		Namespace:   string(ns.Name()),
 		Name:        p.Name(),
 		Description: p.Description(),
 		Tier:        p.Tier(),

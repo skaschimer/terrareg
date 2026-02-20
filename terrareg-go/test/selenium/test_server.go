@@ -112,14 +112,7 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
 
 	// Override DATABASE_URL with unique database file
-	// Always use unique name to prevent test pollution
-	if ts.configOverrides["DATABASE_URL"] == "" {
-		ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
-	} else {
-		// If a DATABASE_URL was provided, still ensure it uses our unique filename
-		// This handles tests that provide their own config via getDefaultTestConfig()
-		ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
-	}
+	ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
 
 	// Clean up old database files at test start (ignore errors if they don't exist)
 	// This handles any leftover files from previous runs

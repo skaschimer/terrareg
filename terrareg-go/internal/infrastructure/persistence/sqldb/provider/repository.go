@@ -10,10 +10,13 @@ import (
 
 	"gorm.io/gorm"
 
+	modulemodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	moduleDb "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 )
 
 // ProviderRepository implements the provider repository interface using GORM
@@ -140,7 +143,7 @@ func (r *ProviderRepository) FindAll(ctx context.Context, offset, limit int) ([]
 	versionData := make(map[int]repository.VersionData, len(results))
 
 	for i, result := range results {
-		// Store namespace name for this provider
+		// Store namespace name for this provider (kept for backwards compatibility)
 		namespaceNames[result.ProviderID] = result.NamespaceName
 
 		// Store version data for this provider (if available)
@@ -180,6 +183,17 @@ func (r *ProviderRepository) FindAll(ctx context.Context, offset, limit int) ([]
 			result.LatestVersionID,
 			defaultProviderSourceAuth,
 		)
+
+		// Create and set namespace entity from result data
+		// This ensures providers from FindAll have their namespace relationship populated
+		namespace := modulemodel.ReconstructNamespace(
+			result.NamespaceID,
+			types.NamespaceName(result.NamespaceName),
+			result.NamespaceDisplayName,
+			modulemodel.NamespaceType(result.NamespaceType),
+		)
+		prov.SetNamespace(namespace)
+
 		providers[i] = prov
 	}
 
@@ -408,7 +422,7 @@ func (r *ProviderRepository) Search(ctx context.Context, params repository.Provi
 	namespaceNames := make(map[int]string, len(results))
 	versionData := make(map[int]repository.VersionData, len(results))
 	for i, result := range results {
-		// Store namespace name for this provider
+		// Store namespace name for this provider (kept for backwards compatibility)
 		namespaceNames[result.ProviderID] = result.NamespaceName
 
 		// Store version data for this provider (if available)
@@ -448,6 +462,17 @@ func (r *ProviderRepository) Search(ctx context.Context, params repository.Provi
 			result.LatestVersionID,
 			defaultProviderSourceAuth,
 		)
+
+		// Create and set namespace entity from search result data
+		// This ensures providers from search have their namespace relationship populated
+		namespace := modulemodel.ReconstructNamespace(
+			result.NamespaceID,
+			types.NamespaceName(result.NamespaceName),
+			result.NamespaceDisplayName,
+			modulemodel.NamespaceType(result.NamespaceType),
+		)
+		prov.SetNamespace(namespace)
+
 		providers[i] = prov
 
 		// Set relevance score if available
@@ -1067,7 +1092,8 @@ func toDBProviderDocumentation(d *provider.ProviderVersionDocumentation) *sqldb.
 // Mapper functions (DB → domain)
 
 func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
-	return provider.ReconstructProvider(
+	// Reconstruct provider
+	p := provider.ReconstructProvider(
 		db.ID,
 		db.NamespaceID,
 		db.Name,
@@ -1078,6 +1104,20 @@ func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
 		db.LatestVersionID,
 		db.DefaultProviderSourceAuth, // Field name: DefaultProviderSourceAuth
 	)
+
+	// Convert and set namespace if preloaded (via Preload("Namespace"))
+	// This is important for getting the correct namespace name in API responses
+	// Data integrity check: providers must have a namespace
+	if db.Namespace.ID == 0 {
+		// Data integrity issue - provider should always have a namespace
+		// Panic with clear message - Recoverer middleware will convert to 500 error
+		panic(fmt.Sprintf("data integrity error: provider %d (namespace_id=%d) has no namespace loaded - ensure Namespace is preloaded", db.ID, db.NamespaceID))
+	}
+
+	namespace := moduleDb.FromDBNamespace(&db.Namespace)
+	p.SetNamespace(namespace)
+
+	return p
 }
 
 func toDomainProviderVersion(db *sqldb.ProviderVersionDB) *provider.ProviderVersion {

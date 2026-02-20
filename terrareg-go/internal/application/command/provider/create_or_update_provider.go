@@ -83,6 +83,9 @@ func (c *CreateOrUpdateProviderCommand) Execute(ctx context.Context, req CreateO
 		false, // UseProviderSourceAuth
 	)
 
+	// Set namespace entity on provider for proper data access
+	newProvider.SetNamespace(namespace)
+
 	if err := c.providerRepo.Save(ctx, newProvider); err != nil {
 		return nil, fmt.Errorf("failed to save provider: %w", err)
 	}
