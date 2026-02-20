@@ -2,12 +2,17 @@ package dto
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider"
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 )
 
 // ProviderListResponse represents the provider list API response
+// Endpoints:
+//   - GET /v1/providers (Terraform v1 provider list)
+//   - GET /v1/providers/search (Terraform v1 provider search)
+// Python reference: ApiProviderList, ApiProviderSearch
 type ProviderListResponse struct {
 	Meta      PaginationMeta `json:"meta"`
 	Providers []ProviderData `json:"providers"`
@@ -33,17 +38,40 @@ type ProviderData struct {
 }
 
 // ProviderDetailResponse represents a single provider detail response
+// Endpoints:
+//   - GET /v1/providers/{namespace}/{provider} (Terraform v1 provider details)
+// Python reference: ApiProvider - provider_version_model.py get_api_details()
 type ProviderDetailResponse struct {
 	ID          string   `json:"id"`
+	Owner       string   `json:"owner"`
 	Namespace   string   `json:"namespace"`
 	Name        string   `json:"name"`
+	Alias       *string  `json:"alias"`
+	Version     string   `json:"version"`       // Latest version
+	Tag         *string  `json:"tag"`
 	Description *string  `json:"description,omitempty"`
-	Tier        string   `json:"tier"`
 	Source      *string  `json:"source,omitempty"`
-	Versions    []string `json:"versions,omitempty"`
+	PublishedAt *string  `json:"published_at,omitempty"`
+	Downloads   int64    `json:"downloads"`
+	Tier        string   `json:"tier"`
+	LogoURL     *string  `json:"logo_url,omitempty"`
+	Versions    []string `json:"versions,omitempty"` // All version strings - CRITICAL for frontend
+	Docs        []Doc    `json:"docs,omitempty"`     // Documentation array
+}
+
+// Doc represents documentation for a provider version
+// Python reference: provider_version_documentation_model.py get_api_outline()
+type Doc struct {
+	Name     string  `json:"name"`
+	Slug     string  `json:"slug"`
+	Title    *string `json:"title,omitempty"`
+	Category *string `json:"category,omitempty"`
 }
 
 // ProviderVersionsResponse represents the versions list for a provider
+// Endpoints:
+//   - GET /v1/providers/{namespace}/{provider}/versions (Terraform v1 versions list)
+// Python reference: ApiProviderVersions
 type ProviderVersionsResponse struct {
 	ID       string            `json:"id"`
 	Versions []ProviderVersion `json:"versions"`
@@ -54,6 +82,36 @@ type ProviderVersion struct {
 	Version   string   `json:"version"`
 	Protocols []string `json:"protocols"`
 	Platforms []string `json:"platforms,omitempty"`
+}
+
+// ProviderVersionDetailResponse represents a single provider version detail response
+// Endpoints:
+//   - GET /v1/providers/{namespace}/{provider}/{version} (Terraform v1 version details)
+// Python reference: ApiProvider (with version path parameter)
+type ProviderVersionDetailResponse struct {
+	ID       string            `json:"id"`
+	Version  string            `json:"version"`
+	Beta     bool              `json:"beta"`
+	Protocols []string          `json:"protocols"`
+	Binaries []ProviderBinary `json:"binaries,omitempty"`
+}
+
+// ProviderBinary represents provider binary information for download
+type ProviderBinary struct {
+	Filename    string `json:"filename"`
+	SHASUM      string `json:"shasum"`
+	DownloadURL string `json:"download_url"`
+}
+
+// ProviderDownloadResponse represents download metadata for a provider binary
+// Endpoints:
+//   - GET /v1/providers/{namespace}/{provider}/{version}/download/{os}/{arch}
+//   - GET /v2/providers/{namespace}/{provider}/{version}/download/{os}/{arch}
+// Python reference: ApiProviderVersionDownload
+type ProviderDownloadResponse struct {
+	DownloadURL string `json:"download_url"`
+	Filename     string `json:"filename"`
+	SHASUM       string `json:"shasum"`
 }
 
 // NewProviderListResponse creates a provider list response from domain models
@@ -154,7 +212,8 @@ func getPublicSourceURL(cloneURL *string) *string {
 }
 
 // NewProviderDetailResponse creates a provider detail response from domain model
-func NewProviderDetailResponse(p *provider.Provider) ProviderDetailResponse {
+// Matches Python's provider_version_model.py get_api_details() response structure
+func NewProviderDetailResponse(p *provider.Provider, versions []*provider.ProviderVersion) ProviderDetailResponse {
 	// Get namespace name from provider's namespace entity
 	// The namespace should be populated by the repository's toDomainProvider conversion
 	// Data integrity: provider without namespace indicates database corruption
@@ -163,12 +222,49 @@ func NewProviderDetailResponse(p *provider.Provider) ProviderDetailResponse {
 		panic(fmt.Sprintf("data integrity error: provider %d has nil namespace - ensure repository populates namespace", p.ID()))
 	}
 
+	// Build versions array (all version strings)
+	// Python reference: get_api_details() - "versions": [version.version for version in self.provider.get_all_versions()]
+	versionStrings := make([]string, len(versions))
+	for i, v := range versions {
+		versionStrings[i] = v.Version()
+	}
+
+	// Get latest version for detailed fields
+	// Versions are ordered DESC by ID (highest/latest first)
+	var latestVersion *provider.ProviderVersion
+	var tag *string
+	var publishedAt *string
+	if len(versions) > 0 {
+		latestVersion = versions[0]
+		tag = latestVersion.GitTag()
+		if latestVersion.PublishedAt() != nil {
+			formatted := latestVersion.PublishedAt().Format(time.RFC3339)
+			publishedAt = &formatted
+		}
+	}
+
+	// Build latest version string
+	latestVersionString := ""
+	if latestVersion != nil {
+		latestVersionString = latestVersion.Version()
+	}
+
 	return ProviderDetailResponse{
 		ID:          fmt.Sprintf("%d", p.ID()),
+		Owner:       "", // TODO: Get from repository owner when available
 		Namespace:   string(ns.Name()),
 		Name:        p.Name(),
+		Alias:       nil, // Always null in Python
+		Version:     latestVersionString,
+		Tag:         tag,
 		Description: p.Description(),
+		Source:      nil, // TODO: Get from source URL when available
+		PublishedAt: publishedAt,
+		Downloads:   0, // TODO: Implement analytics integration
 		Tier:        p.Tier(),
+		LogoURL:     nil, // TODO: Get from provider logo URL when available
+		Versions:    versionStrings, // CRITICAL - enables frontend version dropdown
+		Docs:        []Doc{}, // TODO: Implement when provider documentation is available
 	}
 }
 

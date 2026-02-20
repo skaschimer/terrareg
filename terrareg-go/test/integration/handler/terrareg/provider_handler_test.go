@@ -399,11 +399,17 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 
 	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	description := "Test provider"
-	testutils.CreateProvider(t, db, namespace.ID, "test-provider", &description, sqldb.ProviderTierOfficial, nil)
+	provider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", &description, sqldb.ProviderTierOfficial, nil)
+
+	// Create provider versions
+	publishedAt := time.Now()
+	testutils.CreateProviderVersion(t, db, provider.ID, "1.0.0", 0, false, &publishedAt)
+	testutils.CreateProviderVersion(t, db, provider.ID, "2.0.0", 0, false, &publishedAt)
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	getProviderQuery := providerQuery.NewGetProviderQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, nil, nil, nil, nil, nil)
+	getProviderVersionsQuery := providerQuery.NewGetProviderVersionsQuery(providerRepository)
+	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, getProviderVersionsQuery, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/v1/providers/test-namespace/test-provider", nil)
 	w := httptest.NewRecorder()
@@ -419,7 +425,6 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "namespace")
-	// Handler now returns actual namespace name (not placeholder)
 	assert.Equal(t, "test-namespace", response["namespace"])
 	assert.Contains(t, response, "name")
 	assert.Equal(t, "test-provider", response["name"])
@@ -427,6 +432,22 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 	assert.Equal(t, "official", response["tier"])
 	assert.Contains(t, response, "description")
 	assert.Equal(t, "Test provider", response["description"])
+
+	// Verify versions array is present and populated (CRITICAL for frontend)
+	assert.Contains(t, response, "versions")
+	versions := response["versions"].([]interface{})
+	assert.Len(t, versions, 2)
+	// Convert to strings for assertion
+	versionStrings := make([]string, len(versions))
+	for i, v := range versions {
+		versionStrings[i] = v.(string)
+	}
+	assert.Contains(t, versionStrings, "1.0.0")
+	assert.Contains(t, versionStrings, "2.0.0")
+
+	// Verify latest version is set (Python behavior: first version in list)
+	assert.Contains(t, response, "version")
+	assert.Equal(t, "2.0.0", response["version"])
 }
 
 // TestProviderHandler_HandleProviderVersions_Success tests successful provider versions retrieval

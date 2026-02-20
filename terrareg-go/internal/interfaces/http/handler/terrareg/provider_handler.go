@@ -10,6 +10,7 @@ import (
 
 	providerCommand "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider"
 	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
+	providerDomain "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider"
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 )
@@ -148,6 +149,7 @@ func (h *ProviderHandler) HandleProviderSearch(w http.ResponseWriter, r *http.Re
 }
 
 // HandleProviderDetails handles GET /v1/providers/{namespace}/{provider}
+// Python reference: /app/terrareg/server/api/provider.py - ApiProvider._get
 func (h *ProviderHandler) HandleProviderDetails(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -167,8 +169,17 @@ func (h *ProviderHandler) HandleProviderDetails(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Build response
-	response := dto.NewProviderDetailResponse(provider)
+	// Fetch all versions for the provider (required for versions array)
+	// Python reference: provider_version.get_api_details() includes versions array
+	versions, err := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
+	if err != nil {
+		// Log error but continue - versions will be nil
+		// Frontend will show "no versions" which is appropriate
+		versions = nil
+	}
+
+	// Build response with versions array
+	response := dto.NewProviderDetailResponse(provider, versions)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -239,8 +250,16 @@ func (h *ProviderHandler) HandleCreateOrUpdateProvider(w http.ResponseWriter, r 
 		return
 	}
 
-	// Build response
-	response := dto.NewProviderDetailResponse(provider)
+	// Fetch versions for the provider
+	// Use nil if query not available (for tests that don't provide the query)
+	var versions []*providerDomain.ProviderVersion = nil
+	if h.getProviderVersionsQuery != nil {
+		v, _ := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
+		versions = v
+	}
+
+	// Build response (DTO constructor handles nil versions)
+	response := dto.NewProviderDetailResponse(provider, versions)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -357,8 +376,11 @@ func (h *ProviderHandler) HandleAddGPGKey(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Fetch versions for the provider
+	versions, _ := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
+
 	// Build response
-	response := dto.NewProviderDetailResponse(provider)
+	response := dto.NewProviderDetailResponse(provider, versions)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -391,8 +413,11 @@ func (h *ProviderHandler) HandleRemoveGPGKey(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Fetch versions for the provider
+	versions, _ := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
+
 	// Build response
-	response := dto.NewProviderDetailResponse(provider)
+	response := dto.NewProviderDetailResponse(provider, versions)
 	RespondJSON(w, http.StatusOK, response)
 }
 
