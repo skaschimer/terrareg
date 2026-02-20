@@ -14,11 +14,11 @@ import (
 
 // mockAuditHistoryRepository is a mock for testing
 type mockAuditHistoryRepository struct {
-	mu          sync.Mutex
+	mu           sync.Mutex
 	createCalled bool
 	createCount  int
 	createError  error
-	lastAudit   *model.AuditHistory
+	lastAudit    *model.AuditHistory
 }
 
 func (m *mockAuditHistoryRepository) Search(ctx context.Context, query model.AuditHistorySearchQuery) (*model.AuditHistorySearchResult, error) {

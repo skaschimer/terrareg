@@ -116,9 +116,9 @@ func (s *GitImportService) Execute(ctx context.Context, req module.ImportModuleV
 		}
 		// Generate git tag from format
 		gitRef = strings.ReplaceAll(*gitTagFormat, "{version}", string(req.Version))
-		} else if req.GitTag != "" {
+	} else if req.GitTag != "" {
 		gitRef = string(req.GitTag)
-		}
+	}
 
 	// Clone repository
 	if err := s.cloneRepository(*gitCloneURL, tmpDir, gitRef); err != nil {

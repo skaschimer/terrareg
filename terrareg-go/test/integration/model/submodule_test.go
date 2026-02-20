@@ -610,4 +610,3 @@ func TestSubmodule_UpdateModuleDetailsID_MultipleUpdates(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, moduleDetails2.ID, *updated2.ModuleDetailsID, "Second update should change ModuleDetailsID")
 }
-

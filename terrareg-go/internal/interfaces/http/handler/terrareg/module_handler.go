@@ -459,16 +459,16 @@ func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *htt
 
 	// Create command request
 	cmdReq := moduleCmd.CreateModuleProviderRequest{
-		Namespace:              namespace,
-		Module:                 name,
-		Provider:               provider,
-		GitProviderID:           body.GitProviderID,
-		RepoBaseURLTemplate:     body.RepoBaseURLTemplate,
-		RepoCloneURLTemplate:    body.RepoCloneURLTemplate,
-		RepoBrowseURLTemplate:   body.RepoBrowseURLTemplate,
-		GitTagFormat:            body.GitTagFormat,
-		GitPath:                 body.GitPath,
-		ArchiveGitPath:          body.ArchiveGitPath,
+		Namespace:             namespace,
+		Module:                name,
+		Provider:              provider,
+		GitProviderID:         body.GitProviderID,
+		RepoBaseURLTemplate:   body.RepoBaseURLTemplate,
+		RepoCloneURLTemplate:  body.RepoCloneURLTemplate,
+		RepoBrowseURLTemplate: body.RepoBrowseURLTemplate,
+		GitTagFormat:          body.GitTagFormat,
+		GitPath:               body.GitPath,
+		ArchiveGitPath:        body.ArchiveGitPath,
 	}
 
 	// Execute command

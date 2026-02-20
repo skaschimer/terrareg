@@ -71,7 +71,7 @@ type VersionDetails struct {
 // Similar to Python's ModuleVersion.get_terrareg_api_details()
 type TerraregVersionDetails struct {
 	VersionDetails
-	TerraregProviderFields    // Mixin: ModuleProvider terrareg fields (no base fields - avoids dupes)
+	TerraregProviderFields                 // Mixin: ModuleProvider terrareg fields (no base fields - avoids dupes)
 	Beta                       bool        `json:"beta"`
 	Published                  bool        `json:"published"`
 	TerraformVersionConstraint *string     `json:"terraform_version_constraint"`

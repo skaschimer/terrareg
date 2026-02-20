@@ -29,32 +29,47 @@ The provider domain provides the following capabilities:
 
 ```go
 type Provider struct {
-    id                  int
-    namespaceID         int
-    name                string
-    description         *string
-    tier                string
-    categoryID          *int
-    repositoryID        *int
+    id                    int
+    namespace            *model.Namespace  // Namespace entity reference
+    namespaceID           int               // Denormalized for persistence
+    name                  string
+    description           *string
+    tier                  string
+    categoryID            *int
+    repositoryID          *int
     useProviderSourceAuth bool
-    versions            []*ProviderVersion
-    latestVersionID     *int
+    versions              []*ProviderVersion
+    gpgKeys               []*GPGKey
+    latestVersionID       *int
 }
 ```
+
+**Key Methods**:
+- `Namespace() *model.Namespace` - Returns namespace entity
+- `Name() string` - Provider name
+- `VersionID(namespace, version string)` - Returns formatted ID (temporary, until Namespace is always populated)
 
 #### ProviderVersion Entity
 
 ```go
 type ProviderVersion struct {
-    id              int
-    providerID      int
-    version         string
-    gitTag          *string
+    id               int
+    provider         *Provider  // Parent provider reference
+    providerID       int
+    version          string
+    gitTag           *string
+    beta             bool
+    publishedAt      *time.Time
+    gpgKeyID         int
     protocolVersions []string
-    isBeta          bool
-    gpgKeyID        *string
+    binaries         []*ProviderBinary
 }
 ```
+
+**Key Methods**:
+- `FormattedID() string` - Returns `"namespace/provider/version"` (Python: ProviderVersion.id property)
+- `Provider() *Provider` - Returns parent provider
+- `Version() string` - Version string
 
 #### ProviderCategory Model
 
@@ -105,6 +120,30 @@ type ProviderCategoryRepository interface {
     FindByID(ctx context.Context, id int) (*ProviderCategory, error)
     FindAll(ctx context.Context) ([]*ProviderCategory, error)
     FindBySlug(ctx context.Context, slug string) (*ProviderCategory, error)
+}
+```
+
+#### Repository "Not Found" Pattern
+
+**Important**: The repository layer returns `(nil, nil)` for "no results", not an error:
+
+```go
+// ✅ CORRECT: Repository returns (nil, nil) for "not found"
+if errors.Is(err, gorm.ErrRecordNotFound) {
+    return nil, nil  // "no results", not an error
+}
+```
+
+**Query layer** converts to descriptive error:
+
+```go
+// Query layer handles (nil, nil) → descriptive error
+p, err := repo.FindByNamespaceAndName(ctx, namespace, name)
+if err != nil {
+    return nil, fmt.Errorf("failed to get provider: %w", err)
+}
+if p == nil {
+    return nil, fmt.Errorf("provider %s/%s not found", namespace, name)
 }
 ```
 

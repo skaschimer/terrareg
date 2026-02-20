@@ -43,13 +43,13 @@ type CreateModuleProviderRequest struct {
 	Provider  types.ModuleProviderName
 
 	// JSON body fields (optional)
-	GitProviderID           *int    `json:"git_provider_id"`
-	RepoBaseURLTemplate     *string `json:"repo_base_url_template"`
-	RepoCloneURLTemplate    *string `json:"repo_clone_url_template"`
-	RepoBrowseURLTemplate   *string `json:"repo_browse_url_template"`
-	GitTagFormat            *string `json:"git_tag_format"`
-	GitPath                 *string `json:"git_path"`
-	ArchiveGitPath          *bool   `json:"archive_git_path"`
+	GitProviderID         *int    `json:"git_provider_id"`
+	RepoBaseURLTemplate   *string `json:"repo_base_url_template"`
+	RepoCloneURLTemplate  *string `json:"repo_clone_url_template"`
+	RepoBrowseURLTemplate *string `json:"repo_browse_url_template"`
+	GitTagFormat          *string `json:"git_tag_format"`
+	GitPath               *string `json:"git_path"`
+	ArchiveGitPath        *bool   `json:"archive_git_path"`
 }
 
 // Execute executes the command

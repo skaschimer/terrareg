@@ -12,10 +12,10 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/module"
 	namespaceQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/namespace"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/presenter"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 )
 
 // NamespaceHandler handles namespace-related requests

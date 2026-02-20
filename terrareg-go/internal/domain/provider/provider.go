@@ -24,19 +24,19 @@ var (
 	ErrBinaryAlreadyExists       = errors.New("binary already exists for platform")
 
 	// Provider extraction errors
-	ErrMissingSignatureArtifact  = errors.New("signature artifact not found")
-	ErrMissingChecksumArtifact   = errors.New("checksum artifact not found")
-	ErrInvalidSignature          = errors.New("invalid signature")
-	ErrNoMatchingGPGKey          = errors.New("no matching GPG key found")
-	ErrMissingReleaseArtifact    = errors.New("release artifact not found")
-	ErrUnableToDownloadArtifact  = errors.New("unable to download artifact")
-	ErrInvalidChecksumFile       = errors.New("invalid checksum file format")
-	ErrInvalidBinaryChecksum     = errors.New("binary checksum mismatch")
-	ErrInvalidManifestFile       = errors.New("invalid manifest file")
-	ErrInvalidManifestVersion    = errors.New("invalid manifest version: only version 1 is supported")
-	ErrInvalidProtocolVersions   = errors.New("invalid protocol versions in manifest")
-	ErrUnableToObtainSource      = errors.New("unable to obtain source code")
-	ErrInvalidTarArchive         = errors.New("invalid tar archive")
+	ErrMissingSignatureArtifact = errors.New("signature artifact not found")
+	ErrMissingChecksumArtifact  = errors.New("checksum artifact not found")
+	ErrInvalidSignature         = errors.New("invalid signature")
+	ErrNoMatchingGPGKey         = errors.New("no matching GPG key found")
+	ErrMissingReleaseArtifact   = errors.New("release artifact not found")
+	ErrUnableToDownloadArtifact = errors.New("unable to download artifact")
+	ErrInvalidChecksumFile      = errors.New("invalid checksum file format")
+	ErrInvalidBinaryChecksum    = errors.New("binary checksum mismatch")
+	ErrInvalidManifestFile      = errors.New("invalid manifest file")
+	ErrInvalidManifestVersion   = errors.New("invalid manifest version: only version 1 is supported")
+	ErrInvalidProtocolVersions  = errors.New("invalid protocol versions in manifest")
+	ErrUnableToObtainSource     = errors.New("unable to obtain source code")
+	ErrInvalidTarArchive        = errors.New("invalid tar archive")
 )
 
 // GPGKey represents a GPG key value object
@@ -200,7 +200,7 @@ func (b *ProviderBinary) SetDownloadURL(downloadURL string) { b.downloadURL = do
 // ProviderVersion represents a provider version
 type ProviderVersion struct {
 	id               int
-	provider         *Provider  // Parent provider (for ID generation)
+	provider         *Provider // Parent provider (for ID generation)
 	providerID       int
 	version          string
 	gitTag           *string
@@ -260,15 +260,15 @@ func ReconstructProviderVersion(
 }
 
 // Getters
-func (pv *ProviderVersion) ID() int                  { return pv.id }
-func (pv *ProviderVersion) Provider() *Provider       { return pv.provider }
-func (pv *ProviderVersion) ProviderID() int           { return pv.providerID }
-func (pv *ProviderVersion) Version() string           { return pv.version }
-func (pv *ProviderVersion) GitTag() *string           { return pv.gitTag }
-func (pv *ProviderVersion) Beta() bool                { return pv.beta }
-func (pv *ProviderVersion) PublishedAt() *time.Time   { return pv.publishedAt }
-func (pv *ProviderVersion) GPGKeyID() int             { return pv.gpgKeyID }
-func (pv *ProviderVersion) ProtocolVersions() []string { return pv.protocolVersions }
+func (pv *ProviderVersion) ID() int                     { return pv.id }
+func (pv *ProviderVersion) Provider() *Provider         { return pv.provider }
+func (pv *ProviderVersion) ProviderID() int             { return pv.providerID }
+func (pv *ProviderVersion) Version() string             { return pv.version }
+func (pv *ProviderVersion) GitTag() *string             { return pv.gitTag }
+func (pv *ProviderVersion) Beta() bool                  { return pv.beta }
+func (pv *ProviderVersion) PublishedAt() *time.Time     { return pv.publishedAt }
+func (pv *ProviderVersion) GPGKeyID() int               { return pv.gpgKeyID }
+func (pv *ProviderVersion) ProtocolVersions() []string  { return pv.protocolVersions }
 func (pv *ProviderVersion) Binaries() []*ProviderBinary { return pv.binaries }
 
 // ID returns the formatted ID for this provider version
@@ -283,7 +283,7 @@ func (pv *ProviderVersion) FormattedID() string {
 
 // Setters for repository operations
 func (pv *ProviderVersion) SetID(id int)                          { pv.id = id }
-func (pv *ProviderVersion) SetProvider(provider *Provider)          { pv.provider = provider }
+func (pv *ProviderVersion) SetProvider(provider *Provider)        { pv.provider = provider }
 func (pv *ProviderVersion) SetProviderID(providerID int)          { pv.providerID = providerID }
 func (pv *ProviderVersion) SetVersion(version string)             { pv.version = version }
 func (pv *ProviderVersion) SetGitTag(gitTag *string)              { pv.gitTag = gitTag }
@@ -470,8 +470,8 @@ func GenerateSlugFromName(name string) string {
 // Provider represents a Terraform provider aggregate root
 type Provider struct {
 	id                    int
-	namespace            *model.Namespace  // Namespace entity (not just ID)
-	namespaceID           int               // Denormalized for persistence
+	namespace             *model.Namespace // Namespace entity (not just ID)
+	namespaceID           int              // Denormalized for persistence
 	name                  string
 	description           *string
 	tier                  string
@@ -536,9 +536,9 @@ func ReconstructProvider(
 }
 
 // Getters
-func (p *Provider) ID() int                      { return p.id }
-func (p *Provider) Namespace() *model.Namespace  { return p.namespace }
-func (p *Provider) NamespaceID() int             { return p.namespaceID }
+func (p *Provider) ID() int                     { return p.id }
+func (p *Provider) Namespace() *model.Namespace { return p.namespace }
+func (p *Provider) NamespaceID() int            { return p.namespaceID }
 func (p *Provider) Name() string                { return p.name }
 func (p *Provider) Description() *string        { return p.description }
 func (p *Provider) Tier() string                { return p.tier }

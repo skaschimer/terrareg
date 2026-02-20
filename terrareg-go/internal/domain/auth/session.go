@@ -35,16 +35,16 @@ func (s *Session) SetProviderSourceAuth(data []byte) {
 // SessionData represents the data stored in an encrypted session cookie
 // This is the data that gets encrypted and stored in the HTTP cookie
 type SessionData struct {
-	SessionID   string                 `json:"session_id"`
-	UserID      string                 `json:"user_id"`
-	Username    string                 `json:"username"`
-	AuthMethod  string                 `json:"auth_method"`
-	IsAdmin     bool                   `json:"is_admin"`
-	SiteAdmin   bool                   `json:"site_admin"`
-	UserGroups  []string               `json:"user_groups"`
-	Permissions map[string]string      `json:"permissions,omitempty"`
-	Expiry      *time.Time             `json:"expiry"`
-	LastAccessed *time.Time             `json:"last_accessed,omitempty"`
+	SessionID    string            `json:"session_id"`
+	UserID       string            `json:"user_id"`
+	Username     string            `json:"username"`
+	AuthMethod   string            `json:"auth_method"`
+	IsAdmin      bool              `json:"is_admin"`
+	SiteAdmin    bool              `json:"site_admin"`
+	UserGroups   []string          `json:"user_groups"`
+	Permissions  map[string]string `json:"permissions,omitempty"`
+	Expiry       *time.Time        `json:"expiry"`
+	LastAccessed *time.Time        `json:"last_accessed,omitempty"`
 }
 
 // SessionManager is an interface for session validation operations

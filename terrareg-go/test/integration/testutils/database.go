@@ -90,27 +90,27 @@ func SetupTestDatabase(t *testing.T) *sqldb.Database {
 // CreateTestDomainConfig creates a test domain configuration
 func CreateTestDomainConfig(t *testing.T) *model.DomainConfig {
 	return &model.DomainConfig{
-		TrustedNamespaces:         []string{"test"},
-		VerifiedModuleNamespaces:  []string{"verified"},
-		AllowModuleHosting:        model.ModuleHostingModeAllow,
-		SecretKeySet:              true,
-		OpenIDConnectEnabled:      true,
-		SAMLEnabled:               true,
-		AdminLoginEnabled:         true,
+		TrustedNamespaces:        []string{"test"},
+		VerifiedModuleNamespaces: []string{"verified"},
+		AllowModuleHosting:       model.ModuleHostingModeAllow,
+		SecretKeySet:             true,
+		OpenIDConnectEnabled:     true,
+		SAMLEnabled:              true,
+		AdminLoginEnabled:        true,
 	}
 }
 
 // CreateTestDomainConfigWithReindexMode creates a test domain configuration with custom reindex mode
 func CreateTestDomainConfigWithReindexMode(t *testing.T, reindexMode model.ModuleVersionReindexMode) *model.DomainConfig {
 	return &model.DomainConfig{
-		TrustedNamespaces:         []string{"test"},
-		VerifiedModuleNamespaces:  []string{"verified"},
-		AllowModuleHosting:        model.ModuleHostingModeAllow,
-		SecretKeySet:              true,
-		OpenIDConnectEnabled:      true,
-		SAMLEnabled:               true,
-		AdminLoginEnabled:         true,
-		ModuleVersionReindexMode:  reindexMode,
+		TrustedNamespaces:        []string{"test"},
+		VerifiedModuleNamespaces: []string{"verified"},
+		AllowModuleHosting:       model.ModuleHostingModeAllow,
+		SecretKeySet:             true,
+		OpenIDConnectEnabled:     true,
+		SAMLEnabled:              true,
+		AdminLoginEnabled:        true,
+		ModuleVersionReindexMode: reindexMode,
 	}
 }
 
@@ -133,9 +133,9 @@ func CreateTestInfraConfigWithPublicURL(t *testing.T, publicURL string) *config.
 		AdminAuthenticationToken:    "test-admin-api-key",
 		UploadApiKeys:               []string{"test-upload-key"},
 		PublishApiKeys:              []string{"test-publish-key"},
-		AdminSessionExpiryMins:      60, // 1 hour for admin sessions
-		TerraformLockTimeoutSeconds: 1800, // 30 minutes default (required for terraform operations)
-		AllowUnauthenticatedAccess:  true, // Match Python default of ALLOW_UNAUTHENTICATED_ACCESS=True
+		AdminSessionExpiryMins:      60,    // 1 hour for admin sessions
+		TerraformLockTimeoutSeconds: 1800,  // 30 minutes default (required for terraform operations)
+		AllowUnauthenticatedAccess:  true,  // Match Python default of ALLOW_UNAUTHENTICATED_ACCESS=True
 		EnableAccessControls:        false, // Match Python default of ENABLE_ACCESS_CONTROLS=False
 		// Terraform configuration for tests - prevents tfswitch from trying to prompt interactively
 		TerraformDefaultVersion: "1.5.7", // Use a specific version to avoid interactive prompts

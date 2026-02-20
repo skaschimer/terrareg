@@ -255,7 +255,7 @@ func testAuditHistoryResultFiltering(t *testing.T) {
 		},
 		{
 			"MODULE_VERSION_INDEX",
-			3, // 2 results + header
+			3,                                // 2 results + header
 			[]string{"module_version_index"}, // The action is stored as lowercase in the database
 		},
 		{

@@ -25,22 +25,22 @@ import (
 
 // AuthHandler handles authentication-related requests
 type AuthHandler struct {
-	adminLoginCmd           *authCmd.AdminLoginCommand
-	checkSessionQuery       *authQuery.CheckSessionQuery
-	isAuthenticatedQuery    *authQuery.IsAuthenticatedQuery
-	oidcLoginCmd            *authCmd.OidcLoginCommand
-	oidcCallbackCmd         *authCmd.OidcCallbackCommand
-	samlLoginCmd            *authCmd.SamlLoginCommand
-	samlMetadataCmd         *authCmd.SamlMetadataCommand
-	githubOAuthCmd          *authCmd.GithubOAuthCommand
+	adminLoginCmd            *authCmd.AdminLoginCommand
+	checkSessionQuery        *authQuery.CheckSessionQuery
+	isAuthenticatedQuery     *authQuery.IsAuthenticatedQuery
+	oidcLoginCmd             *authCmd.OidcLoginCommand
+	oidcCallbackCmd          *authCmd.OidcCallbackCommand
+	samlLoginCmd             *authCmd.SamlLoginCommand
+	samlMetadataCmd          *authCmd.SamlMetadataCommand
+	githubOAuthCmd           *authCmd.GithubOAuthCommand
 	sessionManagementService *service.SessionManagementService
-	stateStorageService     *service.StateStorageService
-	infraConfig             *config.InfrastructureConfig
-	listUserGroupsQuery     *userGroupQuery.ListUserGroupsQuery
-	createUserGroupCmd      *userGroupCmd.CreateUserGroupCommand
-	deleteUserGroupCmd      *userGroupCmd.DeleteUserGroupCommand
-	createNsPermCmd         *userGroupCmd.CreateUserGroupNamespacePermissionCommand
-	deleteNsPermCmd         *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
+	stateStorageService      *service.StateStorageService
+	infraConfig              *config.InfrastructureConfig
+	listUserGroupsQuery      *userGroupQuery.ListUserGroupsQuery
+	createUserGroupCmd       *userGroupCmd.CreateUserGroupCommand
+	deleteUserGroupCmd       *userGroupCmd.DeleteUserGroupCommand
+	createNsPermCmd          *userGroupCmd.CreateUserGroupNamespacePermissionCommand
+	deleteNsPermCmd          *userGroupCmd.DeleteUserGroupNamespacePermissionCommand
 }
 
 // NewAuthHandler creates a new auth handler
@@ -63,22 +63,22 @@ func NewAuthHandler(
 	deleteNsPermCmd *userGroupCmd.DeleteUserGroupNamespacePermissionCommand,
 ) *AuthHandler {
 	return &AuthHandler{
-		adminLoginCmd:           adminLoginCmd,
-		checkSessionQuery:       checkSessionQuery,
-		isAuthenticatedQuery:    isAuthenticatedQuery,
-		oidcLoginCmd:            oidcLoginCmd,
-		oidcCallbackCmd:         oidcCallbackCmd,
-		samlLoginCmd:            samlLoginCmd,
-		samlMetadataCmd:         samlMetadataCmd,
-		githubOAuthCmd:          githubOAuthCmd,
+		adminLoginCmd:            adminLoginCmd,
+		checkSessionQuery:        checkSessionQuery,
+		isAuthenticatedQuery:     isAuthenticatedQuery,
+		oidcLoginCmd:             oidcLoginCmd,
+		oidcCallbackCmd:          oidcCallbackCmd,
+		samlLoginCmd:             samlLoginCmd,
+		samlMetadataCmd:          samlMetadataCmd,
+		githubOAuthCmd:           githubOAuthCmd,
 		sessionManagementService: sessionManagementService,
-		stateStorageService:     stateStorageService,
-		infraConfig:             infraConfig,
-		listUserGroupsQuery:     listUserGroupsQuery,
-		createUserGroupCmd:      createUserGroupCmd,
-		deleteUserGroupCmd:      deleteUserGroupCmd,
-		createNsPermCmd:         createNsPermCmd,
-		deleteNsPermCmd:         deleteNsPermCmd,
+		stateStorageService:      stateStorageService,
+		infraConfig:              infraConfig,
+		listUserGroupsQuery:      listUserGroupsQuery,
+		createUserGroupCmd:       createUserGroupCmd,
+		deleteUserGroupCmd:       deleteUserGroupCmd,
+		createNsPermCmd:          createNsPermCmd,
+		deleteNsPermCmd:          deleteNsPermCmd,
 	}
 }
 

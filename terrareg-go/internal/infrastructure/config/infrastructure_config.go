@@ -111,11 +111,11 @@ type InfrastructureConfig struct {
 	AllowedProviders []string         `env:"ALLOWED_PROVIDERS"`
 
 	// HTTP Timeouts (in seconds)
-	StandardRequestTimeoutSeconds int `env:"STANDARD_REQUEST_TIMEOUT_SECONDS"`  // Default: 60
+	StandardRequestTimeoutSeconds int `env:"STANDARD_REQUEST_TIMEOUT_SECONDS"` // Default: 60
 	ModuleIndexingTimeoutSeconds  int `env:"MODULE_INDEXING_TIMEOUT_SECONDS"`  // Default: 1800
 
 	// Terraform Processing Timeouts (in seconds)
-	TerraformLockTimeoutSeconds int `env:"TERRAFORM_LOCK_TIMEOUT_SECONDS"`  // Default: 1800
+	TerraformLockTimeoutSeconds int `env:"TERRAFORM_LOCK_TIMEOUT_SECONDS"` // Default: 1800
 
 	// Terraform Presigned URL Configuration
 	TerraformPresignedUrlSecret        string `env:"TERRAFORM_PRESIGNED_URL_SECRET"`

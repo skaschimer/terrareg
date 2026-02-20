@@ -13,11 +13,11 @@ import (
 
 // SessionAuthMethod implements immutable authentication for session-based users
 type SessionAuthMethod struct {
-	sessionRepo     repository.SessionRepository
-	userGroupRepo   repository.UserGroupRepository
-	namespaceRepo   moduleRepo.NamespaceRepository
-	sessionManager  auth.SessionManager
-	config          *infraConfig.InfrastructureConfig
+	sessionRepo    repository.SessionRepository
+	userGroupRepo  repository.UserGroupRepository
+	namespaceRepo  moduleRepo.NamespaceRepository
+	sessionManager auth.SessionManager
+	config         *infraConfig.InfrastructureConfig
 }
 
 // NewSessionAuthMethod creates a new immutable session-based authentication method
@@ -29,11 +29,11 @@ func NewSessionAuthMethod(
 	config *infraConfig.InfrastructureConfig,
 ) *SessionAuthMethod {
 	return &SessionAuthMethod{
-		sessionRepo:     sessionRepo,
-		userGroupRepo:   userGroupRepo,
-		namespaceRepo:   namespaceRepo,
-		sessionManager:  sessionManager,
-		config:          config,
+		sessionRepo:    sessionRepo,
+		userGroupRepo:  userGroupRepo,
+		namespaceRepo:  namespaceRepo,
+		sessionManager: sessionManager,
+		config:         config,
 	}
 }
 

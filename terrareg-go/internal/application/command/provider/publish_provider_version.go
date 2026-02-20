@@ -13,7 +13,7 @@ import (
 // PublishProviderVersionCommand handles publishing a provider version
 type PublishProviderVersionCommand struct {
 	providerRepo         providerRepo.ProviderRepository
-	namespaceRepo         namespaceRepo.NamespaceRepository
+	namespaceRepo        namespaceRepo.NamespaceRepository
 	providerAuditService auditservice.ProviderAuditServiceInterface
 }
 
@@ -25,7 +25,7 @@ func NewPublishProviderVersionCommand(
 ) *PublishProviderVersionCommand {
 	return &PublishProviderVersionCommand{
 		providerRepo:         providerRepo,
-		namespaceRepo:         namespaceRepo,
+		namespaceRepo:        namespaceRepo,
 		providerAuditService: providerAuditService,
 	}
 }

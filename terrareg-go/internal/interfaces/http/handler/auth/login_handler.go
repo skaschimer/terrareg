@@ -74,10 +74,10 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		auth.AuthMethodSession,
 		req.Username,
 		true, // TODO: Implement proper admin check
-		nil, // userGroups
-		nil, // permissions
-		nil, // providerData
-		nil, // ttl - will use default
+		nil,  // userGroups
+		nil,  // permissions
+		nil,  // providerData
+		nil,  // ttl - will use default
 	)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create session and cookie")

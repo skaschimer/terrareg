@@ -29,11 +29,11 @@ func setupTestProvider(t *testing.T, id, namespaceID int, name string) *provider
 	testProvider := provider.NewProvider(
 		namespaceID,
 		name,
-		nil, // description
+		nil,         // description
 		"community", // tier
-		nil, // categoryID
-		nil, // repositoryID
-		false, // useProviderSourceAuth
+		nil,         // categoryID
+		nil,         // repositoryID
+		false,       // useProviderSourceAuth
 	)
 	testProvider.SetID(id)
 	return testProvider

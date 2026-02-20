@@ -79,7 +79,7 @@ type TestServer struct {
 	serverCtx       context.Context
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
-	originalWd      string // Original working directory to restore on shutdown
+	originalWd      string                // Original working directory to restore on shutdown
 	testDataSetup   func(*sqldb.Database) // Optional test data setup function
 }
 

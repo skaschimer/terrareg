@@ -216,8 +216,8 @@ func TestCreateSession(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.NotNil(t, session)
-		assert.True(t, session.Expiry.After(time.Now().Add(customTTL - time.Minute)))
-		assert.True(t, session.Expiry.Before(time.Now().Add(customTTL + time.Minute)))
+		assert.True(t, session.Expiry.After(time.Now().Add(customTTL-time.Minute)))
+		assert.True(t, session.Expiry.Before(time.Now().Add(customTTL+time.Minute)))
 	})
 
 	t.Run("respects max TTL limit", func(t *testing.T) {
@@ -322,8 +322,8 @@ func TestValidateSession(t *testing.T) {
 
 		// Create a session
 		session := &auth.Session{
-			ID:     "test-session-123",
-			Expiry: time.Now().Add(1 * time.Hour),
+			ID:                 "test-session-123",
+			Expiry:             time.Now().Add(1 * time.Hour),
 			ProviderSourceAuth: []byte(`{"user_id": "123"}`),
 		}
 		mockRepo.setSession("test-session-123", session)
@@ -353,8 +353,8 @@ func TestValidateSession(t *testing.T) {
 
 		// Create an expired session
 		session := &auth.Session{
-			ID:     "expired-session",
-			Expiry: time.Now().Add(-1 * time.Hour),
+			ID:                 "expired-session",
+			Expiry:             time.Now().Add(-1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.setSession("expired-session", session)
@@ -384,8 +384,8 @@ func TestValidateSession(t *testing.T) {
 
 		// Session that expired right now
 		session := &auth.Session{
-			ID:     "just-expired",
-			Expiry: time.Now().Add(-1 * time.Millisecond), // Just expired
+			ID:                 "just-expired",
+			Expiry:             time.Now().Add(-1 * time.Millisecond), // Just expired
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.setSession("just-expired", session)
@@ -406,8 +406,8 @@ func TestGetSession(t *testing.T) {
 		service := NewSessionService(mockRepo, nil)
 
 		session := &auth.Session{
-			ID:     "test-session",
-			Expiry: time.Now().Add(-1 * time.Hour), // Even expired
+			ID:                 "test-session",
+			Expiry:             time.Now().Add(-1 * time.Hour), // Even expired
 			ProviderSourceAuth: []byte(`{"data": "value"}`),
 		}
 		mockRepo.setSession("test-session", session)
@@ -451,8 +451,8 @@ func TestDeleteSession(t *testing.T) {
 
 		// Create a session
 		session := &auth.Session{
-			ID:     "to-delete",
-			Expiry: time.Now().Add(1 * time.Hour),
+			ID:                 "to-delete",
+			Expiry:             time.Now().Add(1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.setSession("to-delete", session)
@@ -499,23 +499,23 @@ func TestCleanupExpiredSessions(t *testing.T) {
 		// Create mixed sessions
 		expiryTime := time.Now()
 		mockRepo.setSession("active-1", &auth.Session{
-			ID:     "active-1",
-			Expiry: expiryTime.Add(1 * time.Hour),
+			ID:                 "active-1",
+			Expiry:             expiryTime.Add(1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 		mockRepo.setSession("active-2", &auth.Session{
-			ID:     "active-2",
-			Expiry: expiryTime.Add(2 * time.Hour),
+			ID:                 "active-2",
+			Expiry:             expiryTime.Add(2 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 		mockRepo.setSession("expired-1", &auth.Session{
-			ID:     "expired-1",
-			Expiry: expiryTime.Add(-1 * time.Hour),
+			ID:                 "expired-1",
+			Expiry:             expiryTime.Add(-1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 		mockRepo.setSession("expired-2", &auth.Session{
-			ID:     "expired-2",
-			Expiry: expiryTime.Add(-2 * time.Hour),
+			ID:                 "expired-2",
+			Expiry:             expiryTime.Add(-2 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 
@@ -550,13 +550,13 @@ func TestCleanupExpiredSessions(t *testing.T) {
 
 		expiryTime := time.Now()
 		mockRepo.setSession("expired-1", &auth.Session{
-			ID:     "expired-1",
-			Expiry: expiryTime.Add(-1 * time.Minute),
+			ID:                 "expired-1",
+			Expiry:             expiryTime.Add(-1 * time.Minute),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 		mockRepo.setSession("expired-2", &auth.Session{
-			ID:     "expired-2",
-			Expiry: expiryTime.Add(-5 * time.Minute),
+			ID:                 "expired-2",
+			Expiry:             expiryTime.Add(-5 * time.Minute),
 			ProviderSourceAuth: []byte(`{}`),
 		})
 
@@ -598,8 +598,8 @@ func TestRefreshSession(t *testing.T) {
 		// Create a session with short expiry
 		originalExpiry := time.Now().Add(10 * time.Minute)
 		session := &auth.Session{
-			ID:     "to-refresh",
-			Expiry: originalExpiry,
+			ID:                 "to-refresh",
+			Expiry:             originalExpiry,
 			ProviderSourceAuth: []byte(`{"user": "test"}`),
 		}
 		mockRepo.setSession("to-refresh", session)
@@ -637,8 +637,8 @@ func TestRefreshSession(t *testing.T) {
 		service := NewSessionService(mockRepo, config)
 
 		session := &auth.Session{
-			ID:     "to-refresh",
-			Expiry: time.Now().Add(10 * time.Minute),
+			ID:                 "to-refresh",
+			Expiry:             time.Now().Add(10 * time.Minute),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.setSession("to-refresh", session)
@@ -657,8 +657,8 @@ func TestRefreshSession(t *testing.T) {
 		service := NewSessionService(mockRepo, nil)
 
 		session := &auth.Session{
-			ID:     "to-refresh",
-			Expiry: time.Now().Add(10 * time.Minute),
+			ID:                 "to-refresh",
+			Expiry:             time.Now().Add(10 * time.Minute),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.setSession("to-refresh", session)

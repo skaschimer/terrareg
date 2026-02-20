@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
+	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
 )
 
 // GpgKeyAuditServiceInterface defines the interface for GPG key audit operations

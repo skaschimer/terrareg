@@ -23,10 +23,10 @@ type ProviderExtractionOrchestratorInterface interface {
 
 // ExtractProviderVersionCommand handles provider version extraction
 type ExtractProviderVersionCommand struct {
-	orchestrator         ProviderExtractionOrchestratorInterface
-	providerRepo         providerRepo.ProviderRepository
+	orchestrator          ProviderExtractionOrchestratorInterface
+	providerRepo          providerRepo.ProviderRepository
 	providerSourceFactory *providerSourceService.ProviderSourceFactory
-	logger               zerolog.Logger
+	logger                zerolog.Logger
 }
 
 // ExtractProviderVersionRequest contains the parameters for extraction (external API)

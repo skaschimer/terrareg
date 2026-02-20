@@ -11,14 +11,14 @@ import (
 // This handles all session-based auth: built-in admin login, SAML, OIDC, GitHub
 type SessionAuthContext struct {
 	BaseAuthContext
-	userID       int
-	username     string
-	email        string
-	sessionID    string
-	userGroups   []*UserGroup
-	permissions  map[string]string
-	isAdmin      bool
-	config       *infraConfig.InfrastructureConfig
+	userID      int
+	username    string
+	email       string
+	sessionID   string
+	userGroups  []*UserGroup
+	permissions map[string]string
+	isAdmin     bool
+	config      *infraConfig.InfrastructureConfig
 }
 
 // NewSessionAuthContext creates a new session auth context

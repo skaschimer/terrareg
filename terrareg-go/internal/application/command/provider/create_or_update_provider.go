@@ -14,7 +14,7 @@ import (
 // CreateOrUpdateProviderCommand handles creating or updating a provider
 type CreateOrUpdateProviderCommand struct {
 	providerRepo         providerRepo.ProviderRepository
-	namespaceRepo         namespaceRepo.NamespaceRepository
+	namespaceRepo        namespaceRepo.NamespaceRepository
 	providerAuditService auditservice.ProviderAuditServiceInterface
 }
 
@@ -26,7 +26,7 @@ func NewCreateOrUpdateProviderCommand(
 ) *CreateOrUpdateProviderCommand {
 	return &CreateOrUpdateProviderCommand{
 		providerRepo:         providerRepo,
-		namespaceRepo:         namespaceRepo,
+		namespaceRepo:        namespaceRepo,
 		providerAuditService: providerAuditService,
 	}
 }

@@ -13,10 +13,10 @@ import (
 
 // mockSessionRepoForCleanup is a minimal session repository mock
 type mockSessionRepoForCleanup struct {
-	mu            sync.Mutex
-	cleanupCount  int
-	cleanupError  error
-	sessions      map[string]*auth.Session
+	mu           sync.Mutex
+	cleanupCount int
+	cleanupError error
+	sessions     map[string]*auth.Session
 }
 
 func newMockSessionRepoForCleanup() *mockSessionRepoForCleanup {
@@ -415,23 +415,23 @@ func TestSessionCleanupService_ActualCleanup(t *testing.T) {
 
 		// Active session
 		activeSession := &auth.Session{
-			ID:     "active-session",
-			Expiry: now.Add(1 * time.Hour),
+			ID:                 "active-session",
+			Expiry:             now.Add(1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, activeSession)
 
 		// Expired sessions
 		expiredSession1 := &auth.Session{
-			ID:     "expired-1",
-			Expiry: now.Add(-1 * time.Hour),
+			ID:                 "expired-1",
+			Expiry:             now.Add(-1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, expiredSession1)
 
 		expiredSession2 := &auth.Session{
-			ID:     "expired-2",
-			Expiry: now.Add(-2 * time.Hour),
+			ID:                 "expired-2",
+			Expiry:             now.Add(-2 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, expiredSession2)

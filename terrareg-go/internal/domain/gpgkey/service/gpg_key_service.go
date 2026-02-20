@@ -6,9 +6,9 @@ import (
 
 	gpgkeyModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/model"
 	gpgkeyRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/repository"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/gpg"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	types "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/gpg"
 )
 
 // GPGKeyServiceInterface defines the interface for GPG key operations
