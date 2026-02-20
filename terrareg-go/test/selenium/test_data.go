@@ -318,13 +318,24 @@ func SetupCommonSearchPageTestData(t *testing.T, db *sqldb.Database) {
 	// Setup comprehensive provider search test data for the "mixed" search test
 	integrationTestUtils.SetupComprehensiveProviderSearchTestData(t, db)
 
-	// Create "initial-providers" provider for provider-only search test
-	// This ensures that searching "initial-providers" only matches providers
-	var providersearchNs sqldb.NamespaceDB
-	err := db.DB.Where("namespace = ?", "providersearch").First(&providersearchNs).Error
-	require.NoError(t, err, "Failed to find providersearch namespace")
+	// Create "initial-providers" namespace with providers for provider-only search test
+	// This ensures that searching "initial-providers" only matches providers (not modules)
+	initialProvidersNs := integrationTestUtils.CreateNamespace(t, db, "initial-providers", nil)
 
+	// Create a provider in the initial-providers namespace with a version
+	// This provider will be found when searching for "initial-providers"
 	description := "Initial provider for search tests"
-	_ = integrationTestUtils.CreateProvider(t, db, providersearchNs.ID, "initial-providers",
+	provider := integrationTestUtils.CreateProvider(t, db, initialProvidersNs.ID, "test-initial",
 		&description, sqldb.ProviderTierCommunity, nil)
+
+	// Create a GPG key for the provider
+	// CreateGPGKey(t, db, name string, providerID int, keyID string)
+	gpgKey := integrationTestUtils.CreateGPGKey(t, db, "test-gpg-key", provider.ID,
+		"E8B4C3C6FE51E8FC1AFFCC6DEA2F2F9F9989A6E5")
+
+	// Create a provider version so it appears in search results
+	// CreateProviderVersion(t, db, providerID int, version string, gpgKeyID int, beta bool, publishedAt *time.Time)
+	publishedAt := time.Now()
+	_ = integrationTestUtils.CreateProviderVersion(t, db, provider.ID, "1.5.0",
+		gpgKey.ID, false, &publishedAt)
 }

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 var testDbMutex sync.Mutex
 
 // testCounter generates unique IDs for test database files
+// Must be atomic to handle parallel subtests safely
 var testCounter int64
 
 // generateTestSigningKey generates a test RSA signing key and saves it to a file.
@@ -98,8 +100,9 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 
 	// Generate unique database file name for this test to ensure isolation
 	// This prevents test pollution when tests run sequentially
-	testCounter++
-	dbFileName := fmt.Sprintf("temp-selenium-%d.db", testCounter)
+	// Use atomic increment to handle parallel subtests safely
+	counter := atomic.AddInt64(&testCounter, 1)
+	dbFileName := fmt.Sprintf("temp-selenium-%d.db", counter)
 
 	// Generate test signing key for Terraform OIDC
 	signingKeyPath := generateTestSigningKey(t)

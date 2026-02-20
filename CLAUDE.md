@@ -143,6 +143,36 @@ type ModuleVersionRepositoryImpl struct {
 }
 ```
 
+#### Repository "Not Found" Pattern (IMPORTANT)
+
+**Repository Layer** returns `(nil, nil)` for "no results":
+- This is NOT an error - it just means the query found nothing
+- Consistent with SQL semantics: "no rows" ≠ "error"
+
+**Query/Command Layer** converts to descriptive error:
+- `(nil, nil)` → `shared.ErrNotFound` with context
+- Provides clear error messages like "module provider X not found"
+
+**Handler Layer** checks both error and nil:
+```go
+entity, err := query.Execute(ctx, params)
+if err != nil {
+    if errors.Is(err, shared.ErrNotFound) {
+        RespondError(w, http.StatusNotFound, err.Error())
+        return
+    }
+    RespondError(w, http.StatusInternalServerError, err.Error())
+    return
+}
+if entity == nil {
+    // Defensive: repository returned nil with no error
+    RespondError(w, http.StatusNotFound, "Entity not found")
+    return
+}
+```
+
+**Exception**: Delete operations return error for not found (can't delete what doesn't exist)
+
 ### Core Domain Model
 
 #### Module Aggregate (Most Important)

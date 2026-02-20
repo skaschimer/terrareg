@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 )
 
 // Domain errors for Provider aggregate
@@ -198,6 +200,7 @@ func (b *ProviderBinary) SetDownloadURL(downloadURL string) { b.downloadURL = do
 // ProviderVersion represents a provider version
 type ProviderVersion struct {
 	id               int
+	provider         *Provider  // Parent provider (for ID generation)
 	providerID       int
 	version          string
 	gitTag           *string
@@ -257,18 +260,30 @@ func ReconstructProviderVersion(
 }
 
 // Getters
-func (pv *ProviderVersion) ID() int                     { return pv.id }
-func (pv *ProviderVersion) ProviderID() int             { return pv.providerID }
-func (pv *ProviderVersion) Version() string             { return pv.version }
-func (pv *ProviderVersion) GitTag() *string             { return pv.gitTag }
-func (pv *ProviderVersion) Beta() bool                  { return pv.beta }
-func (pv *ProviderVersion) PublishedAt() *time.Time     { return pv.publishedAt }
-func (pv *ProviderVersion) GPGKeyID() int               { return pv.gpgKeyID }
-func (pv *ProviderVersion) ProtocolVersions() []string  { return pv.protocolVersions }
+func (pv *ProviderVersion) ID() int                  { return pv.id }
+func (pv *ProviderVersion) Provider() *Provider       { return pv.provider }
+func (pv *ProviderVersion) ProviderID() int           { return pv.providerID }
+func (pv *ProviderVersion) Version() string           { return pv.version }
+func (pv *ProviderVersion) GitTag() *string           { return pv.gitTag }
+func (pv *ProviderVersion) Beta() bool                { return pv.beta }
+func (pv *ProviderVersion) PublishedAt() *time.Time   { return pv.publishedAt }
+func (pv *ProviderVersion) GPGKeyID() int             { return pv.gpgKeyID }
+func (pv *ProviderVersion) ProtocolVersions() []string { return pv.protocolVersions }
 func (pv *ProviderVersion) Binaries() []*ProviderBinary { return pv.binaries }
+
+// ID returns the formatted ID for this provider version
+// Format: namespace/provider/version (Python: ProviderVersion.id property)
+// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
+func (pv *ProviderVersion) FormattedID() string {
+	if pv.provider == nil || pv.provider.namespace == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s/%s", pv.provider.namespace.Name(), pv.provider.name, pv.version)
+}
 
 // Setters for repository operations
 func (pv *ProviderVersion) SetID(id int)                          { pv.id = id }
+func (pv *ProviderVersion) SetProvider(provider *Provider)          { pv.provider = provider }
 func (pv *ProviderVersion) SetProviderID(providerID int)          { pv.providerID = providerID }
 func (pv *ProviderVersion) SetVersion(version string)             { pv.version = version }
 func (pv *ProviderVersion) SetGitTag(gitTag *string)              { pv.gitTag = gitTag }
@@ -455,7 +470,8 @@ func GenerateSlugFromName(name string) string {
 // Provider represents a Terraform provider aggregate root
 type Provider struct {
 	id                    int
-	namespaceID           int
+	namespace            *model.Namespace  // Namespace entity (not just ID)
+	namespaceID           int               // Denormalized for persistence
 	name                  string
 	description           *string
 	tier                  string
@@ -520,8 +536,9 @@ func ReconstructProvider(
 }
 
 // Getters
-func (p *Provider) ID() int                     { return p.id }
-func (p *Provider) NamespaceID() int            { return p.namespaceID }
+func (p *Provider) ID() int                      { return p.id }
+func (p *Provider) Namespace() *model.Namespace  { return p.namespace }
+func (p *Provider) NamespaceID() int             { return p.namespaceID }
 func (p *Provider) Name() string                { return p.name }
 func (p *Provider) Description() *string        { return p.description }
 func (p *Provider) Tier() string                { return p.tier }
@@ -532,6 +549,7 @@ func (p *Provider) UseProviderSourceAuth() bool { return p.useProviderSourceAuth
 
 // Setters for repository operations
 func (p *Provider) SetID(id int)                            { p.id = id }
+func (p *Provider) SetNamespace(namespace *model.Namespace) { p.namespace = namespace }
 func (p *Provider) SetNamespaceID(namespaceID int)          { p.namespaceID = namespaceID }
 func (p *Provider) SetName(name string)                     { p.name = name }
 func (p *Provider) SetDescription(description *string)      { p.description = description }
@@ -729,6 +747,14 @@ func (p *Provider) RemoveGPGKeyByKeyID(keyIdentifier string) error {
 		}
 	}
 	return ErrGPGKeyNotFound
+}
+
+// VersionID returns the formatted ID for a specific version
+// Format: namespace/provider/version (Python: ProviderVersion.id property)
+// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
+// This method is used by the DTO layer to generate the correct ID format
+func (p *Provider) VersionID(namespace string, version string) string {
+	return fmt.Sprintf("%s/%s/%s", namespace, p.name, version)
 }
 
 // Validation Functions

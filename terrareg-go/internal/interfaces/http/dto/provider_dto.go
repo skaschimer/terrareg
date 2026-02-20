@@ -76,9 +76,12 @@ func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[
 		}
 
 		// Build response matching Python's get_api_outline()
-		// ID is version ID, not provider ID
+		// ID is in format {namespace}/{provider}/{version} (Python: ProviderVersion.id property)
+		// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
+		// Use domain method Provider.VersionID() to generate the formatted ID
+		// TODO: Once repository populates Provider.namespace, use p.Namespace().Name() directly
 		data := ProviderData{
-			ID:          fmt.Sprintf("%d", versionData.VersionID),
+			ID:          p.VersionID(namespace, versionData.Version),
 			Owner:       derefString(versionData.RepositoryOwner),
 			Namespace:   namespace,
 			Name:        p.Name(),

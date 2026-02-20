@@ -161,6 +161,11 @@ func (h *ProviderHandler) HandleProviderDetails(w http.ResponseWriter, r *http.R
 		RespondError(w, http.StatusNotFound, err.Error())
 		return
 	}
+	// Defensive: ensure provider is not nil (shouldn't happen if query is correct)
+	if provider == nil {
+		RespondError(w, http.StatusNotFound, "Provider not found")
+		return
+	}
 
 	// Build response
 	response := dto.NewProviderDetailResponse(provider)

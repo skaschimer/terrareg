@@ -297,13 +297,19 @@ func toModuleVersionResponse(mv *model.ModuleVersion) moduledto.ModuleVersionRes
 }
 
 // toModuleProviderResponse converts a domain ModuleProvider model to a DTO
+// Python reference: /app/terrareg/models.py - ModuleVersion.get_api_outline()
+// ID format is {namespace}/{name}/{provider}/{version} (Python: ModuleVersion.id property)
 func toModuleProviderResponse(mp *model.ModuleProvider) moduledto.ModuleProviderResponse {
+	namespace := string(mp.Namespace().Name())
+	name := string(mp.Module())
+	provider := string(mp.Provider())
+
 	response := moduledto.ModuleProviderResponse{
 		ProviderBase: moduledto.ProviderBase{
-			ID:        fmt.Sprintf("%d", mp.ID()),
-			Namespace: string(mp.Namespace().Name()),
-			Name:      string(mp.Module()),
-			Provider:  string(mp.Provider()),
+			ID:        "", // Will be set when we have the version
+			Namespace: namespace,
+			Name:      name,
+			Provider:  provider,
 			Verified:  mp.IsVerified(),
 			Trusted:   false, // TODO: Get from namespace service
 		},
@@ -311,6 +317,10 @@ func toModuleProviderResponse(mp *model.ModuleProvider) moduledto.ModuleProvider
 
 	// Add latest version info if available
 	if latestVersion := mp.GetLatestVersion(); latestVersion != nil {
+		// Set ID using domain method: ModuleVersion.VersionedID()
+		// Python: ModuleVersion.id = '{provider_id}/{version}'
+		response.ID = string(latestVersion.VersionedID())
+
 		// Add published date
 		if publishedAt := latestVersion.PublishedAt(); publishedAt != nil {
 			publishedStr := publishedAt.Format(time.RFC3339)

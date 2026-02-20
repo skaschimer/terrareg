@@ -447,7 +447,16 @@ func (st *SeleniumTest) GetAttribute(selector, attr string) string {
 // This is different from GetAttribute which returns the initial HTML attribute value.
 func (st *SeleniumTest) GetValue(selector string) string {
 	var value string
-	err := st.runChromedp(chromedp.Value(selector, &value, nil))
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var el = document.querySelector(%q);
+					return el ? el.value : null;
+				})()
+			`, selector), &value).Do(ctx)
+		}),
+	)
 	if err != nil {
 		return ""
 	}

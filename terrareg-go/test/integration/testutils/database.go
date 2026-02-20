@@ -522,6 +522,9 @@ func CreateProviderVersion(t *testing.T, db *sqldb.Database, providerID int, ver
 	err := db.DB.Create(&providerVersion).Error
 	require.NoError(t, err)
 
+	// Update provider's latest_version_id so this version appears in search results
+	SetProviderLatestVersion(t, db, providerID, providerVersion.ID)
+
 	return providerVersion
 }
 

@@ -82,13 +82,29 @@ func testSearchFromHomepageCommonSearch(t *testing.T) {
 			searchButton.Click()
 
 			// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url(f'/search?q={search_string}'))
+			// Wait for redirect to complete and URL to match expected
 			expectedURL := st.GetURL("/search?q=" + tc.searchString)
-			currentURL := st.GetCurrentURL()
-			assert.Equal(t, expectedURL, currentURL)
+			var currentURL string
+			err := st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+				currentURL = st.GetCurrentURL()
+				if currentURL == expectedURL {
+					return nil
+				}
+				return fmt.Errorf("URL not redirected: expected %q, got %q", expectedURL, currentURL)
+			}), 100, 10)
+			require.NoError(t, err, "URL redirect failed: expected %q, but got %q", expectedURL, currentURL)
 
 			// Python: assert self.selenium_instance.title == 'Search - Terrareg'
-			title := st.GetTitle()
-			assert.Equal(t, "Search - Terrareg", title)
+			// Wait for title to update (might lag behind URL change)
+			var title string
+			err = st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+				title = st.GetTitle()
+				if title == "Search - Terrareg" {
+					return nil
+				}
+				return fmt.Errorf("Title not updated: expected %q, got %q", "Search - Terrareg", title)
+			}), 50, 10)
+			require.NoError(t, err, "Title check failed: expected %q, but got %q", "Search - Terrareg", title)
 		})
 	}
 }
@@ -128,23 +144,40 @@ func testSearchFromHomepageRedirectTypeSearch(t *testing.T) {
 			searchButton.Click()
 
 			// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url(expected_url))
+			// Wait for redirect to complete and URL to match expected
 			expectedURL := st.GetURL(tc.expectedURL)
-			currentURL := st.GetCurrentURL()
-			assert.Equal(t, expectedURL, currentURL)
+			var currentURL string
+			err := st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+				currentURL = st.GetCurrentURL()
+				if currentURL == expectedURL {
+					return nil
+				}
+				return fmt.Errorf("URL not redirected: expected %q, got %q", expectedURL, currentURL)
+			}), 100, 10)
+			require.NoError(t, err, "URL redirect failed: expected %q, but got %q", expectedURL, currentURL)
 
 			// Python: self.assert_equals(lambda: self.selenium_instance.title, expected_title)
-			title := st.GetTitle()
-			assert.Equal(t, tc.expectedTitle, title)
+			// Wait for title to update (might lag behind URL change)
+			var title string
+			err = st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+				title = st.GetTitle()
+				if title == tc.expectedTitle {
+					return nil
+				}
+				return fmt.Errorf("Title not updated: expected %q, got %q", tc.expectedTitle, title)
+			}), 50, 10)
+			require.NoError(t, err, "Title check failed: expected %q, but got %q", tc.expectedTitle, title)
 
 			// Python: assert self.selenium_instance.find_element(By.ID, 'search-query-string').get_attribute('value') == search_string
 			var actualValue string
-			st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+			err = st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
 				actualValue = st.GetValue("#search-query-string")
 				if tc.searchString == actualValue {
 					return nil
 				}
 				return fmt.Errorf("%s does not match %s", tc.searchString, actualValue)
-			}), 1000, 5)
+			}), 100, 10)
+			require.NoError(t, err, "Retry failed: expected %q to match %q, but got %q", tc.searchString, tc.searchString, actualValue)
 			assert.Equal(t, tc.searchString, actualValue)
 		})
 	}

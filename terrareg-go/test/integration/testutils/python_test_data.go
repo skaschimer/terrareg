@@ -332,7 +332,7 @@ func CreateModuleProviderWithVerified(t *testing.T, db *sqldb.Database, namespac
 
 // SetupComprehensiveProviderSearchTestData creates comprehensive provider search test data
 // matching Python's integration_test_data.py provider search data.
-// This creates providers in providersearch and contributed-providersearch namespaces.
+// This creates providers in providersearch-trusted and contributed-providersearch namespaces.
 func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) {
 	t.Helper()
 
@@ -340,46 +340,61 @@ func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) 
 	createProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	createProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
-	// Create providersearch namespace (for trusted providers)
-	providersearchNs := CreateNamespace(t, db, "providersearch", nil)
+	// Create providersearch-trusted namespace (for trusted providers)
+	// Python reference: /app/test/selenium/test_data.py - 'providersearch-trusted'
+	providersearchTrustedNs := CreateNamespace(t, db, "providersearch-trusted", nil)
 
 	// Create contributed-providersearch namespace (for contributed providers)
+	// Python reference: /app/test/selenium/test_data.py - 'contributed-providersearch'
 	contributedProvidersearchNs := CreateNamespace(t, db, "contributed-providersearch", nil)
 
 	// Create GPG keys directly in namespaces (not linked to providers yet)
-	gpgKeyProviderSearch := createGPGKeyInNamespace(t, db, providersearchNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
-
+	gpgKeyProviderSearchTrusted := createGPGKeyInNamespace(t, db, providersearchTrustedNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
 	gpgKeyContributed := createGPGKeyInNamespace(t, db, contributedProvidersearchNs.ID, "D7AA1BEFF16FA788760E54F5591EF84DC5EDCD68")
 
 	// Get category IDs
 	visibleMonitoringCat := getProviderCategoryBySlug(t, db, "visible-monitoring")
-	secondVisibleCloudCat := getProviderCategoryBySlug(t, db, "second-visible-cloud")
 
-	// ===== providersearch namespace providers =====
-	// contributedprovider-oneversion (one version)
-	provider1 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-oneversion",
-		stringPtr("DESCRIPTION-Search"), sqldb.ProviderTierOfficial, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider1.ID, "1.2.0", gpgKeyProviderSearch.ID, false)
+	// ===== providersearch-trusted namespace providers =====
+	// Python reference: /app/test/selenium/test_data.py - providersearch-trusted providers
 
-	// contributedprovider-multiversion (multiple versions)
-	provider2 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-multiversion",
-		stringPtr("DESCRIPTION-MultiVersion"), sqldb.ProviderTierOfficial, &secondVisibleCloudCat)
-	createProviderVersion(t, db, provider2.ID, "1.2.0", gpgKeyProviderSearch.ID, false)
-	createProviderVersion(t, db, provider2.ID, "1.3.0", gpgKeyProviderSearch.ID, false)
+	// mixedsearch-trusted-result (one version)
+	// Python: terraform-provider-mixedsearch-trusted-result
+	provider1 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider1.ID, "1.0.0", gpgKeyProviderSearchTrusted.ID, false)
+
+	// mixedsearch-trusted-second-result (one version)
+	// Python: terraform-provider-mixedsearch-trusted-second-result
+	provider2 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-second-result",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider2.ID, "5.2.1", gpgKeyProviderSearchTrusted.ID, false)
+
+	// mixedsearch-trusted-result-multiversion (multiple versions)
+	// Python: terraform-provider-mixedsearch-trusted-result-multiversion
+	provider3 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider3.ID, "1.2.3", gpgKeyProviderSearchTrusted.ID, false)
+	createProviderVersion(t, db, provider3.ID, "2.0.0", gpgKeyProviderSearchTrusted.ID, false)
 
 	// ===== contributed-providersearch namespace providers =====
+	// Python reference: /app/test/selenium/test_data.py - contributed-providersearch providers
+
 	// mixedsearch-result (one version)
-	provider3 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result",
+	// Python: terraform-provider-mixedsearch-result
+	provider4 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider3.ID, "1.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider4.ID, "1.0.0", gpgKeyContributed.ID, false)
 
 	// mixedsearch-result-multiversion (multiple versions - IMPORTANT for duplicate bug testing)
-	provider4 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-multiversion",
+	// Python: terraform-provider-mixedsearch-result-multiversion
+	provider5 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-multiversion",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider4.ID, "1.2.3", gpgKeyContributed.ID, false)
-	createProviderVersion(t, db, provider4.ID, "2.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider5.ID, "1.2.3", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider5.ID, "2.0.0", gpgKeyContributed.ID, false)
 
 	// mixedsearch-result-no-version (no versions - should be excluded from search)
+	// Python: terraform-provider-mixedsearch-result-no-version
 	_ = CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-no-version",
 		stringPtr("DESCRIPTION-NoVersion"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
 }
