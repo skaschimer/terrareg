@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	modulemodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	repositoryModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
@@ -899,6 +900,29 @@ func (r *ProviderRepository) GetBinaryDownloadCount(ctx context.Context, binaryI
 	return 0, nil
 }
 
+// GetTotalDownloads returns total downloads for all versions of a provider
+// Python reference: analytics.py get_provider_total_downloads()
+func (r *ProviderRepository) GetTotalDownloads(ctx context.Context, providerID int) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("analytics").
+		Joins("JOIN provider_version ON analytics.parent_module_version = provider_version.id").
+		Where("provider_version.provider_id = ?", providerID).
+		Count(&count).Error
+	return count, err
+}
+
+// GetVersionDownloads returns downloads for a specific provider version
+// Python reference: analytics.py get_provider_version_total_downloads()
+func (r *ProviderRepository) GetVersionDownloads(ctx context.Context, providerVersionID int) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("analytics").
+		Where("parent_module_version = ?", providerVersionID).
+		Count(&count).Error
+	return count, err
+}
+
 // FindDocumentationByID retrieves documentation by its ID
 func (r *ProviderRepository) FindDocumentationByID(ctx context.Context, id int) (*provider.ProviderVersionDocumentation, error) {
 	var dbDoc sqldb.ProviderVersionDocumentationDB
@@ -1091,6 +1115,46 @@ func toDBProviderDocumentation(d *provider.ProviderVersionDocumentation) *sqldb.
 
 // Mapper functions (DB → domain)
 
+// toDomainRepository converts a RepositoryDB to a domain Repository model
+// Python reference: repository_model.py::Repository
+func toDomainRepository(db *sqldb.RepositoryDB) *repositoryModel.Repository {
+	if db == nil {
+		return nil
+	}
+
+	// Handle nullable fields
+	var owner, name, cloneURL, logoURL string
+	var description *string
+
+	if db.Owner != nil {
+		owner = *db.Owner
+	}
+	if db.Name != nil {
+		name = *db.Name
+	}
+	if db.CloneURL != nil {
+		cloneURL = *db.CloneURL
+	}
+	if db.LogoURL != nil {
+		logoURL = *db.LogoURL
+	}
+	if len(db.Description) > 0 {
+		descStr := string(db.Description)
+		description = &descStr
+	}
+
+	return &repositoryModel.Repository{
+		ID:                 db.ID,
+		ProviderID:         "", // Not stored in repository table for providers
+		Name:               name,
+		Owner:              owner,
+		Description:        description,
+		CloneURL:           cloneURL,
+		LogoURL:            &logoURL,
+		ProviderSourceName: db.ProviderSourceName,
+	}
+}
+
 func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
 	// Reconstruct provider
 	p := provider.ReconstructProvider(
@@ -1116,6 +1180,13 @@ func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
 
 	namespace := moduleDb.FromDBNamespace(&db.Namespace)
 	p.SetNamespace(namespace)
+
+	// Set repository if preloaded (via Preload("Repository"))
+	// Python reference: provider_model.py lines 185-187
+	if db.Repository != nil {
+		repository := toDomainRepository(db.Repository)
+		p.SetRepository(repository)
+	}
 
 	return p
 }

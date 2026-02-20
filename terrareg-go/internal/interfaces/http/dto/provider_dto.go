@@ -213,7 +213,7 @@ func getPublicSourceURL(cloneURL *string) *string {
 
 // NewProviderDetailResponse creates a provider detail response from domain model
 // Matches Python's provider_version_model.py get_api_details() response structure
-func NewProviderDetailResponse(p *provider.Provider, versions []*provider.ProviderVersion) ProviderDetailResponse {
+func NewProviderDetailResponse(p *provider.Provider, versions []*provider.ProviderVersion, docs []*provider.ProviderVersionDocumentation, totalDownloads int64) ProviderDetailResponse {
 	// Get namespace name from provider's namespace entity
 	// The namespace should be populated by the repository's toDomainProvider conversion
 	// Data integrity: provider without namespace indicates database corruption
@@ -249,22 +249,34 @@ func NewProviderDetailResponse(p *provider.Provider, versions []*provider.Provid
 		latestVersionString = latestVersion.Version()
 	}
 
+	// Build docs array
+	// Python reference: get_api_details() - "docs": [doc.get_api_outline() for doc in ProviderVersionDocumentation.get_by_provider_version(self)]
+	docsArray := make([]Doc, 0, len(docs))
+	for _, doc := range docs {
+		docsArray = append(docsArray, Doc{
+			Name:     doc.Name(),
+			Slug:     doc.Slug(),
+			Title:    doc.Title(),
+			Category: doc.Subcategory(), // Python uses subcategory as the category in API
+		})
+	}
+
 	return ProviderDetailResponse{
 		ID:          fmt.Sprintf("%d", p.ID()),
-		Owner:       "", // TODO: Get from repository owner when available
+		Owner:       p.Owner(), // From repository owner
 		Namespace:   string(ns.Name()),
 		Name:        p.Name(),
 		Alias:       nil, // Always null in Python
 		Version:     latestVersionString,
 		Tag:         tag,
 		Description: p.Description(),
-		Source:      nil, // TODO: Get from source URL when available
+		Source:      p.SourceURL(), // From repository clone URL (with .git removed)
 		PublishedAt: publishedAt,
-		Downloads:   0, // TODO: Implement analytics integration
+		Downloads:   totalDownloads, // From analytics
 		Tier:        p.Tier(),
-		LogoURL:     nil, // TODO: Get from provider logo URL when available
+		LogoURL:     p.LogoURL(), // From repository logo URL
 		Versions:    versionStrings, // CRITICAL - enables frontend version dropdown
-		Docs:        []Doc{}, // TODO: Implement when provider documentation is available
+		Docs:        docsArray, // From provider version documentation
 	}
 }
 

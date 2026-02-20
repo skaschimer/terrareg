@@ -1048,6 +1048,7 @@ func NewContainer(
 		c.PublishProviderVersionCmd,
 		c.ManageGPGKeyCmd,
 		c.GetProviderDownloadQuery,
+		c.ProviderRepo,
 	)
 	c.ProviderLogosHandler = terrareg.NewProviderLogosHandler(c.GetProviderLogosQuery)
 	c.AuthHandler = terrareg.NewAuthHandler(

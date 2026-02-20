@@ -26,6 +26,7 @@ type ProviderHandler struct {
 	publishProviderVersionCmd *providerCommand.PublishProviderVersionCommand
 	manageGPGKeyCmd           *providerCommand.ManageGPGKeyCommand
 	getProviderDownloadQuery  *providerCommand.GetProviderDownloadQuery
+	providerRepo              providerRepo.ProviderRepository // For fetching docs and downloads
 }
 
 // NewProviderHandler creates a new provider handler
@@ -39,6 +40,7 @@ func NewProviderHandler(
 	publishProviderVersionCmd *providerCommand.PublishProviderVersionCommand,
 	manageGPGKeyCmd *providerCommand.ManageGPGKeyCommand,
 	getProviderDownloadQuery *providerCommand.GetProviderDownloadQuery,
+	providerRepo providerRepo.ProviderRepository,
 ) *ProviderHandler {
 	return &ProviderHandler{
 		listProvidersQuery:        listProvidersQuery,
@@ -50,6 +52,7 @@ func NewProviderHandler(
 		publishProviderVersionCmd: publishProviderVersionCmd,
 		manageGPGKeyCmd:           manageGPGKeyCmd,
 		getProviderDownloadQuery:  getProviderDownloadQuery,
+		providerRepo:              providerRepo,
 	}
 }
 
@@ -178,8 +181,23 @@ func (h *ProviderHandler) HandleProviderDetails(w http.ResponseWriter, r *http.R
 		versions = nil
 	}
 
-	// Build response with versions array
-	response := dto.NewProviderDetailResponse(provider, versions)
+	// Fetch documentation for the latest version (if versions exist)
+	// Python reference: get_api_details() - docs from ProviderVersionDocumentation.get_by_provider_version()
+	var docs []*providerDomain.ProviderVersionDocumentation
+	if h.providerRepo != nil && len(versions) > 0 {
+		latestVersion := versions[0]
+		docs, _ = h.providerRepo.FindDocumentationByVersion(ctx, latestVersion.ID())
+	}
+
+	// Fetch total downloads for the provider
+	// Python reference: analytics.py get_provider_total_downloads()
+	var totalDownloads int64
+	if h.providerRepo != nil {
+		totalDownloads, _ = h.providerRepo.GetTotalDownloads(ctx, provider.ID())
+	}
+
+	// Build response with versions array, docs, and downloads
+	response := dto.NewProviderDetailResponse(provider, versions, docs, totalDownloads)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -258,8 +276,21 @@ func (h *ProviderHandler) HandleCreateOrUpdateProvider(w http.ResponseWriter, r 
 		versions = v
 	}
 
+	// Fetch documentation for the latest version (if versions exist)
+	var docs []*providerDomain.ProviderVersionDocumentation
+	if h.providerRepo != nil && len(versions) > 0 {
+		latestVersion := versions[0]
+		docs, _ = h.providerRepo.FindDocumentationByVersion(ctx, latestVersion.ID())
+	}
+
+	// Fetch total downloads for the provider
+	var totalDownloads int64
+	if h.providerRepo != nil {
+		totalDownloads, _ = h.providerRepo.GetTotalDownloads(ctx, provider.ID())
+	}
+
 	// Build response (DTO constructor handles nil versions)
-	response := dto.NewProviderDetailResponse(provider, versions)
+	response := dto.NewProviderDetailResponse(provider, versions, docs, totalDownloads)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -379,8 +410,21 @@ func (h *ProviderHandler) HandleAddGPGKey(w http.ResponseWriter, r *http.Request
 	// Fetch versions for the provider
 	versions, _ := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
 
+	// Fetch documentation for the latest version (if versions exist)
+	var docs []*providerDomain.ProviderVersionDocumentation
+	if h.providerRepo != nil && len(versions) > 0 {
+		latestVersion := versions[0]
+		docs, _ = h.providerRepo.FindDocumentationByVersion(ctx, latestVersion.ID())
+	}
+
+	// Fetch total downloads for the provider
+	var totalDownloads int64
+	if h.providerRepo != nil {
+		totalDownloads, _ = h.providerRepo.GetTotalDownloads(ctx, provider.ID())
+	}
+
 	// Build response
-	response := dto.NewProviderDetailResponse(provider, versions)
+	response := dto.NewProviderDetailResponse(provider, versions, docs, totalDownloads)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -416,8 +460,21 @@ func (h *ProviderHandler) HandleRemoveGPGKey(w http.ResponseWriter, r *http.Requ
 	// Fetch versions for the provider
 	versions, _ := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
 
+	// Fetch documentation for the latest version (if versions exist)
+	var docs []*providerDomain.ProviderVersionDocumentation
+	if h.providerRepo != nil && len(versions) > 0 {
+		latestVersion := versions[0]
+		docs, _ = h.providerRepo.FindDocumentationByVersion(ctx, latestVersion.ID())
+	}
+
+	// Fetch total downloads for the provider
+	var totalDownloads int64
+	if h.providerRepo != nil {
+		totalDownloads, _ = h.providerRepo.GetTotalDownloads(ctx, provider.ID())
+	}
+
 	// Build response
-	response := dto.NewProviderDetailResponse(provider, versions)
+	response := dto.NewProviderDetailResponse(provider, versions, docs, totalDownloads)
 	RespondJSON(w, http.StatusOK, response)
 }
 

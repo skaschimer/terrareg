@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	repositoryModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/model"
 )
 
 // Domain errors for Provider aggregate
@@ -477,6 +478,7 @@ type Provider struct {
 	tier                  string
 	categoryID            *int
 	repositoryID          *int
+	repository            *repositoryModel.Repository // Repository entity (lazy-loaded)
 	latestVersionID       *int
 	useProviderSourceAuth bool
 
@@ -544,6 +546,47 @@ func (p *Provider) Description() *string        { return p.description }
 func (p *Provider) Tier() string                { return p.tier }
 func (p *Provider) CategoryID() *int            { return p.categoryID }
 func (p *Provider) RepositoryID() *int          { return p.repositoryID }
+
+// Repository returns the provider's repository entity
+// Python reference: provider_model.py lines 185-187
+func (p *Provider) Repository() *repositoryModel.Repository {
+	return p.repository
+}
+
+// Owner returns the repository owner
+// Python reference: repository_model.py lines 119-121
+func (p *Provider) Owner() string {
+	if p.repository == nil {
+		return ""
+	}
+	return p.repository.Owner
+}
+
+// LogoURL returns the repository logo URL
+// Python reference: provider_model.py lines 216-218
+func (p *Provider) LogoURL() *string {
+	if p.repository == nil {
+		return nil
+	}
+	return p.repository.LogoURL
+}
+
+// SourceURL returns the public source URL for the provider
+// Converts clone URL to public URL by removing .git suffix if present
+// Python reference: provider_model.py lines 195-198, repository_model.py get_public_source_url
+func (p *Provider) SourceURL() *string {
+	if p.repository == nil || p.repository.CloneURL == "" {
+		return nil
+	}
+	url := p.repository.CloneURL
+	// Remove .git suffix if present (matching Python behavior)
+	if len(url) > 4 && url[len(url)-4:] == ".git" {
+		trimmed := url[:len(url)-4]
+		return &trimmed
+	}
+	return &url
+}
+
 func (p *Provider) LatestVersionID() *int       { return p.latestVersionID }
 func (p *Provider) UseProviderSourceAuth() bool { return p.useProviderSourceAuth }
 
@@ -556,6 +599,14 @@ func (p *Provider) SetDescription(description *string)      { p.description = de
 func (p *Provider) SetTier(tier string)                     { p.tier = tier }
 func (p *Provider) SetCategoryID(categoryID *int)           { p.categoryID = categoryID }
 func (p *Provider) SetRepositoryID(repositoryID *int)       { p.repositoryID = repositoryID }
+
+// SetRepository sets the provider's repository entity
+// Called by repository during domain model reconstruction
+// Python reference: provider_model.py line 185-187
+func (p *Provider) SetRepository(repository *repositoryModel.Repository) {
+	p.repository = repository
+}
+
 func (p *Provider) SetLatestVersionID(latestVersionID *int) { p.latestVersionID = latestVersionID }
 func (p *Provider) SetUseProviderSourceAuth(use bool)       { p.useProviderSourceAuth = use }
 
