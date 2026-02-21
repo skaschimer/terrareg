@@ -15,7 +15,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 const (
@@ -67,7 +67,7 @@ type SourcePreparationService struct {
 	archiveProcessor   ArchiveProcessor
 	domainConfig       *configmodel.DomainConfig
 	infraConfig        *infraConfig.InfrastructureConfig
-	logger             zerolog.Logger
+	logger             logging.Logger
 }
 
 // NewSourcePreparationService creates a new source preparation service
@@ -78,7 +78,7 @@ func NewSourcePreparationService(
 	archiveProcessor ArchiveProcessor,
 	domainConfig *configmodel.DomainConfig,
 	infraConfig *infraConfig.InfrastructureConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) *SourcePreparationService {
 	return &SourcePreparationService{
 		moduleProviderRepo: moduleProviderRepo,

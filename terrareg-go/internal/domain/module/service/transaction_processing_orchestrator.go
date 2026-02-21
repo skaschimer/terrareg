@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
@@ -13,6 +12,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // TransactionProcessingOrchestrator coordinates the complete module processing pipeline
@@ -33,7 +33,7 @@ type TransactionProcessingOrchestrator struct {
 
 	// Configuration
 	domainConfig *configmodel.DomainConfig
-	logger       zerolog.Logger
+	logger       logging.Logger
 
 	// Repositories
 	moduleVersionRepo  repository.ModuleVersionRepository
@@ -52,7 +52,7 @@ func NewTransactionProcessingOrchestrator(
 	moduleCreationWrapper *ModuleCreationWrapperService,
 	savepointHelper *transaction.SavepointHelper,
 	domainConfig *configmodel.DomainConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 	moduleVersionRepo repository.ModuleVersionRepository,
 	moduleProviderRepo repository.ModuleProviderRepository,
 ) *TransactionProcessingOrchestrator {

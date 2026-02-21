@@ -4,19 +4,19 @@ import (
 	"context"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // SessionCleanupService periodically cleans up expired sessions
 type SessionCleanupService struct {
 	sessionService  *SessionService
-	logger          zerolog.Logger
+	logger          logging.Logger
 	cleanupInterval time.Duration
 	stopChan        chan struct{}
 }
 
 // NewSessionCleanupService creates a new session cleanup service
-func NewSessionCleanupService(sessionService *SessionService, logger zerolog.Logger, cleanupInterval time.Duration) *SessionCleanupService {
+func NewSessionCleanupService(sessionService *SessionService, logger logging.Logger, cleanupInterval time.Duration) *SessionCleanupService {
 	if cleanupInterval == 0 {
 		cleanupInterval = 1 * time.Hour // Default cleanup interval
 	}

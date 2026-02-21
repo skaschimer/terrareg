@@ -17,12 +17,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	domainConfigService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
@@ -75,7 +75,7 @@ type TestServer struct {
 	baseURL         string
 	db              *sqldb.Database
 	configOverrides map[string]string
-	logger          zerolog.Logger
+	logger          logging.Logger
 	serverCtx       context.Context
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
@@ -95,7 +95,7 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	ts := &TestServer{
 		t:               t,
 		configOverrides: configOverrides,
-		logger:          zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger(),
+		logger:          logging.NewTestLogger(t),
 	}
 
 	// Generate unique database file name for this test to ensure isolation

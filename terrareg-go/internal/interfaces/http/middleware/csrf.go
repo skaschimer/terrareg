@@ -4,17 +4,17 @@ import (
 	"net/http"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/security/csrf"
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // CSRFMiddleware provides CSRF protection for HTTP requests
 type CSRFMiddleware struct {
 	validator *csrf.SecureTokenValidator
-	logger    zerolog.Logger
+	logger    logging.Logger
 }
 
 // NewCSRFMiddleware creates a new CSRF middleware
-func NewCSRFMiddleware(logger zerolog.Logger) *CSRFMiddleware {
+func NewCSRFMiddleware(logger logging.Logger) *CSRFMiddleware {
 	return &CSRFMiddleware{
 		validator: csrf.NewSecureTokenValidator(),
 		logger:    logger,

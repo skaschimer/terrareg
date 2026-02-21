@@ -9,6 +9,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // mockSessionRepoForCleanup is a minimal session repository mock
@@ -80,7 +81,7 @@ func (m *mockSessionRepoForCleanup) reset() {
 }
 
 // newTestLoggerSessionCleanup creates a test logger with no output
-func newTestLoggerSessionCleanup() zerolog.Logger {
+func newTestLoggerSessionCleanup() logging.Logger {
 	return zerolog.New(zerolog.Nop()).With().Timestamp().Logger()
 }
 

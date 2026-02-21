@@ -7,22 +7,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rs/zerolog"
 
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // SubmoduleScanningService handles scanning for submodules and examples
 type SubmoduleScanningService struct {
 	domainConfig *configmodel.DomainConfig
-	logger       zerolog.Logger
+	logger       logging.Logger
 }
 
 // NewSubmoduleScanningService creates a new submodule scanning service
 func NewSubmoduleScanningService(
 	domainConfig *configmodel.DomainConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) *SubmoduleScanningService {
 	return &SubmoduleScanningService{
 		domainConfig: domainConfig,

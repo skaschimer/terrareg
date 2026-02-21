@@ -10,6 +10,7 @@ import (
 
 	domainConfigService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
 )
@@ -22,14 +23,16 @@ func main() {
 
 	// Setup logger
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zlogger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	logger := logging.NewZeroLogger(zlogger)
 
 	logger.Info().Msg("Starting Terrareg Go Server")
 
 	// Use new configuration service architecture
 	c, err := bootstrap(logger, *sslCertPrivateKey, *sslCertPublicKey)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to bootstrap application")
+		logger.Error().Err(err).Msg("Failed to bootstrap application")
+		os.Exit(1)
 	}
 
 	// Start session cleanup service
@@ -38,12 +41,13 @@ func main() {
 	// Start server
 	logger.Info().Int("port", c.InfraConfig.ListenPort).Msg("Starting HTTP server")
 	if err := c.Server.Start(); err != nil {
-		logger.Fatal().Err(err).Msg("HTTP server failed")
+		logger.Error().Err(err).Msg("HTTP server failed")
+		os.Exit(1)
 	}
 }
 
 // bootstrapWithConfigService bootstraps the application using the new configuration service
-func bootstrap(logger zerolog.Logger, sslCertPrivateKey, sslCertPublicKey string) (*container.Container, error) {
+func bootstrap(logger logging.Logger, sslCertPrivateKey, sslCertPublicKey string) (*container.Container, error) {
 	// Load configuration using the new configuration service
 	versionReader := version.NewVersionReader()
 	configService := domainConfigService.NewConfigurationService(

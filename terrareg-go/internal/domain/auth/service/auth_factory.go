@@ -13,7 +13,7 @@ import (
 	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	infraAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/auth"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // AuthFactory handles authentication with immutable AuthMethod implementations
@@ -25,7 +25,7 @@ type AuthFactory struct {
 	userGroupRepo            repository.UserGroupRepository
 	namespaceRepo            moduleRepo.NamespaceRepository
 	config                   *infraConfig.InfrastructureConfig
-	logger                   *zerolog.Logger
+	logger                   logging.Logger
 	providerSourceFactory    *provider_source_service.ProviderSourceFactory
 	sessionManagementService *SessionManagementService
 }
@@ -41,7 +41,7 @@ func NewAuthFactory(
 	oidcService *OIDCService,
 	providerSourceFactory *provider_source_service.ProviderSourceFactory,
 	sessionManagementService *SessionManagementService,
-	logger *zerolog.Logger,
+	logger logging.Logger,
 ) (*AuthFactory, error) {
 	// Validate required dependencies
 	if sessionRepo == nil {

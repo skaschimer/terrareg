@@ -8,10 +8,11 @@ import (
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // Helper function to create a test logger
-func newTestLogger() *zerolog.Logger {
+func newTestLogger() logging.Logger {
 	logger := zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger()
 	return &logger
 }

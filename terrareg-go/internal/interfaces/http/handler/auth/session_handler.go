@@ -5,22 +5,22 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rs/zerolog"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // SessionHandler handles session management requests
 type SessionHandler struct {
 	sessionManagementService *service.SessionManagementService
-	logger                   zerolog.Logger
+	logger                   logging.Logger
 }
 
 // NewSessionHandler creates a new SessionHandler
 func NewSessionHandler(
 	sessionManagementService *service.SessionManagementService,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) *SessionHandler {
 	return &SessionHandler{
 		sessionManagementService: sessionManagementService,

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/stretchr/testify/require"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
@@ -24,24 +24,10 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/webhook"
 )
 
-// testWriter is an io.Writer that writes to testing.T.Log()
-type testWriter struct {
-	t *testing.T
-}
-
-// Write implements io.Writer by writing to t.Log()
-func (tw *testWriter) Write(p []byte) (n int, err error) {
-	tw.t.Log(string(p))
-	return len(p), nil
-}
-
-// TestLogger is a no-op logger for testing (used when no *testing.T is available)
-var TestLogger = zerolog.Nop()
-
-// GetTestLogger returns a logger that outputs to testing.T.Log()
-// This integrates with Go's testing framework and shows logs with `go test -v`
-func GetTestLogger(t *testing.T) zerolog.Logger {
-	return zerolog.New(&testWriter{t: t}).With().Timestamp().Logger()
+// GetTestLogger returns a logger that only shows output on test failure
+// or when running with go test -v
+func GetTestLogger(t *testing.T) logging.Logger {
+	return logging.NewTestLogger(t)
 }
 
 // SetupTestDatabase creates an in-memory SQLite database for testing
