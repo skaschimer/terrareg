@@ -112,13 +112,9 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
 
 	// Override DATABASE_URL with unique database file
-	ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite:///%s", dbFileName)
-
-	// Clean up old database files at test start (ignore errors if they don't exist)
-	// This handles any leftover files from previous runs
-	os.Remove(dbFileName)
-	os.Remove(dbFileName + "-wal")
-	os.Remove(dbFileName + "-shm")
+	// Use relative path (two slashes) for sqlite:// so it's created in current directory
+	// NOT three slashes (sqlite:///) which would create in root directory
+	ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite://%s", dbFileName)
 
 	// Apply pre-setup options (test data setup) BEFORE setup
 	for _, opt := range opts {
@@ -127,8 +123,8 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 
 	ts.setup()
 
-	// Note: Database files are kept after test for inspection
-	// Each test uses a unique database name, so no cleanup needed
+	// Note: Database file cleanup is now handled by the bootstrap function
+	// which deletes old database files BEFORE creating the new database
 
 	// Call test data setup AFTER setup but before returning
 	// This is done here because testDataSetup needs the database to exist,
@@ -265,30 +261,19 @@ func (ts *TestServer) bootstrap() {
 	// Python tests run sequentially, so this emulates that behavior
 	testDbMutex.Lock()
 
-	// Extract database file path from DATABASE_URL config
-	// Format: sqlite:///path/to/file.db or sqlite://./path/to/file.db
-	dbPath := "temp-selenium.db" // default fallback
+	// Extract database file path from DATABASE_URL config and delete old database files
+	// This must happen BEFORE creating the new database
 	if dbURL, ok := ts.configOverrides["DATABASE_URL"]; ok {
 		// Parse sqlite:// prefix to get the actual file path
-		// Remove "sqlite:///" or "sqlite://" prefix
-		if len(dbURL) > 10 && dbURL[:10] == "sqlite://" {
-			path := dbURL[10:]
-			if len(path) > 0 && path[0] == '/' {
-				path = path[1:] // remove leading slash
-			}
-			// Get just the filename, not the full path
-			dbPath = filepath.Base(path)
+		if len(dbURL) > 9 && dbURL[:9] == "sqlite://" {
+			dbPath := dbURL[9:] // Remove "sqlite://" prefix
+			os.Remove(dbPath)
+			os.Remove(dbPath + "-wal")
+			os.Remove(dbPath + "-shm")
 		}
 	}
 
-	// Remove all database-related files atomically
-	for _, ext := range []string{"", "-wal", "-shm"} {
-		path := dbPath + ext
-		os.Remove(path) // Ignore errors if file doesn't exist
-	}
-
 	// Register cleanup function to unlock mutex after test completes
-	// Note: Database file deletion is handled by NewTestServer cleanup
 	ts.t.Cleanup(func() {
 		testDbMutex.Unlock()
 	})

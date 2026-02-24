@@ -121,7 +121,17 @@ func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[
 	for _, p := range providers {
 		// Get namespace name from provider's namespace entity
 		// The namespace should be populated by the repository
-		namespace := string(p.Namespace().Name())
+		nsEntity := p.Namespace()
+		if nsEntity == nil {
+			panic(fmt.Sprintf("CRITICAL: Provider %d (%s) has nil namespace entity! Provider ptr=%p", p.ID(), p.Name(), p))
+		}
+		namespace := string(nsEntity.Name())
+
+		// Validate provider name
+		providerName := p.Name()
+		if providerName == "" {
+			panic(fmt.Sprintf("CRITICAL: Provider %d has empty name!", p.ID()))
+		}
 
 		// Get version data for this provider
 		versionData, hasVersion := versionDataMap[p.ID()]
@@ -136,11 +146,13 @@ func NewProviderListResponse(providers []*provider.Provider, namespaceNames map[
 		// ID is in format {namespace}/{provider}/{version} (Python: ProviderVersion.id property)
 		// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
 		// Use domain method Provider.VersionID() to generate the formatted ID
+		id := p.VersionID(namespace, versionData.Version)
+
 		data := ProviderData{
-			ID:          p.VersionID(namespace, versionData.Version),
+			ID:          id,
 			Owner:       derefString(versionData.RepositoryOwner),
 			Namespace:   namespace,
-			Name:        p.Name(),
+			Name:        providerName,
 			Alias:       nil, // Always null in Python
 			Version:     versionData.Version,
 			Tag:         versionData.GitTag,

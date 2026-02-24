@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"github.com/stretchr/testify/assert"
@@ -191,8 +192,89 @@ func testCommonSearchResultCards(t *testing.T) {
 
 	st.NavigateTo("/search?q=mixed")
 
+	// Debug: Wait for page to load
+	time.Sleep(2 * time.Second)
+
+	// Debug: Check how many result-box elements exist
+	var resultBoxCount int
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					return document.querySelectorAll('#results-providers-content .result-box').length;
+				})()
+			`, &resultBoxCount).Do(ctx)
+		}),
+	)
+	t.Logf("Number of provider result boxes found: %d (error: %v)", resultBoxCount, err)
+
+	// Debug: Check page title
+	var pageTitle string
+	err = st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Title(&pageTitle).Do(ctx)
+		}),
+	)
+	t.Logf("Page title: %s (error: %v)", pageTitle, err)
+
+	// Debug: List all IDs of result-box elements
+	var allIDs []string
+	err = st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					var boxes = document.querySelectorAll('#results-providers-content .result-box');
+					return Array.from(boxes).map(b => b.id);
+				})()
+			`, &allIDs).Do(ctx)
+		}),
+	)
+	t.Logf("All result box IDs: %v (error: %v)", allIDs, err)
+
+	// Debug: Check the actual API response
+	var apiResponse string
+	err = st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(async function() {
+					try {
+						const response = await fetch('/v1/providers/search?q=mixed&include_count=true&limit=6');
+						const data = await response.json();
+						return JSON.stringify(data);
+					} catch (e) {
+						return 'Error: ' + e.message;
+					}
+				})()
+			`, &apiResponse).Do(ctx)
+		}),
+	)
+	t.Logf("API Response: %s (error: %v)", apiResponse, err)
+
+	// Wait for page to fully load before checking for elements
+	// The search page loads data asynchronously via JavaScript
+	time.Sleep(1 * time.Second)
+
+	// Debug: Check if the specific element exists before WaitForElement
+	var elementExists bool
+	err = st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					var el = document.querySelector('[id="contributed-providersearch.mixedsearch-result.1.0.0"]');
+					if (!el) return false;
+					var rect = el.getBoundingClientRect();
+					return { exists: true, visible: rect.width > 0 && rect.height > 0 };
+				})()
+			`, &elementExists).Do(ctx)
+		}),
+	)
+	t.Logf("Element exists check: %v (error: %v)", elementExists, err)
+
 	// Python: self.wait_for_element(By.ID, "contributed-providersearch.mixedsearch-result.1.0.0")
-	_ = st.WaitForElement("#contributed-providersearch.mixedsearch-result.1.0.0")
+	// Note: In Python Selenium, By.ID queries the DOM ID attribute directly
+	// In Go chromedp with CSS selectors, dots are interpreted as class separators
+	// We use attribute selector to avoid this ambiguity
+	_ = st.WaitForElement(`[id="contributed-providersearch.mixedsearch-result.1.0.0"]`)
 
 	// Python: provider_cards = [...]
 	// Python: for card in self.selenium_instance.find_element(By.ID, "results-providers-content").find_elements(By.CLASS_NAME, "result-box"):
