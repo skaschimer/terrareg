@@ -116,12 +116,12 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	// NOT three slashes (sqlite:///) which would create in root directory
 	ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite://%s", dbFileName)
 
-	// Apply pre-setup options (test data setup) BEFORE setup
+	ts.setup()
+
+	// Apply options AFTER setup (when container exists)
 	for _, opt := range opts {
 		opt(ts)
 	}
-
-	ts.setup()
 
 	// Note: Database file cleanup is now handled by the bootstrap function
 	// which deletes old database files BEFORE creating the new database
