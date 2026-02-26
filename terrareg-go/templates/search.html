@@ -120,22 +120,12 @@
     }
 
     async function displayModuleResults(results) {
-        // Clear reuslts panel before adding results
+        // Clear results panel before adding results
         $('#results-modules-content').html('');
 
-        // Debug: Show module count on page
-        $('#results-modules-content').append('<div id="debug-module-count" style="background: yellow; padding: 10px;">Received ' + results.length + ' modules</div>');
-
         // Iterate through modules
-        for (let i = 0; i < results.length; i++) {
-            let module = results[i];
-            $('#debug-module-count').append('<div>Processing ' + (i+1) + ': ' + module.namespace + '/' + module.name + '/' + module.provider + '</div>');
-            try {
-                await createSearchResultBox('results-modules-content', 'module', module);
-                $('#debug-module-count').append('<div style="color: green;">✓ Created card ' + (i+1) + '</div>');
-            } catch (e) {
-                $('#debug-module-count').append('<div style="color: red;">✗ Error creating card ' + (i+1) + ': ' + e + '</div>');
-            }
+        for (let module of results) {
+            await createSearchResultBox('results-modules-content', 'module', module);
         }
     }
 
