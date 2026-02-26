@@ -235,11 +235,11 @@ func SetupComprehensiveModuleSearchTestData(t *testing.T, db *sqldb.Database) {
 	createVersion(t, db, provider43.ID, "1.0.0", &published, nil, "", "")
 
 	// mixedsearch-trusted-second-result (published, single version)
-	provider44 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-second-result", "aws")
+	provider44 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-second-result", "datadog")
 	createVersion(t, db, provider44.ID, "5.2.1", &published, nil, "", "")
 
 	// mixedsearch-trusted-result-multiversion (published, multiple versions - IMPORTANT for duplicate bug testing)
-	provider45 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion", "aws")
+	provider45 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion", "null")
 	createVersion(t, db, provider45.ID, "1.2.3", &published, nil, "", "")
 	createVersion(t, db, provider45.ID, "2.0.0", &published, nil, "", "")
 
@@ -248,22 +248,27 @@ func SetupComprehensiveModuleSearchTestData(t *testing.T, db *sqldb.Database) {
 	createVersion(t, db, provider46.ID, "1.2.3", nil, nil, "", "")
 	createVersion(t, db, provider46.ID, "2.0.0", nil, nil, "", "")
 
+	// mixedsearch-trusted-result-verified (published, verified)
+	// Python reference: /app/test/selenium/test_data.py - mixedsearch-trusted-result-verified
+	provider47 := CreateModuleProviderWithVerified(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-verified", "gcp", true)
+	createVersion(t, db, provider47.ID, "2.0.0", &published, nil, "", "")
+
 	// ===== Additional testnamespace modules from Python unit tests =====
 	// These are important for testing edge cases like wrong version order, no versions, etc.
 
 	// wrongversionorder/testprovider - tests version sorting with various version formats
-	provider47 := CreateModuleProvider(t, db, testNs.ID, "wrongversionorder", "testprovider")
-	createVersion(t, db, provider47.ID, "1.5.4", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "2.1.0", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.1", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "10.23.0", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.10", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.0.9", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.09", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.8", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "23.2.3-beta", &published, &beta, "", "")
+	provider48 := CreateModuleProvider(t, db, testNs.ID, "wrongversionorder", "testprovider")
+	createVersion(t, db, provider48.ID, "1.5.4", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "2.1.0", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.1", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "10.23.0", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.10", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.0.9", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.09", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.8", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "23.2.3-beta", &published, &beta, "", "")
 	// Unpublished version
-	createVersion(t, db, provider47.ID, "5.21.2", nil, nil, "", "")
+	createVersion(t, db, provider48.ID, "5.21.2", nil, nil, "", "")
 
 	// noversions/testprovider - module with no versions
 	_ = CreateModuleProvider(t, db, testNs.ID, "noversions", "testprovider")

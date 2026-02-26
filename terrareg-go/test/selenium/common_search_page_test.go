@@ -192,12 +192,26 @@ func testCommonSearchResultCards(t *testing.T) {
 
 	st.NavigateTo("/search?q=mixed")
 
-	// Debug: Wait for page to load
-	time.Sleep(2 * time.Second)
+	// Debug: Wait for page to load and for JavaScript to execute
+	time.Sleep(3 * time.Second)
+
+	// Debug: Check the debug-module-count element to see JavaScript trace
+	var debugText string
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(function() {
+					var el = document.getElementById('debug-module-count');
+					return el ? el.textContent : 'debug element not found';
+				})()
+			`, &debugText).Do(ctx)
+		}),
+	)
+	t.Logf("Debug module count element text: %s (error: %v)", debugText, err)
 
 	// Debug: Check how many result-box elements exist
 	var resultBoxCount int
-	err := st.runChromedp(
+	err = st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(`
 				(function() {
@@ -248,7 +262,26 @@ func testCommonSearchResultCards(t *testing.T) {
 			`, &apiResponse).Do(ctx)
 		}),
 	)
-	t.Logf("API Response: %s (error: %v)", apiResponse, err)
+	t.Logf("Provider API Response: %s (error: %v)", apiResponse, err)
+
+	// Debug: Check the module API response
+	var moduleApiResponse string
+	err = st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(`
+				(async function() {
+					try {
+						const response = await fetch('/v1/modules/search?q=mixed&include_count=true&limit=6');
+						const data = await response.json();
+						return JSON.stringify(data);
+					} catch (e) {
+						return 'Error: ' + e.message;
+					}
+				})()
+			`, &moduleApiResponse).Do(ctx)
+		}),
+	)
+	t.Logf("Module API Response: %s (error: %v)", moduleApiResponse, err)
 
 	// Wait for page to fully load before checking for elements
 	// The search page loads data asynchronously via JavaScript
@@ -373,7 +406,7 @@ func testProviderResultsButton(t *testing.T) {
 	st.NavigateTo("/search?q=mixed")
 
 	// Python: self.wait_for_element(By.ID, "contributed-providersearch.mixedsearch-result.1.0.0")
-	_ = st.WaitForElement("#contributed-providersearch.mixedsearch-result.1.0.0")
+	_ = st.WaitForElement(`[id="contributed-providersearch.mixedsearch-result.1.0.0"]`)
 
 	// Python: button = self.selenium_instance.find_element(By.XPATH, ".//button[text()='View all provider results']")
 	// Python: button.click()
@@ -381,8 +414,18 @@ func testProviderResultsButton(t *testing.T) {
 	button.Click()
 
 	// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url('/search/providers?q=mixed'))
-	currentURL := st.GetCurrentURL()
-	assert.Equal(t, st.GetURL("/search/providers?q=mixed"), currentURL)
+	// Wait for redirect to complete
+	expectedURL := st.GetURL("/search/providers?q=mixed")
+	var currentURL string
+	err := st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+		currentURL = st.GetCurrentURL()
+		if currentURL == expectedURL {
+			return nil
+		}
+		return fmt.Errorf("URL not redirected: expected %q, got %q", expectedURL, currentURL)
+	}), 50, 10)
+	require.NoError(t, err, "URL redirect failed: expected %q, but got %q", expectedURL, currentURL)
+	assert.Equal(t, expectedURL, currentURL)
 }
 
 // testModuleResultsButton checks link to module results.
@@ -394,7 +437,7 @@ func testModuleResultsButton(t *testing.T) {
 	st.NavigateTo("/search?q=mixed")
 
 	// Python: self.wait_for_element(By.ID, "contributed-providersearch.mixedsearch-result.1.0.0")
-	_ = st.WaitForElement("#contributed-providersearch.mixedsearch-result.1.0.0")
+	_ = st.WaitForElement(`[id="contributed-providersearch.mixedsearch-result.1.0.0"]`)
 
 	// Python: button = self.selenium_instance.find_element(By.XPATH, ".//button[text()='View all module results']")
 	// Python: button.click()
@@ -415,9 +458,19 @@ func testModuleResultsButton(t *testing.T) {
 			`, nil).Do(ctx)
 		}),
 	)
-	require.NoError(st.t, err)
+	require.NoError(t, err)
 
 	// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url('/search/modules?q=mixed'))
-	currentURL := st.GetCurrentURL()
-	assert.Equal(t, st.GetURL("/search/modules?q=mixed"), currentURL)
+	// Wait for redirect to complete
+	expectedURL := st.GetURL("/search/modules?q=mixed")
+	var currentURL string
+	err = st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+		currentURL = st.GetCurrentURL()
+		if currentURL == expectedURL {
+			return nil
+		}
+		return fmt.Errorf("URL not redirected: expected %q, got %q", expectedURL, currentURL)
+	}), 50, 10)
+	require.NoError(t, err, "URL redirect failed: expected %q, but got %q", expectedURL, currentURL)
+	assert.Equal(t, expectedURL, currentURL)
 }

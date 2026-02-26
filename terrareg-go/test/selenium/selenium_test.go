@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
+	defaultTimeout = 5 * time.Second
 	pollInterval   = 100 * time.Millisecond
 )
 

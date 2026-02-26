@@ -28,7 +28,7 @@
 
         let namespaceDisplayName = details.namespace;
         let namespaceDetails = await getNamespaceDetails(details.namespace);
-        if (namespaceDetails.display_name) {
+        if (namespaceDetails && namespaceDetails.display_name) {
             namespaceDisplayName = namespaceDetails.display_name;
         }
 
@@ -123,9 +123,19 @@
         // Clear reuslts panel before adding results
         $('#results-modules-content').html('');
 
+        // Debug: Show module count on page
+        $('#results-modules-content').append('<div id="debug-module-count" style="background: yellow; padding: 10px;">Received ' + results.length + ' modules</div>');
+
         // Iterate through modules
-        for (let module of results) {
-            await createSearchResultBox('results-modules-content', 'module', module);
+        for (let i = 0; i < results.length; i++) {
+            let module = results[i];
+            $('#debug-module-count').append('<div>Processing ' + (i+1) + ': ' + module.namespace + '/' + module.name + '/' + module.provider + '</div>');
+            try {
+                await createSearchResultBox('results-modules-content', 'module', module);
+                $('#debug-module-count').append('<div style="color: green;">✓ Created card ' + (i+1) + '</div>');
+            } catch (e) {
+                $('#debug-module-count').append('<div style="color: red;">✗ Error creating card ' + (i+1) + ': ' + e + '</div>');
+            }
         }
     }
 
