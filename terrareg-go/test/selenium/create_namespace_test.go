@@ -37,6 +37,13 @@ func newCreateNamespaceTest(t *testing.T) *SeleniumTest {
 	// Create test with admin auth enabled
 	// Python: mock.patch('terrareg.config.Config.ADMIN_AUTHENTICATION_TOKEN', 'unittest-password')
 	st := NewSeleniumTestWithConfig(t, ConfigForCreateNamespaceTests())
+
+	// Create a dummy namespace to avoid the initial-setup redirect
+	// The Go implementation redirects to /initial-setup when there are no namespaces
+	// Python tests don't have this issue because they use a persistent test database
+	db := st.server.GetDB()
+	_ = integrationTestUtils.CreateNamespace(t, db, "dummy-namespace-for-setup", nil)
+
 	return st
 }
 
@@ -71,8 +78,9 @@ func testCreateNamespacePageDetails(t *testing.T) {
 	// Python: expected_labels = ['Name', 'Display Name']
 	//         for label in ...find_elements(By.TAG_NAME, 'label'):
 	//             assert label.text == expected_labels.pop(0)
-	st.AssertTextContent("#create-namespace-form label:first-child", "Name")
-	st.AssertTextContent("#create-namespace-form label:nth-child(2)", "Display Name")
+	// Use more robust selectors that match the HTML structure
+	st.AssertTextContent("#create-namespace-form .field:nth-of-type(1) label", "Name")
+	st.AssertTextContent("#create-namespace-form .field:nth-of-type(2) label", "Display Name")
 }
 
 // testCreateNamespaceBasic tests creating namespace with just the name.
@@ -236,7 +244,7 @@ func fillOutNamespaceFieldByLabel(st *SeleniumTest, label, input string) {
 // Python reference: /app/test/selenium/test_create_namespace.py - _click_create
 func clickCreateNamespaceButton(st *SeleniumTest) {
 	// Python: self.selenium_instance.find_element(By.XPATH, "//button[text()='Create Namespace']").click()
-	// In Go, we'll use a more robust selector
-	createButton := st.WaitForElement("button[type='submit']")
+	// Use XPath to find button by text content (matching Python implementation)
+	createButton := st.WaitForElement(`//button[text()='Create Namespace']`)
 	createButton.Click()
 }

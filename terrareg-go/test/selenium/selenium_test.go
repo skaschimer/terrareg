@@ -176,6 +176,9 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 		o(opt)
 	}
 
+	// Detect XPath selector (starts with //)
+	isXPath := strings.HasPrefix(selector, "//")
+
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), opt.timeout)
 	defer cancel()
 
@@ -195,7 +198,11 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 				chromedp.ActionFunc(func(ctx context.Context) error {
 					// Check if element exists
 					var textContent string
-					err := chromedp.Text(selector, &textContent, chromedp.ByQuery).Do(ctx)
+					queryOpts := chromedp.ByQuery
+					if isXPath {
+						queryOpts = chromedp.BySearch
+					}
+					err := chromedp.Text(selector, &textContent, queryOpts).Do(ctx)
 					if err != nil {
 						found = false
 						return nil
@@ -206,15 +213,30 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 						return nil
 					}
 
-					// Check if visible
-					return chromedp.Evaluate(fmt.Sprintf(`
-						(function() {
-							var el = document.querySelector(%q);
-							if (!el) return false;
-							var rect = el.getBoundingClientRect();
-							return rect.width > 0 && rect.height > 0;
-						})()
-					`, selector), &visible).Do(ctx)
+					// Check if visible - for XPath, we need different approach
+					if isXPath {
+						// For XPath, use $x() helper to get element and check visibility
+						return chromedp.Evaluate(fmt.Sprintf(`
+							(function() {
+								var els = document.evaluate(%q, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+								if (!els.snapshotLength) return false;
+								var el = els.snapshotItem(0);
+								if (!el) return false;
+								var rect = el.getBoundingClientRect();
+								return rect.width > 0 && rect.height > 0;
+							})()
+						`, selector), &visible).Do(ctx)
+					} else {
+						// For CSS selectors, use querySelector
+						return chromedp.Evaluate(fmt.Sprintf(`
+							(function() {
+								var el = document.querySelector(%q);
+								if (!el) return false;
+								var rect = el.getBoundingClientRect();
+								return rect.width > 0 && rect.height > 0;
+							})()
+						`, selector), &visible).Do(ctx)
+					}
 				}),
 			)
 
@@ -222,6 +244,7 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 				if !opt.ensureDisplayed || visible {
 					return &Element{
 						selector: selector,
+						isXPath:  isXPath,
 						ctx:      st.AllocCtx,
 						st:       st,
 					}
@@ -323,9 +346,15 @@ func (st *SeleniumTest) AssertElementExists(selector string) {
 }
 
 // AssertElementNotExists asserts that an element does not exist in the DOM.
+// Uses a short timeout to quickly fail if the element exists.
+// Python reference: /app/test/selenium/test_homepage.py - pytest.raises(NoSuchElementException)
 func (st *SeleniumTest) AssertElementNotExists(selector string) {
+	// Create a context with a short timeout (500ms) to quickly check if element exists
+	ctx, cancel := context.WithTimeout(st.AllocCtx, 500*time.Millisecond)
+	defer cancel()
+
 	var text string
-	err := st.runChromedp(chromedp.Text(selector, &text, chromedp.ByQuery))
+	err := chromedp.Run(ctx, chromedp.Text(selector, &text, chromedp.ByQuery))
 	assert.Error(st.t, err, "Element should not exist: %s", selector)
 }
 
@@ -366,6 +395,7 @@ func WithoutVisibilityCheck() ElementOption {
 // This is the Go equivalent of Python's WebElement.
 type Element struct {
 	selector string
+	isXPath  bool
 	ctx      context.Context
 	st       *SeleniumTest
 }
@@ -373,14 +403,22 @@ type Element struct {
 // Text returns the text content of the element.
 func (e *Element) Text() string {
 	var text string
-	err := e.st.runChromedp(chromedp.Text(e.selector, &text, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Text(e.selector, &text, queryOpts))
 	require.NoError(e.st.t, err, "Failed to get text for element: %s", e.selector)
 	return text
 }
 
 // Click clicks the element.
 func (e *Element) Click() {
-	err := e.st.runChromedp(chromedp.Click(e.selector, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Click(e.selector, queryOpts))
 	require.NoError(e.st.t, err, "Failed to click element: %s", e.selector)
 }
 
@@ -404,13 +442,21 @@ func (e *Element) IsDisplayed() bool {
 // Exists returns true if the element exists in the DOM.
 func (e *Element) Exists() bool {
 	var text string
-	err := e.st.runChromedp(chromedp.Text(e.selector, &text, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Text(e.selector, &text, queryOpts))
 	return err == nil
 }
 
 // SendKeys sends keystrokes to the element.
 func (e *Element) SendKeys(keys string) {
-	err := e.st.runChromedp(chromedp.SendKeys(e.selector, keys, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.SendKeys(e.selector, keys, queryOpts))
 	require.NoError(e.st.t, err, "Failed to send keys to element: %s", e.selector)
 }
 
