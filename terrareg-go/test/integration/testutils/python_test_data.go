@@ -235,11 +235,11 @@ func SetupComprehensiveModuleSearchTestData(t *testing.T, db *sqldb.Database) {
 	createVersion(t, db, provider43.ID, "1.0.0", &published, nil, "", "")
 
 	// mixedsearch-trusted-second-result (published, single version)
-	provider44 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-second-result", "aws")
+	provider44 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-second-result", "datadog")
 	createVersion(t, db, provider44.ID, "5.2.1", &published, nil, "", "")
 
 	// mixedsearch-trusted-result-multiversion (published, multiple versions - IMPORTANT for duplicate bug testing)
-	provider45 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion", "aws")
+	provider45 := CreateModuleProvider(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion", "null")
 	createVersion(t, db, provider45.ID, "1.2.3", &published, nil, "", "")
 	createVersion(t, db, provider45.ID, "2.0.0", &published, nil, "", "")
 
@@ -248,22 +248,27 @@ func SetupComprehensiveModuleSearchTestData(t *testing.T, db *sqldb.Database) {
 	createVersion(t, db, provider46.ID, "1.2.3", nil, nil, "", "")
 	createVersion(t, db, provider46.ID, "2.0.0", nil, nil, "", "")
 
+	// mixedsearch-trusted-result-verified (published, verified)
+	// Python reference: /app/test/selenium/test_data.py - mixedsearch-trusted-result-verified
+	provider47 := CreateModuleProviderWithVerified(t, db, modulesearchTrustedNs.ID, "mixedsearch-trusted-result-verified", "gcp", true)
+	createVersion(t, db, provider47.ID, "2.0.0", &published, nil, "", "")
+
 	// ===== Additional testnamespace modules from Python unit tests =====
 	// These are important for testing edge cases like wrong version order, no versions, etc.
 
 	// wrongversionorder/testprovider - tests version sorting with various version formats
-	provider47 := CreateModuleProvider(t, db, testNs.ID, "wrongversionorder", "testprovider")
-	createVersion(t, db, provider47.ID, "1.5.4", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "2.1.0", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.1", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "10.23.0", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.10", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.0.9", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.09", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "0.1.8", &published, nil, "", "")
-	createVersion(t, db, provider47.ID, "23.2.3-beta", &published, &beta, "", "")
+	provider48 := CreateModuleProvider(t, db, testNs.ID, "wrongversionorder", "testprovider")
+	createVersion(t, db, provider48.ID, "1.5.4", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "2.1.0", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.1", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "10.23.0", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.10", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.0.9", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.09", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "0.1.8", &published, nil, "", "")
+	createVersion(t, db, provider48.ID, "23.2.3-beta", &published, &beta, "", "")
 	// Unpublished version
-	createVersion(t, db, provider47.ID, "5.21.2", nil, nil, "", "")
+	createVersion(t, db, provider48.ID, "5.21.2", nil, nil, "", "")
 
 	// noversions/testprovider - module with no versions
 	_ = CreateModuleProvider(t, db, testNs.ID, "noversions", "testprovider")
@@ -332,7 +337,7 @@ func CreateModuleProviderWithVerified(t *testing.T, db *sqldb.Database, namespac
 
 // SetupComprehensiveProviderSearchTestData creates comprehensive provider search test data
 // matching Python's integration_test_data.py provider search data.
-// This creates providers in providersearch and contributed-providersearch namespaces.
+// This creates providers in providersearch-trusted and contributed-providersearch namespaces.
 func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) {
 	t.Helper()
 
@@ -340,46 +345,61 @@ func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) 
 	createProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	createProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
-	// Create providersearch namespace (for trusted providers)
-	providersearchNs := CreateNamespace(t, db, "providersearch", nil)
+	// Create providersearch-trusted namespace (for trusted providers)
+	// Python reference: /app/test/selenium/test_data.py - 'providersearch-trusted'
+	providersearchTrustedNs := CreateNamespace(t, db, "providersearch-trusted", nil)
 
 	// Create contributed-providersearch namespace (for contributed providers)
+	// Python reference: /app/test/selenium/test_data.py - 'contributed-providersearch'
 	contributedProvidersearchNs := CreateNamespace(t, db, "contributed-providersearch", nil)
 
 	// Create GPG keys directly in namespaces (not linked to providers yet)
-	gpgKeyProviderSearch := createGPGKeyInNamespace(t, db, providersearchNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
-
+	gpgKeyProviderSearchTrusted := createGPGKeyInNamespace(t, db, providersearchTrustedNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
 	gpgKeyContributed := createGPGKeyInNamespace(t, db, contributedProvidersearchNs.ID, "D7AA1BEFF16FA788760E54F5591EF84DC5EDCD68")
 
 	// Get category IDs
 	visibleMonitoringCat := getProviderCategoryBySlug(t, db, "visible-monitoring")
-	secondVisibleCloudCat := getProviderCategoryBySlug(t, db, "second-visible-cloud")
 
-	// ===== providersearch namespace providers =====
-	// contributedprovider-oneversion (one version)
-	provider1 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-oneversion",
-		stringPtr("DESCRIPTION-Search"), sqldb.ProviderTierOfficial, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider1.ID, "1.2.0", gpgKeyProviderSearch.ID, false)
+	// ===== providersearch-trusted namespace providers =====
+	// Python reference: /app/test/selenium/test_data.py - providersearch-trusted providers
 
-	// contributedprovider-multiversion (multiple versions)
-	provider2 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-multiversion",
-		stringPtr("DESCRIPTION-MultiVersion"), sqldb.ProviderTierOfficial, &secondVisibleCloudCat)
-	createProviderVersion(t, db, provider2.ID, "1.2.0", gpgKeyProviderSearch.ID, false)
-	createProviderVersion(t, db, provider2.ID, "1.3.0", gpgKeyProviderSearch.ID, false)
+	// mixedsearch-trusted-result (one version)
+	// Python: terraform-provider-mixedsearch-trusted-result
+	provider1 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider1.ID, "1.0.0", gpgKeyProviderSearchTrusted.ID, false)
+
+	// mixedsearch-trusted-second-result (one version)
+	// Python: terraform-provider-mixedsearch-trusted-second-result
+	provider2 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-second-result",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider2.ID, "5.2.1", gpgKeyProviderSearchTrusted.ID, false)
+
+	// mixedsearch-trusted-result-multiversion (multiple versions)
+	// Python: terraform-provider-mixedsearch-trusted-result-multiversion
+	provider3 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion",
+		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider3.ID, "1.2.3", gpgKeyProviderSearchTrusted.ID, false)
+	createProviderVersion(t, db, provider3.ID, "2.0.0", gpgKeyProviderSearchTrusted.ID, false)
 
 	// ===== contributed-providersearch namespace providers =====
+	// Python reference: /app/test/selenium/test_data.py - contributed-providersearch providers
+
 	// mixedsearch-result (one version)
-	provider3 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result",
+	// Python: terraform-provider-mixedsearch-result
+	provider4 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider3.ID, "1.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider4.ID, "1.0.0", gpgKeyContributed.ID, false)
 
 	// mixedsearch-result-multiversion (multiple versions - IMPORTANT for duplicate bug testing)
-	provider4 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-multiversion",
+	// Python: terraform-provider-mixedsearch-result-multiversion
+	provider5 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-multiversion",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider4.ID, "1.2.3", gpgKeyContributed.ID, false)
-	createProviderVersion(t, db, provider4.ID, "2.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider5.ID, "1.2.3", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider5.ID, "2.0.0", gpgKeyContributed.ID, false)
 
 	// mixedsearch-result-no-version (no versions - should be excluded from search)
+	// Python: terraform-provider-mixedsearch-result-no-version
 	_ = CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-no-version",
 		stringPtr("DESCRIPTION-NoVersion"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
 }
@@ -454,6 +474,15 @@ func createProviderVersion(t *testing.T, db *sqldb.Database, providerID int, ver
 func createProviderCategory(t *testing.T, db *sqldb.Database, name, slug string, userSelectable bool) sqldb.ProviderCategoryDB {
 	t.Helper()
 
+	// First, try to find existing category by slug
+	var existingCategory sqldb.ProviderCategoryDB
+	err := db.DB.Where("slug = ?", slug).First(&existingCategory).Error
+	if err == nil {
+		// Category already exists, return it
+		return existingCategory
+	}
+
+	// Category doesn't exist, create it
 	namePtr := &name
 	category := sqldb.ProviderCategoryDB{
 		Name:           namePtr,
@@ -461,7 +490,7 @@ func createProviderCategory(t *testing.T, db *sqldb.Database, name, slug string,
 		UserSelectable: userSelectable,
 	}
 
-	err := db.DB.Create(&category).Error
+	err = db.DB.Create(&category).Error
 	require.NoError(t, err)
 
 	return category

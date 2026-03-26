@@ -13,21 +13,21 @@ import (
 	provider_source_service "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	infraAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/auth"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // AuthFactory handles authentication with immutable AuthMethod implementations
 // It uses AuthMethod factories to create AuthContext instances with authentication state
 type AuthFactory struct {
-	authMethods               []auth.AuthMethod
-	mutex                     sync.RWMutex
-	sessionRepo               repository.SessionRepository
-	userGroupRepo             repository.UserGroupRepository
-	namespaceRepo             moduleRepo.NamespaceRepository
-	config                    *infraConfig.InfrastructureConfig
-	logger                    *zerolog.Logger
-	providerSourceFactory     *provider_source_service.ProviderSourceFactory
-	sessionManagementService  *SessionManagementService
+	authMethods              []auth.AuthMethod
+	mutex                    sync.RWMutex
+	sessionRepo              repository.SessionRepository
+	userGroupRepo            repository.UserGroupRepository
+	namespaceRepo            moduleRepo.NamespaceRepository
+	config                   *infraConfig.InfrastructureConfig
+	logger                   logging.Logger
+	providerSourceFactory    *provider_source_service.ProviderSourceFactory
+	sessionManagementService *SessionManagementService
 }
 
 // NewAuthFactory creates a new immutable authentication factory
@@ -41,7 +41,7 @@ func NewAuthFactory(
 	oidcService *OIDCService,
 	providerSourceFactory *provider_source_service.ProviderSourceFactory,
 	sessionManagementService *SessionManagementService,
-	logger *zerolog.Logger,
+	logger logging.Logger,
 ) (*AuthFactory, error) {
 	// Validate required dependencies
 	if sessionRepo == nil {
@@ -244,15 +244,15 @@ func (af *AuthFactory) AuthenticateRequest(ctx context.Context, headers, formDat
 // Used only when HTTP response is needed (e.g., for backward compatibility)
 func NewAuthenticationResponseFromAuthContext(authCtx auth.AuthContext) *model.AuthenticationResponse {
 	response := &model.AuthenticationResponse{
-		Success:           authCtx.IsAuthenticated(),
-		AuthMethod:        authCtx.GetProviderType(),
-		Username:          authCtx.GetUsername(),
-		IsAdmin:           authCtx.IsAdmin(),
-		UserGroups:        authCtx.GetUserGroupNames(),
-		Permissions:       authCtx.GetAllNamespacePermissions(),
-		CanPublish:        authCtx.CanPublishModuleVersion(""),
-		CanUpload:         authCtx.CanUploadModuleVersion(""),
-		CanAccessAPI:      authCtx.CanAccessReadAPI(),
+		Success:            authCtx.IsAuthenticated(),
+		AuthMethod:         authCtx.GetProviderType(),
+		Username:           authCtx.GetUsername(),
+		IsAdmin:            authCtx.IsAdmin(),
+		UserGroups:         authCtx.GetUserGroupNames(),
+		Permissions:        authCtx.GetAllNamespacePermissions(),
+		CanPublish:         authCtx.CanPublishModuleVersion(""),
+		CanUpload:          authCtx.CanUploadModuleVersion(""),
+		CanAccessAPI:       authCtx.CanAccessReadAPI(),
 		CanAccessTerraform: authCtx.CanAccessTerraformAPI(),
 	}
 

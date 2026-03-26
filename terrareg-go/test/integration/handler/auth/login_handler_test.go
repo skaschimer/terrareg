@@ -22,7 +22,7 @@ func TestLoginHandler_HandleLogin_Success_ValidCredentials(t *testing.T) {
 
 	// Create handler with real dependencies
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with valid credentials
@@ -84,7 +84,7 @@ func TestLoginHandler_HandleLogin_Failure_InvalidUsername(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with empty username
@@ -119,7 +119,7 @@ func TestLoginHandler_HandleLogin_Failure_InvalidPassword(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with empty password
@@ -154,7 +154,7 @@ func TestLoginHandler_HandleLogin_Failure_EmptyUsername(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with no username field
@@ -182,7 +182,7 @@ func TestLoginHandler_HandleLogin_Failure_EmptyPassword(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with no password field
@@ -210,7 +210,7 @@ func TestLoginHandler_HandleLogin_CreatesSessionInDatabase(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request
@@ -263,7 +263,7 @@ func TestLoginHandler_HandleLogin_SetsEncryptedCookie(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request
@@ -308,7 +308,7 @@ func TestLoginHandler_HandleLogout_Success_WithSession(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request
@@ -348,7 +348,7 @@ func TestLoginHandler_HandleLogout_Success_ClearsCookie(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request
@@ -381,7 +381,7 @@ func TestLoginHandler_HandleLogout_Success_WithoutSession(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request without any session cookie
@@ -407,7 +407,7 @@ func TestLoginHandler_HandleLogin_InvalidRequestMethod(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with GET method instead of POST
@@ -428,7 +428,7 @@ func TestLoginHandler_HandleLogin_InvalidRequestBody(t *testing.T) {
 
 	// Create handler
 	sessionManagementService, _ := testutils.CreateTestSessionManagementService(t, db)
-	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.TestLogger)
+	handler, err := auth.NewLoginHandler(sessionManagementService, testutils.GetTestLogger(t))
 	require.NoError(t, err)
 
 	// Create request with invalid JSON

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rs/zerolog"
-)
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
+)
 // TerraformIDPValidator interface for token validation (implemented by domain service)
 type TerraformIDPValidator interface {
 	ValidateToken(ctx context.Context, token string) (interface{}, error)
@@ -88,12 +88,12 @@ func getString(m map[string]interface{}, key string) string {
 // terraformIDP is a complete implementation of TerraformIDP interface
 type terraformIDP struct {
 	terraformIDPService TerraformIDPValidator
-	logger              *zerolog.Logger
+	logger              logging.Logger
 	enabled             bool
 }
 
 // NewTerraformIDP creates a Terraform IDP implementation
-func NewTerraformIDP(terraformIDPService TerraformIDPValidator, logger *zerolog.Logger, enabled bool) TerraformIDP {
+func NewTerraformIDP(terraformIDPService TerraformIDPValidator, logger logging.Logger, enabled bool) TerraformIDP {
 	return &terraformIDP{
 		terraformIDPService: terraformIDPService,
 		logger:              logger,

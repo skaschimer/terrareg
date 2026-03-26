@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/rs/zerolog"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // SessionMiddleware handles session management for HTTP requests
@@ -15,11 +15,11 @@ import (
 // It does NOT require authentication - just adds auth info if available
 type SessionMiddleware struct {
 	authFactory *authservice.AuthFactory
-	logger      zerolog.Logger
+	logger      logging.Logger
 }
 
 // NewSessionMiddleware creates a new session middleware
-func NewSessionMiddleware(authFactory *authservice.AuthFactory, logger zerolog.Logger) *SessionMiddleware {
+func NewSessionMiddleware(authFactory *authservice.AuthFactory, logger logging.Logger) *SessionMiddleware {
 	return &SessionMiddleware{
 		authFactory: authFactory,
 		logger:      logger,

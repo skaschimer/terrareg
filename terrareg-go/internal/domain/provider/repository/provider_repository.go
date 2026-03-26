@@ -128,4 +128,12 @@ type ProviderRepository interface {
 
 	// GetBinaryDownloadCount returns the download count for a binary
 	GetBinaryDownloadCount(ctx context.Context, binaryID int) (int64, error)
+
+	// GetTotalDownloads returns total downloads for all versions of a provider
+	// Python reference: analytics.py get_provider_total_downloads()
+	GetTotalDownloads(ctx context.Context, providerID int) (int64, error)
+
+	// GetVersionDownloads returns downloads for a specific provider version
+	// Python reference: analytics.py get_provider_version_total_downloads()
+	GetVersionDownloads(ctx context.Context, providerVersionID int) (int64, error)
 }

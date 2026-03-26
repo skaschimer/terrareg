@@ -9,8 +9,8 @@ import (
 
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
 )
 
 // AnalyticsHandler handles analytics-related requests

@@ -13,15 +13,16 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
 	analyticsQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/analytics"
 	domainConfigService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/container"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/version"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
@@ -31,6 +32,10 @@ import (
 // Python tests run sequentially, but Go runs tests in parallel by default
 // This mutex ensures only one test uses the database at a time
 var testDbMutex sync.Mutex
+
+// testCounter generates unique IDs for test database files
+// Must be atomic to handle parallel subtests safely
+var testCounter int64
 
 // generateTestSigningKey generates a test RSA signing key and saves it to a file.
 // This is required for Terraform OIDC tests.
@@ -53,6 +58,9 @@ func generateTestSigningKey(t *testing.T) string {
 	err = os.WriteFile(keyPath, privateKeyBytes, 0600)
 	require.NoError(t, err, "Failed to write signing key file")
 
+	// Note: Go's testing framework will clean up tmpDir automatically
+	// To inspect signing key on failure, check the temporary directory path
+
 	return keyPath
 }
 
@@ -67,11 +75,12 @@ type TestServer struct {
 	baseURL         string
 	db              *sqldb.Database
 	configOverrides map[string]string
-	logger          zerolog.Logger
+	logger          logging.Logger
 	serverCtx       context.Context
 	serverCancel    context.CancelFunc
 	serverWg        sync.WaitGroup
-	originalWd      string // Original working directory to restore on shutdown
+	originalWd      string                // Original working directory to restore on shutdown
+	testDataSetup   func(*sqldb.Database) // Optional test data setup function
 }
 
 // TestServerOption is a function that configures the test server after container creation.
@@ -86,8 +95,14 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	ts := &TestServer{
 		t:               t,
 		configOverrides: configOverrides,
-		logger:          zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger(),
+		logger:          logging.NewTestLogger(t),
 	}
+
+	// Generate unique database file name for this test to ensure isolation
+	// This prevents test pollution when tests run sequentially
+	// Use atomic increment to handle parallel subtests safely
+	counter := atomic.AddInt64(&testCounter, 1)
+	dbFileName := fmt.Sprintf("temp-selenium-%d.db", counter)
 
 	// Generate test signing key for Terraform OIDC
 	signingKeyPath := generateTestSigningKey(t)
@@ -96,11 +111,26 @@ func NewTestServer(t *testing.T, configOverrides map[string]string, opts ...Test
 	}
 	ts.configOverrides["TERRAFORM_OIDC_IDP_SIGNING_KEY_PATH"] = signingKeyPath
 
+	// Override DATABASE_URL with unique database file
+	// Use relative path (two slashes) for sqlite:// so it's created in current directory
+	// NOT three slashes (sqlite:///) which would create in root directory
+	ts.configOverrides["DATABASE_URL"] = fmt.Sprintf("sqlite://%s", dbFileName)
+
 	ts.setup()
 
-	// Apply test server options (e.g., mock repositories)
+	// Apply options AFTER setup (when container exists)
 	for _, opt := range opts {
 		opt(ts)
+	}
+
+	// Note: Database file cleanup is now handled by the bootstrap function
+	// which deletes old database files BEFORE creating the new database
+
+	// Call test data setup AFTER setup but before returning
+	// This is done here because testDataSetup needs the database to exist,
+	// but it should happen before the server handles requests
+	if ts.testDataSetup != nil {
+		ts.testDataSetup(ts.db)
 	}
 
 	return ts
@@ -231,22 +261,20 @@ func (ts *TestServer) bootstrap() {
 	// Python tests run sequentially, so this emulates that behavior
 	testDbMutex.Lock()
 
-	// Clean up old database file if it exists (matching Python test behavior)
-	// Python tests reuse the same database file, so each test needs to handle cleanup
-	dbPath := "temp-selenium.db"
-
-	// Remove all database-related files atomically
-	for _, ext := range []string{"", "-wal", "-shm"} {
-		path := dbPath + ext
-		os.Remove(path) // Ignore errors if file doesn't exist
+	// Extract database file path from DATABASE_URL config and delete old database files
+	// This must happen BEFORE creating the new database
+	if dbURL, ok := ts.configOverrides["DATABASE_URL"]; ok {
+		// Parse sqlite:// prefix to get the actual file path
+		if len(dbURL) > 9 && dbURL[:9] == "sqlite://" {
+			dbPath := dbURL[9:] // Remove "sqlite://" prefix
+			os.Remove(dbPath)
+			os.Remove(dbPath + "-wal")
+			os.Remove(dbPath + "-shm")
+		}
 	}
 
-	// Register cleanup function to delete database after test completes
+	// Register cleanup function to unlock mutex after test completes
 	ts.t.Cleanup(func() {
-		os.Remove(dbPath)
-		os.Remove(dbPath + "-wal")
-		os.Remove(dbPath + "-shm")
-		// Unlock mutex for next test
 		testDbMutex.Unlock()
 	})
 

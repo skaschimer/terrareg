@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rs/zerolog"
 
 	configModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	gpgkeyModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/model"
@@ -15,20 +14,21 @@ import (
 	providerSourceModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // ProviderExtractionOrchestrator orchestrates the complete provider extraction workflow
 // Python reference: provider_extractor.py::ProviderExtractor.process_version
 type ProviderExtractionOrchestrator struct {
 	gpgService              *ProviderExtractionGPGService
-	sourceExtractionService  *ProviderSourceExtractionService
-	binaryProcessingService  *ProviderBinaryProcessingService
-	documentationService     *ProviderDocumentationService
-	providerRepo             ProviderRepository
-	gpgKeyRepo               repository.GPGKeyRepository
-	providerSourceFactory    *providerSourceService.ProviderSourceFactory
-	config                   *configModel.DomainConfig
-	logger                   zerolog.Logger
+	sourceExtractionService *ProviderSourceExtractionService
+	binaryProcessingService *ProviderBinaryProcessingService
+	documentationService    *ProviderDocumentationService
+	providerRepo            ProviderRepository
+	gpgKeyRepo              repository.GPGKeyRepository
+	providerSourceFactory   *providerSourceService.ProviderSourceFactory
+	config                  *configModel.DomainConfig
+	logger                  logging.Logger
 }
 
 // ProviderRepository defines the provider repository interface needed for extraction
@@ -48,18 +48,18 @@ func NewProviderExtractionOrchestrator(
 	gpgKeyRepo repository.GPGKeyRepository,
 	providerSourceFactory *providerSourceService.ProviderSourceFactory,
 	config *configModel.DomainConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) *ProviderExtractionOrchestrator {
 	return &ProviderExtractionOrchestrator{
 		gpgService:              gpgService,
-		sourceExtractionService:  sourceExtractionService,
-		binaryProcessingService:  binaryProcessingService,
-		documentationService:     documentationService,
-		providerRepo:             providerRepo,
-		gpgKeyRepo:               gpgKeyRepo,
-		providerSourceFactory:    providerSourceFactory,
-		config:                   config,
-		logger:                   logger,
+		sourceExtractionService: sourceExtractionService,
+		binaryProcessingService: binaryProcessingService,
+		documentationService:    documentationService,
+		providerRepo:            providerRepo,
+		gpgKeyRepo:              gpgKeyRepo,
+		providerSourceFactory:   providerSourceFactory,
+		config:                  config,
+		logger:                  logger,
 	}
 }
 
@@ -154,11 +154,11 @@ func (o *ProviderExtractionOrchestrator) ExtractProviderVersion(
 		archiveURL = fmt.Sprintf("archive/%s.tar.gz", req.GitTag)
 	}
 	releaseMetadata := &providerSourceModel.RepositoryReleaseMetadata{
-		Name:       fmt.Sprintf("Release %s", req.Version),
-		Tag:        req.GitTag,
-		ArchiveURL: archiveURL,
-		CommitHash: "", // Not needed for extraction
-		ProviderID: 0, // Not needed for extraction
+		Name:             fmt.Sprintf("Release %s", req.Version),
+		Tag:              req.GitTag,
+		ArchiveURL:       archiveURL,
+		CommitHash:       "", // Not needed for extraction
+		ProviderID:       0,  // Not needed for extraction
 		ReleaseArtifacts: []*providerSourceModel.ReleaseArtifactMetadata{},
 	}
 

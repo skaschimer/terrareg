@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
@@ -22,6 +21,7 @@ import (
 	http_middleware "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
 	terrareg_middleware "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/template"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // Server represents the HTTP server
@@ -29,7 +29,7 @@ type Server struct {
 	router                      *chi.Mux
 	infraConfig                 *config.InfrastructureConfig
 	domainConfig                *model.DomainConfig
-	logger                      zerolog.Logger
+	logger                      logging.Logger
 	NamespaceHandler            *terrareg.NamespaceHandler
 	ModuleHandler               *terrareg.ModuleHandler
 	SubmoduleHandler            *terrareg.SubmoduleHandler
@@ -64,7 +64,7 @@ type Server struct {
 func NewServer(
 	infraConfig *config.InfrastructureConfig,
 	domainConfig *model.DomainConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 	namespaceHandler *terrareg.NamespaceHandler,
 	moduleHandler *terrareg.ModuleHandler,
 	submoduleHandler *terrareg.SubmoduleHandler,

@@ -28,7 +28,7 @@
 
         let namespaceDisplayName = details.namespace;
         let namespaceDetails = await getNamespaceDetails(details.namespace);
-        if (namespaceDetails.display_name) {
+        if (namespaceDetails && namespaceDetails.display_name) {
             namespaceDisplayName = namespaceDetails.display_name;
         }
 
@@ -120,7 +120,7 @@
     }
 
     async function displayModuleResults(results) {
-        // Clear reuslts panel before adding results
+        // Clear results panel before adding results
         $('#results-modules-content').html('');
 
         // Iterate through modules

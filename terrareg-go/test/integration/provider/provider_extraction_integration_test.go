@@ -19,11 +19,11 @@ func TestProviderExtractionOrchestrator_BinaryProcessing(t *testing.T) {
 	binaryService := providerService.NewProviderBinaryProcessingService(nil)
 
 	tests := []struct {
-		name           string
-		filename       string
-		expectedOS     string
-		expectedArch   string
-		shouldFail     bool
+		name         string
+		filename     string
+		expectedOS   string
+		expectedArch string
+		shouldFail   bool
 	}{
 		{
 			name:         "Linux amd64",

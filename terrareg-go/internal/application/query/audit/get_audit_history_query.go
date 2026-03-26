@@ -22,9 +22,9 @@ type GetAuditHistoryRequest struct {
 // Matches Python response format with object fields
 type GetAuditHistoryResponse struct {
 	Data            []map[string]interface{} `json:"data"`
-	Draw            int                     `json:"draw"`
-	RecordsTotal    int                     `json:"recordsTotal"`
-	RecordsFiltered int                     `json:"recordsFiltered"`
+	Draw            int                      `json:"draw"`
+	RecordsTotal    int                      `json:"recordsTotal"`
+	RecordsFiltered int                      `json:"recordsFiltered"`
 }
 
 // GetAuditHistoryQuery retrieves audit history with pagination

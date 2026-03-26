@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog"
 
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	providerService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/service"
 	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
-)
 
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
+)
 // ProviderExtractionOrchestratorInterface defines the interface for provider extraction orchestration
 type ProviderExtractionOrchestratorInterface interface {
 	ExtractProviderVersion(
@@ -23,10 +23,10 @@ type ProviderExtractionOrchestratorInterface interface {
 
 // ExtractProviderVersionCommand handles provider version extraction
 type ExtractProviderVersionCommand struct {
-	orchestrator         ProviderExtractionOrchestratorInterface
-	providerRepo         providerRepo.ProviderRepository
+	orchestrator          ProviderExtractionOrchestratorInterface
+	providerRepo          providerRepo.ProviderRepository
 	providerSourceFactory *providerSourceService.ProviderSourceFactory
-	logger               zerolog.Logger
+	logger                logging.Logger
 }
 
 // ExtractProviderVersionRequest contains the parameters for extraction (external API)
@@ -43,7 +43,7 @@ func NewExtractProviderVersionCommand(
 	orchestrator ProviderExtractionOrchestratorInterface,
 	providerRepo providerRepo.ProviderRepository,
 	providerSourceFactory *providerSourceService.ProviderSourceFactory,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) *ExtractProviderVersionCommand {
 	return &ExtractProviderVersionCommand{
 		orchestrator:          orchestrator,

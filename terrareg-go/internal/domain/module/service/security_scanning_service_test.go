@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
-	types "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
+	types "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -330,24 +330,24 @@ func TestSecurityScanResult_PythonTfsecFormat_AllFields(t *testing.T) {
 
 	// Simulate tfsec JSON output matching Python format exactly
 	tfsecResult := map[string]interface{}{
-		"rule_id":          "AVD-AWS-0098",
-		"long_id":          "aws-ssm-secret-use-customer-key",
-		"description":      "Secret explicitly uses the default key.",
-		"impact":           "Using AWS managed keys reduces flexibility",
-		"links":            []interface{}{"https://aquasecurity.github.io/tfsec/v1.26.0/checks/aws/ssm/secret-use-customer-key/"},
+		"rule_id":     "AVD-AWS-0098",
+		"long_id":     "aws-ssm-secret-use-customer-key",
+		"description": "Secret explicitly uses the default key.",
+		"impact":      "Using AWS managed keys reduces flexibility",
+		"links":       []interface{}{"https://aquasecurity.github.io/tfsec/v1.26.0/checks/aws/ssm/secret-use-customer-key/"},
 		"location": map[string]interface{}{
 			"filename":   "main.tf",
 			"start_line": float64(2),
 			"end_line":   float64(4),
 		},
-		"resolution":      "Use customer managed keys",
-		"resource":        "aws_secretsmanager_secret.this",
+		"resolution":       "Use customer managed keys",
+		"resource":         "aws_secretsmanager_secret.this",
 		"rule_description": "Secrets Manager should use customer managed keys",
-		"rule_provider":   "aws",
-		"rule_service":    "ssm",
-		"severity":        "LOW",
-		"status":          float64(0), // 0=FAIL
-		"warning":         false,
+		"rule_provider":    "aws",
+		"rule_service":     "ssm",
+		"severity":         "LOW",
+		"status":           float64(0), // 0=FAIL
+		"warning":          false,
 	}
 
 	// Call processSingleResult - this is what actually parses the JSON
@@ -365,7 +365,7 @@ func TestSecurityScanResult_PythonTfsecFormat_AllFields(t *testing.T) {
 	assert.Equal(t, "aws", result.RuleProvider)
 	assert.Equal(t, "ssm", result.RuleService)
 	assert.Equal(t, "LOW", result.Severity)
-	assert.Equal(t, 0, result.Status)     // 0 = FAIL
+	assert.Equal(t, 0, result.Status) // 0 = FAIL
 	assert.False(t, result.Warning)
 	assert.Equal(t, "main.tf", result.Location.Filename)
 	assert.Equal(t, 2, result.Location.StartLine)
@@ -668,11 +668,11 @@ func TestSecurityScanningService_processResults_PathStripping(t *testing.T) {
 	results := map[string]interface{}{
 		"results": []interface{}{
 			map[string]interface{}{
-				"rule_id": "AWS001",
+				"rule_id":  "AWS001",
 				"severity": "HIGH",
 				"title":    "Test Issue",
 				"location": map[string]interface{}{
-					"filename":  "/tmp/test/module/main.tf",
+					"filename":   "/tmp/test/module/main.tf",
 					"start_line": float64(10),
 					"end_line":   float64(15),
 				},
@@ -696,22 +696,22 @@ func TestSecurityScanningService_processResults_MultipleResults(t *testing.T) {
 	results := map[string]interface{}{
 		"results": []interface{}{
 			map[string]interface{}{
-				"rule_id":   "AWS001",
-				"severity":  "CRITICAL",
-				"title":     "Critical Issue",
-				"location":  map[string]interface{}{},
+				"rule_id":  "AWS001",
+				"severity": "CRITICAL",
+				"title":    "Critical Issue",
+				"location": map[string]interface{}{},
 			},
 			map[string]interface{}{
-				"rule_id":   "AWS002",
-				"severity":  "HIGH",
-				"title":     "High Issue",
-				"location":  map[string]interface{}{},
+				"rule_id":  "AWS002",
+				"severity": "HIGH",
+				"title":    "High Issue",
+				"location": map[string]interface{}{},
 			},
 			map[string]interface{}{
-				"rule_id":   "AWS003",
-				"severity":  "LOW",
-				"title":     "Low Issue",
-				"location":  map[string]interface{}{},
+				"rule_id":  "AWS003",
+				"severity": "LOW",
+				"title":    "Low Issue",
+				"location": map[string]interface{}{},
 			},
 		},
 	}

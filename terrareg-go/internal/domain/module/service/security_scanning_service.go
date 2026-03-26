@@ -19,11 +19,11 @@ import (
 
 // SecurityScanningService handles tfsec security scanning of module versions with transaction safety
 type SecurityScanningService struct {
-	moduleFileService  *ModuleFileService
-	moduleVersionRepo  moduleRepo.ModuleVersionRepository
-	moduleDetailsRepo  moduleRepo.ModuleDetailsRepository
-	savepointHelper    *transaction.SavepointHelper
-	commandService     service.SystemCommandService
+	moduleFileService *ModuleFileService
+	moduleVersionRepo moduleRepo.ModuleVersionRepository
+	moduleDetailsRepo moduleRepo.ModuleDetailsRepository
+	savepointHelper   *transaction.SavepointHelper
+	commandService    service.SystemCommandService
 }
 
 // NewSecurityScanningService creates a new security scanning service with transaction support
@@ -65,18 +65,18 @@ type SecurityScanRequest struct {
 // Matches Python tfsec format from test_data.py (lines 101-124)
 type SecurityScanResult struct {
 	RuleID          string               `json:"rule_id"`
-	LongID          string               `json:"long_id"`           // Full rule identifier (e.g., "aws-ssm-secret-use-customer-key")
+	LongID          string               `json:"long_id"` // Full rule identifier (e.g., "aws-ssm-secret-use-customer-key")
 	Severity        string               `json:"severity"`
-	Title           string               `json:"title"`             // Deprecated: Use RuleDescription
-	Description     string               `json:"description"`       // Issue description
-	Impact          string               `json:"impact"`            // Impact of the security issue
-	Resolution      string               `json:"resolution"`        // How to fix the issue
-	Resource        string               `json:"resource"`          // Resource name (e.g., "aws_secretsmanager_secret.this")
-	RuleDescription string               `json:"rule_description"`  // Description of the rule
-	RuleProvider    string               `json:"rule_provider"`     // Provider name (e.g., "aws")
-	RuleService     string               `json:"rule_service"`      // Service name (e.g., "ssm")
-	Status          int                  `json:"status"`            // 0=FAIL, 1=PASS, 2=SKIP
-	Warning         bool                 `json:"warning"`           // Whether this is a warning
+	Title           string               `json:"title"`            // Deprecated: Use RuleDescription
+	Description     string               `json:"description"`      // Issue description
+	Impact          string               `json:"impact"`           // Impact of the security issue
+	Resolution      string               `json:"resolution"`       // How to fix the issue
+	Resource        string               `json:"resource"`         // Resource name (e.g., "aws_secretsmanager_secret.this")
+	RuleDescription string               `json:"rule_description"` // Description of the rule
+	RuleProvider    string               `json:"rule_provider"`    // Provider name (e.g., "aws")
+	RuleService     string               `json:"rule_service"`     // Service name (e.g., "ssm")
+	Status          int                  `json:"status"`           // 0=FAIL, 1=PASS, 2=SKIP
+	Warning         bool                 `json:"warning"`          // Whether this is a warning
 	Location        SecurityScanLocation `json:"location"`
 	Links           []string             `json:"links,omitempty"`
 }

@@ -25,11 +25,11 @@ func TestBuildDomainConfig_SAMLEnabled_DelegatesToSAMLService(t *testing.T) {
 
 	// All SAML fields set with valid values
 	allSAMLRawConfig := map[string]string{
-		"PUBLIC_URL":              "https://sp.example.com",
-		"SAML2_ENTITY_ID":         "https://sp.example.com",
-		"SAML2_IDP_METADATA_URL":  "https://idp.example.com/metadata",
-		"SAML2_PUBLIC_KEY":        "-----BEGIN CERTIFICATE-----\nMIIBI...\n-----END CERTIFICATE-----",
-		"SAML2_PRIVATE_KEY":       "-----BEGIN PRIVATE KEY-----\nMIIEv...\n-----END PRIVATE KEY-----",
+		"PUBLIC_URL":             "https://sp.example.com",
+		"SAML2_ENTITY_ID":        "https://sp.example.com",
+		"SAML2_IDP_METADATA_URL": "https://idp.example.com/metadata",
+		"SAML2_PUBLIC_KEY":       "-----BEGIN CERTIFICATE-----\nMIIBI...\n-----END CERTIFICATE-----",
+		"SAML2_PRIVATE_KEY":      "-----BEGIN PRIVATE KEY-----\nMIIEv...\n-----END PRIVATE KEY-----",
 	}
 
 	mergeConfig := func(base, overlay map[string]string) map[string]string {
@@ -127,7 +127,7 @@ func TestBuildDomainConfig_OIDCEnabled_DelegatesToOIDCService(t *testing.T) {
 
 	// All OIDC fields set with valid values
 	allOIDCRawConfig := map[string]string{
-		"OPENID_CONNECT_ISSUER":       "https://oidc.example.com",
+		"OPENID_CONNECT_ISSUER":        "https://oidc.example.com",
 		"OPENID_CONNECT_CLIENT_ID":     "client123",
 		"OPENID_CONNECT_CLIENT_SECRET": "secret123",
 	}
@@ -175,11 +175,11 @@ func TestBuildDomainConfig_OIDCEnabled_DelegatesToOIDCService(t *testing.T) {
 // This mirrors the logic in configuration_service.buildInfrastructureConfig
 func buildTestInfrastructureConfig(rawConfig map[string]string) *config.InfrastructureConfig {
 	return &config.InfrastructureConfig{
-		PublicURL:           rawConfig["PUBLIC_URL"],
-		SAML2EntityID:       rawConfig["SAML2_ENTITY_ID"],
-		SAML2IDPMetadataURL: rawConfig["SAML2_IDP_METADATA_URL"],
-		SAML2PublicKey:      rawConfig["SAML2_PUBLIC_KEY"],
-		SAML2PrivateKey:     rawConfig["SAML2_PRIVATE_KEY"],
+		PublicURL:                 rawConfig["PUBLIC_URL"],
+		SAML2EntityID:             rawConfig["SAML2_ENTITY_ID"],
+		SAML2IDPMetadataURL:       rawConfig["SAML2_IDP_METADATA_URL"],
+		SAML2PublicKey:            rawConfig["SAML2_PUBLIC_KEY"],
+		SAML2PrivateKey:           rawConfig["SAML2_PRIVATE_KEY"],
 		OpenIDConnectIssuer:       rawConfig["OPENID_CONNECT_ISSUER"],
 		OpenIDConnectClientID:     rawConfig["OPENID_CONNECT_CLIENT_ID"],
 		OpenIDConnectClientSecret: rawConfig["OPENID_CONNECT_CLIENT_SECRET"],

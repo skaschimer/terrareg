@@ -14,7 +14,7 @@ import (
 // CreateOrUpdateProviderCommand handles creating or updating a provider
 type CreateOrUpdateProviderCommand struct {
 	providerRepo         providerRepo.ProviderRepository
-	namespaceRepo         namespaceRepo.NamespaceRepository
+	namespaceRepo        namespaceRepo.NamespaceRepository
 	providerAuditService auditservice.ProviderAuditServiceInterface
 }
 
@@ -26,7 +26,7 @@ func NewCreateOrUpdateProviderCommand(
 ) *CreateOrUpdateProviderCommand {
 	return &CreateOrUpdateProviderCommand{
 		providerRepo:         providerRepo,
-		namespaceRepo:         namespaceRepo,
+		namespaceRepo:        namespaceRepo,
 		providerAuditService: providerAuditService,
 	}
 }
@@ -82,6 +82,9 @@ func (c *CreateOrUpdateProviderCommand) Execute(ctx context.Context, req CreateO
 		nil,   // RepositoryID
 		false, // UseProviderSourceAuth
 	)
+
+	// Set namespace entity on provider for proper data access
+	newProvider.SetNamespace(namespace)
 
 	if err := c.providerRepo.Save(ctx, newProvider); err != nil {
 		return nil, fmt.Errorf("failed to save provider: %w", err)

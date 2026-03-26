@@ -15,7 +15,7 @@ const (
 // authContext represents the minimal auth context we need for audit logging
 // This mirrors the structure in middleware/model/auth_context.go
 type authContext struct {
-	Username         string
+	Username        string
 	IsAuthenticated bool
 }
 

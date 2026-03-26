@@ -129,9 +129,9 @@ func TestSessionCipher_Decrypt_InvalidInputs(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name      string
-		input     string
-		wantErr   error
+		name        string
+		input       string
+		wantErr     error
 		errContains string
 	}{
 		{

@@ -10,15 +10,16 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // mockAuditHistoryRepository is a mock for testing
 type mockAuditHistoryRepository struct {
-	mu          sync.Mutex
+	mu           sync.Mutex
 	createCalled bool
 	createCount  int
 	createError  error
-	lastAudit   *model.AuditHistory
+	lastAudit    *model.AuditHistory
 }
 
 func (m *mockAuditHistoryRepository) Search(ctx context.Context, query model.AuditHistorySearchQuery) (*model.AuditHistorySearchResult, error) {
@@ -43,7 +44,7 @@ func (m *mockAuditHistoryRepository) Create(ctx context.Context, audit *model.Au
 }
 
 // newTestLogger creates a test logger that writes to a strings.Builder
-func newAuditTestLogger() (*zerolog.Logger, *strings.Builder) {
+func newAuditTestLogger() (logging.Logger, *strings.Builder) {
 	var output strings.Builder
 	logger := zerolog.New(&output).With().Timestamp().Logger()
 	return &logger, &output

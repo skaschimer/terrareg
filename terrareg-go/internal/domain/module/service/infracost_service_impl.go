@@ -10,13 +10,13 @@ import (
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
 	URLService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // InfracostServiceImpl handles cost analysis of module examples using Infracost CLI
 type InfracostServiceImpl struct {
 	config         *InfracostConfig
-	logger         zerolog.Logger
+	logger         logging.Logger
 	commandService service.SystemCommandService
 	urlService     URLService.URLService
 }
@@ -35,7 +35,7 @@ type InfracostConfig struct {
 // NewInfracostService creates a new InfracostService implementation
 func NewInfracostService(
 	config *InfracostConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 	commandService service.SystemCommandService,
 	urlService *URLService.URLService,
 ) (*InfracostServiceImpl, error) {

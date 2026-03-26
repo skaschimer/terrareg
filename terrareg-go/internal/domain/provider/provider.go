@@ -8,6 +8,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	repositoryModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/model"
 )
 
 // Domain errors for Provider aggregate
@@ -22,19 +25,19 @@ var (
 	ErrBinaryAlreadyExists       = errors.New("binary already exists for platform")
 
 	// Provider extraction errors
-	ErrMissingSignatureArtifact  = errors.New("signature artifact not found")
-	ErrMissingChecksumArtifact   = errors.New("checksum artifact not found")
-	ErrInvalidSignature          = errors.New("invalid signature")
-	ErrNoMatchingGPGKey          = errors.New("no matching GPG key found")
-	ErrMissingReleaseArtifact    = errors.New("release artifact not found")
-	ErrUnableToDownloadArtifact  = errors.New("unable to download artifact")
-	ErrInvalidChecksumFile       = errors.New("invalid checksum file format")
-	ErrInvalidBinaryChecksum     = errors.New("binary checksum mismatch")
-	ErrInvalidManifestFile       = errors.New("invalid manifest file")
-	ErrInvalidManifestVersion    = errors.New("invalid manifest version: only version 1 is supported")
-	ErrInvalidProtocolVersions   = errors.New("invalid protocol versions in manifest")
-	ErrUnableToObtainSource      = errors.New("unable to obtain source code")
-	ErrInvalidTarArchive         = errors.New("invalid tar archive")
+	ErrMissingSignatureArtifact = errors.New("signature artifact not found")
+	ErrMissingChecksumArtifact  = errors.New("checksum artifact not found")
+	ErrInvalidSignature         = errors.New("invalid signature")
+	ErrNoMatchingGPGKey         = errors.New("no matching GPG key found")
+	ErrMissingReleaseArtifact   = errors.New("release artifact not found")
+	ErrUnableToDownloadArtifact = errors.New("unable to download artifact")
+	ErrInvalidChecksumFile      = errors.New("invalid checksum file format")
+	ErrInvalidBinaryChecksum    = errors.New("binary checksum mismatch")
+	ErrInvalidManifestFile      = errors.New("invalid manifest file")
+	ErrInvalidManifestVersion   = errors.New("invalid manifest version: only version 1 is supported")
+	ErrInvalidProtocolVersions  = errors.New("invalid protocol versions in manifest")
+	ErrUnableToObtainSource     = errors.New("unable to obtain source code")
+	ErrInvalidTarArchive        = errors.New("invalid tar archive")
 )
 
 // GPGKey represents a GPG key value object
@@ -198,6 +201,7 @@ func (b *ProviderBinary) SetDownloadURL(downloadURL string) { b.downloadURL = do
 // ProviderVersion represents a provider version
 type ProviderVersion struct {
 	id               int
+	provider         *Provider // Parent provider (for ID generation)
 	providerID       int
 	version          string
 	gitTag           *string
@@ -258,6 +262,7 @@ func ReconstructProviderVersion(
 
 // Getters
 func (pv *ProviderVersion) ID() int                     { return pv.id }
+func (pv *ProviderVersion) Provider() *Provider         { return pv.provider }
 func (pv *ProviderVersion) ProviderID() int             { return pv.providerID }
 func (pv *ProviderVersion) Version() string             { return pv.version }
 func (pv *ProviderVersion) GitTag() *string             { return pv.gitTag }
@@ -267,8 +272,19 @@ func (pv *ProviderVersion) GPGKeyID() int               { return pv.gpgKeyID }
 func (pv *ProviderVersion) ProtocolVersions() []string  { return pv.protocolVersions }
 func (pv *ProviderVersion) Binaries() []*ProviderBinary { return pv.binaries }
 
+// ID returns the formatted ID for this provider version
+// Format: namespace/provider/version (Python: ProviderVersion.id property)
+// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
+func (pv *ProviderVersion) FormattedID() string {
+	if pv.provider == nil || pv.provider.namespace == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s/%s", pv.provider.namespace.Name(), pv.provider.name, pv.version)
+}
+
 // Setters for repository operations
 func (pv *ProviderVersion) SetID(id int)                          { pv.id = id }
+func (pv *ProviderVersion) SetProvider(provider *Provider)        { pv.provider = provider }
 func (pv *ProviderVersion) SetProviderID(providerID int)          { pv.providerID = providerID }
 func (pv *ProviderVersion) SetVersion(version string)             { pv.version = version }
 func (pv *ProviderVersion) SetGitTag(gitTag *string)              { pv.gitTag = gitTag }
@@ -455,12 +471,14 @@ func GenerateSlugFromName(name string) string {
 // Provider represents a Terraform provider aggregate root
 type Provider struct {
 	id                    int
-	namespaceID           int
+	namespace             *model.Namespace // Namespace entity (not just ID)
+	namespaceID           int              // Denormalized for persistence
 	name                  string
 	description           *string
 	tier                  string
 	categoryID            *int
 	repositoryID          *int
+	repository            *repositoryModel.Repository // Repository entity (lazy-loaded)
 	latestVersionID       *int
 	useProviderSourceAuth bool
 
@@ -521,23 +539,74 @@ func ReconstructProvider(
 
 // Getters
 func (p *Provider) ID() int                     { return p.id }
+func (p *Provider) Namespace() *model.Namespace { return p.namespace }
 func (p *Provider) NamespaceID() int            { return p.namespaceID }
 func (p *Provider) Name() string                { return p.name }
 func (p *Provider) Description() *string        { return p.description }
 func (p *Provider) Tier() string                { return p.tier }
 func (p *Provider) CategoryID() *int            { return p.categoryID }
 func (p *Provider) RepositoryID() *int          { return p.repositoryID }
+
+// Repository returns the provider's repository entity
+// Python reference: provider_model.py lines 185-187
+func (p *Provider) Repository() *repositoryModel.Repository {
+	return p.repository
+}
+
+// Owner returns the repository owner
+// Python reference: repository_model.py lines 119-121
+func (p *Provider) Owner() string {
+	if p.repository == nil {
+		return ""
+	}
+	return p.repository.Owner
+}
+
+// LogoURL returns the repository logo URL
+// Python reference: provider_model.py lines 216-218
+func (p *Provider) LogoURL() *string {
+	if p.repository == nil {
+		return nil
+	}
+	return p.repository.LogoURL
+}
+
+// SourceURL returns the public source URL for the provider
+// Converts clone URL to public URL by removing .git suffix if present
+// Python reference: provider_model.py lines 195-198, repository_model.py get_public_source_url
+func (p *Provider) SourceURL() *string {
+	if p.repository == nil || p.repository.CloneURL == "" {
+		return nil
+	}
+	url := p.repository.CloneURL
+	// Remove .git suffix if present (matching Python behavior)
+	if len(url) > 4 && url[len(url)-4:] == ".git" {
+		trimmed := url[:len(url)-4]
+		return &trimmed
+	}
+	return &url
+}
+
 func (p *Provider) LatestVersionID() *int       { return p.latestVersionID }
 func (p *Provider) UseProviderSourceAuth() bool { return p.useProviderSourceAuth }
 
 // Setters for repository operations
 func (p *Provider) SetID(id int)                            { p.id = id }
+func (p *Provider) SetNamespace(namespace *model.Namespace) { p.namespace = namespace }
 func (p *Provider) SetNamespaceID(namespaceID int)          { p.namespaceID = namespaceID }
 func (p *Provider) SetName(name string)                     { p.name = name }
 func (p *Provider) SetDescription(description *string)      { p.description = description }
 func (p *Provider) SetTier(tier string)                     { p.tier = tier }
 func (p *Provider) SetCategoryID(categoryID *int)           { p.categoryID = categoryID }
 func (p *Provider) SetRepositoryID(repositoryID *int)       { p.repositoryID = repositoryID }
+
+// SetRepository sets the provider's repository entity
+// Called by repository during domain model reconstruction
+// Python reference: provider_model.py line 185-187
+func (p *Provider) SetRepository(repository *repositoryModel.Repository) {
+	p.repository = repository
+}
+
 func (p *Provider) SetLatestVersionID(latestVersionID *int) { p.latestVersionID = latestVersionID }
 func (p *Provider) SetUseProviderSourceAuth(use bool)       { p.useProviderSourceAuth = use }
 
@@ -729,6 +798,14 @@ func (p *Provider) RemoveGPGKeyByKeyID(keyIdentifier string) error {
 		}
 	}
 	return ErrGPGKeyNotFound
+}
+
+// VersionID returns the formatted ID for a specific version
+// Format: namespace/provider/version (Python: ProviderVersion.id property)
+// Python reference: /app/terrareg/provider_version_model.py - ProviderVersion.id
+// This method is used by the DTO layer to generate the correct ID format
+func (p *Provider) VersionID(namespace string, version string) string {
+	return fmt.Sprintf("%s/%s/%s", namespace, p.name, version)
 }
 
 // Validation Functions

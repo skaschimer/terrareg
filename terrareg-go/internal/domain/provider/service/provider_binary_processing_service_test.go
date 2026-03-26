@@ -13,11 +13,11 @@ func TestExtractPlatformFromFilename(t *testing.T) {
 	service := NewProviderBinaryProcessingService(nil)
 
 	tests := []struct {
-		name           string
-		filename       string
-		expectedOS     string
-		expectedArch   string
-		shouldFail     bool
+		name         string
+		filename     string
+		expectedOS   string
+		expectedArch string
+		shouldFail   bool
 	}{
 		{
 			name:         "Linux amd64",
@@ -140,11 +140,11 @@ func TestParseBinaryPlatformString(t *testing.T) {
 	service := NewProviderBinaryProcessingService(nil)
 
 	tests := []struct {
-		name        string
-		platform    string
-		expectedOS  string
+		name         string
+		platform     string
+		expectedOS   string
 		expectedArch string
-		shouldFail  bool
+		shouldFail   bool
 	}{
 		{
 			name:         "Valid platform",
@@ -203,8 +203,8 @@ func TestGetBinaryPlatformString(t *testing.T) {
 	service := NewProviderBinaryProcessingService(nil)
 
 	tests := []struct {
-		os      string
-		arch    string
+		os       string
+		arch     string
 		expected string
 	}{
 		{

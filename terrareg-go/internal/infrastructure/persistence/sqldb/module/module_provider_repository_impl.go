@@ -376,6 +376,13 @@ func (r *ModuleProviderRepositoryImpl) Search(ctx context.Context, query reposit
 		}
 	}
 
+	// Filter by published and beta status (matching Python behavior)
+	// Python reference: /app/terrareg/module_search.py - search_module_providers()
+	// Python: select.where(db.module_version.c.published == True, db.module_version.c.beta == False)
+	// This filters out modules without published non-beta versions before LIMIT is applied
+	whereConditions = append(whereConditions, "module_version.published = TRUE")
+	whereConditions = append(whereConditions, "module_version.beta = FALSE")
+
 	// Combine WHERE conditions
 	if len(whereConditions) > 0 {
 		sql += " WHERE " + strings.Join(whereConditions, " AND ")

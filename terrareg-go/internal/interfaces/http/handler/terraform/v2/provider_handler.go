@@ -1,8 +1,12 @@
 package v2
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -39,6 +43,7 @@ func NewTerraformV2ProviderHandler(
 }
 
 // HandleProviderDetails handles GET /v2/providers/{namespace}/{provider}
+// Python reference: /app/terrareg/server/api/terraform/v2/provider.py - ApiV2Provider._get
 func (h *TerraformV2ProviderHandler) HandleProviderDetails(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -53,8 +58,20 @@ func (h *TerraformV2ProviderHandler) HandleProviderDetails(w http.ResponseWriter
 		return
 	}
 
-	// Build Terraform Registry v2 response
-	response := h.buildV2ProviderResponse(namespace, providerName, provider)
+	// Parse include parameter (e.g., "provider-versions,categories")
+	// Python reference: provider_version_model.py get_v2_include()
+	includeParam := r.URL.Query().Get("include")
+	var includeNames []string
+	if includeParam != "" {
+		includeNames = strings.Split(includeParam, ",")
+		// Trim whitespace from each include name
+		for i, name := range includeNames {
+			includeNames[i] = strings.TrimSpace(name)
+		}
+	}
+
+	// Build Terraform Registry v2 response with includes
+	response := h.buildV2ProviderResponse(ctx, namespace, providerName, provider, includeNames)
 	terrareg.RespondJSON(w, http.StatusOK, response)
 }
 
@@ -187,7 +204,8 @@ func (h *TerraformV2ProviderHandler) HandleProviderDownloadsSummary(w http.Respo
 }
 
 // buildV2ProviderResponse builds a Terraform Registry v2 provider response
-func (h *TerraformV2ProviderHandler) buildV2ProviderResponse(namespace, providerName string, provider *provider.Provider) map[string]interface{} {
+// Python reference: /app/terrareg/server/api/terraform/v2/provider.py - ApiV2Provider._get
+func (h *TerraformV2ProviderHandler) buildV2ProviderResponse(ctx context.Context, namespace, providerName string, provider *provider.Provider, includeNames []string) map[string]interface{} {
 	// Build response following Python terrareg API format
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
@@ -216,8 +234,12 @@ func (h *TerraformV2ProviderHandler) buildV2ProviderResponse(namespace, provider
 		},
 	}
 
-	// Add optional includes if requested (for future enhancement)
-	// TODO: Parse include parameter when needed
+	// Build included resources if requested
+	// Python reference: /app/terrareg/server/api/terraform/v2/provider.py lines 47-53
+	included := h.buildV2ProviderIncludes(ctx, provider, includeNames)
+	if len(included) > 0 {
+		response["included"] = included
+	}
 
 	return response
 }
@@ -304,4 +326,87 @@ func (h *TerraformV2ProviderHandler) buildV2VersionResponse(namespace, providerN
 		},
 	}
 	return versionMap
+}
+
+// buildV2ProviderIncludes builds the included resources for v2 API responses
+// Python reference: /app/terrareg/server/api/terraform/v2/provider.py lines 47-53
+// Supports: "provider-versions", "categories"
+func (h *TerraformV2ProviderHandler) buildV2ProviderIncludes(ctx context.Context, provider *provider.Provider, includeNames []string) []map[string]interface{} {
+	included := make([]map[string]interface{}, 0)
+
+	// Add provider versions if requested
+	// Python reference: provider_version_model.py get_v2_include()
+	if h.sliceContains(includeNames, "provider-versions") {
+		versions, err := h.getProviderVersionsQuery.Execute(ctx, provider.ID())
+		if err == nil {
+			for _, version := range versions {
+				included = append(included, h.buildV2ProviderVersionInclude(version))
+			}
+		}
+	}
+
+	// Add categories if requested
+	// Python reference: provider_model.py category.get_v2_include()
+	if h.sliceContains(includeNames, "categories") && provider.CategoryID() != nil {
+		// TODO: Implement category include when category query is available
+		// For now, skip category include if category query doesn't exist
+	}
+
+	return included
+}
+
+// buildV2ProviderVersionInclude builds a v2 include resource for a provider version
+// Python reference: /app/terrareg/provider_version_model.py get_v2_include()
+func (h *TerraformV2ProviderHandler) buildV2ProviderVersionInclude(version *provider.ProviderVersion) map[string]interface{} {
+	// Get description from provider (not version), matching Python behavior
+	description := ""
+	if version.Provider() != nil {
+		desc := version.Provider().Description()
+		if desc != nil {
+			description = *desc
+		}
+	}
+
+	return map[string]interface{}{
+		"type": "provider-versions",
+		"id":   strconv.Itoa(version.ID()),
+		"attributes": map[string]interface{}{
+			"description":  description,
+			"downloads":    0, // TODO: Implement analytics integration
+			"published-at": h.formatISOTime(version.PublishedAt()),
+			"tag":          h.formatGitTag(version.GitTag()),
+			"version":      version.Version(),
+		},
+		"links": map[string]interface{}{
+			"self": fmt.Sprintf("/v2/provider-versions/%d", version.ID()),
+		},
+	}
+}
+
+// formatISOTime formats a time pointer to ISO 8601 string
+// Returns empty string if time is nil
+func (h *TerraformV2ProviderHandler) formatISOTime(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format(time.RFC3339)
+}
+
+// formatGitTag formats a git tag pointer for JSON output
+// Returns empty string if tag is nil
+func (h *TerraformV2ProviderHandler) formatGitTag(tag *string) string {
+	if tag == nil {
+		return ""
+	}
+	return *tag
+}
+
+// sliceContains checks if a string slice contains a specific value (case-insensitive)
+func (h *TerraformV2ProviderHandler) sliceContains(slice []string, value string) bool {
+	for _, item := range slice {
+		if strings.EqualFold(strings.TrimSpace(item), value) {
+			return true
+		}
+	}
+	return false
 }

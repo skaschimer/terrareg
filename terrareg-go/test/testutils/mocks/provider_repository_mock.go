@@ -225,3 +225,15 @@ func (m *MockProviderRepository) GetBinaryDownloadCount(ctx context.Context, bin
 	args := m.Called(ctx, binaryID)
 	return args.Get(0).(int64), args.Error(1)
 }
+
+// GetTotalDownloads mocks getting total downloads for a provider
+func (m *MockProviderRepository) GetTotalDownloads(ctx context.Context, providerID int) (int64, error) {
+	args := m.Called(ctx, providerID)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+// GetVersionDownloads mocks getting downloads for a provider version
+func (m *MockProviderRepository) GetVersionDownloads(ctx context.Context, providerVersionID int) (int64, error) {
+	args := m.Called(ctx, providerVersionID)
+	return args.Get(0).(int64), args.Error(1)
+}

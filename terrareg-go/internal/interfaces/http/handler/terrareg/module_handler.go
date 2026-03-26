@@ -3,6 +3,7 @@ package terrareg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/dto"
@@ -427,6 +429,7 @@ func (h *ModuleHandler) HandleNamespaceModules(w http.ResponseWriter, r *http.Re
 }
 
 // HandleModuleProviderCreate handles POST /v1/terrareg/modules/{namespace}/{name}/{provider}/create
+// Python reference: /app/server/api/terrareg_module_provider_create.py
 func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -435,17 +438,63 @@ func (h *ModuleHandler) HandleModuleProviderCreate(w http.ResponseWriter, r *htt
 	name := types.ModuleName(chi.URLParam(r, "name"))
 	provider := types.ModuleProviderName(chi.URLParam(r, "provider"))
 
+	// Parse JSON body (optional)
+	var body struct {
+		GitProviderID         *int    `json:"git_provider_id"`
+		RepoBaseURLTemplate   *string `json:"repo_base_url_template"`
+		RepoCloneURLTemplate  *string `json:"repo_clone_url_template"`
+		RepoBrowseURLTemplate *string `json:"repo_browse_url_template"`
+		GitTagFormat          *string `json:"git_tag_format"`
+		GitPath               *string `json:"git_path"`
+		ArchiveGitPath        *bool   `json:"archive_git_path"`
+	}
+	// Only decode body if it has content
+	if r.Body != http.NoBody && r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil && err.Error() != "EOF" {
+			// Ignore EOF - empty body is valid
+			RespondError(w, http.StatusBadRequest, "Invalid JSON body")
+			return
+		}
+	}
+
 	// Create command request
 	cmdReq := moduleCmd.CreateModuleProviderRequest{
-		Namespace: namespace,
-		Module:    name,
-		Provider:  provider,
+		Namespace:             namespace,
+		Module:                name,
+		Provider:              provider,
+		GitProviderID:         body.GitProviderID,
+		RepoBaseURLTemplate:   body.RepoBaseURLTemplate,
+		RepoCloneURLTemplate:  body.RepoCloneURLTemplate,
+		RepoBrowseURLTemplate: body.RepoBrowseURLTemplate,
+		GitTagFormat:          body.GitTagFormat,
+		GitPath:               body.GitPath,
+		ArchiveGitPath:        body.ArchiveGitPath,
 	}
 
 	// Execute command
 	moduleProvider, err := h.createModuleProviderCmd.Execute(ctx, cmdReq)
 	if err != nil {
-		RespondError(w, http.StatusInternalServerError, err.Error())
+		// Check for validation errors - these are safe to expose to users
+		// Python reference: /app/server/api/terrareg_module_provider_create.py
+		switch {
+		case errors.Is(err, shared.ErrInvalidProvider):
+			RespondError(w, http.StatusBadRequest, "Module provider name is invalid")
+		case errors.Is(err, shared.ErrInvalidName):
+			RespondError(w, http.StatusBadRequest, "Module name is invalid")
+		case errors.Is(err, shared.ErrAlreadyExists):
+			RespondError(w, http.StatusBadRequest, "Module provider already exists")
+		case errors.Is(err, shared.ErrNotFound):
+			RespondError(w, http.StatusBadRequest, "Namespace does not exist")
+		default:
+			// Check for git model errors by message content
+			// (InvalidGitTagFormatError has no dedicated error type)
+			if strings.Contains(err.Error(), "Invalid git tag format") {
+				RespondError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			// Internal error - don't expose details
+			RespondError(w, http.StatusInternalServerError, "Internal Server Error")
+		}
 		return
 	}
 
@@ -873,7 +922,13 @@ func (h *ModuleHandler) HandleModuleProviderSettingsUpdate(w http.ResponseWriter
 	}
 
 	if err := h.updateModuleProviderSettingsCmd.Execute(ctx, cmdReq); err != nil {
-		RespondError(w, http.StatusInternalServerError, err.Error())
+		// Check for git model errors (InvalidGitTagFormatError)
+		if strings.Contains(err.Error(), "Invalid git tag format") {
+			RespondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// Internal error - don't expose details
+		RespondError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 

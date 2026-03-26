@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"gorm.io/gorm"
 
 	analyticsCmd "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/analytics"
@@ -94,7 +94,7 @@ type Container struct {
 	InfraConfig   *config.InfrastructureConfig
 	ConfigService *configService.ConfigurationService
 
-	Logger zerolog.Logger
+	Logger logging.Logger
 	DB     *sqldb.Database
 
 	// Repositories
@@ -353,7 +353,7 @@ func NewContainer(
 	domainConfig *domainConfig.DomainConfig,
 	infraConfig *config.InfrastructureConfig,
 	configService *configService.ConfigurationService,
-	logger zerolog.Logger,
+	logger logging.Logger,
 	db *sqldb.Database,
 ) (*Container, error) {
 	c := &Container{
@@ -819,7 +819,7 @@ func NewContainer(
 	c.SAMLService, _ = authservice.NewSAMLService(infraConfig)
 
 	// Initialize AuthFactory after all services are created
-	authFactory, err := authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, c.NamespaceRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, c.SessionManagementService, &c.Logger)
+	authFactory, err := authservice.NewAuthFactory(c.SessionRepo, c.UserGroupRepo, c.NamespaceRepo, infraConfig, c.TerraformIdpService, c.OIDCService, c.ProviderSourceFactory, c.SessionManagementService, c.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth factory: %w", err)
 	}
@@ -1048,6 +1048,7 @@ func NewContainer(
 		c.PublishProviderVersionCmd,
 		c.ManageGPGKeyCmd,
 		c.GetProviderDownloadQuery,
+		c.ProviderRepo,
 	)
 	c.ProviderLogosHandler = terrareg.NewProviderLogosHandler(c.GetProviderLogosQuery)
 	c.AuthHandler = terrareg.NewAuthHandler(

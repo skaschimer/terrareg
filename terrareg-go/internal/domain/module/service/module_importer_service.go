@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
@@ -20,6 +19,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // ModuleImporterService handles module importing with comprehensive
@@ -47,7 +47,7 @@ type ModuleImporterService struct {
 	infraConfig *infraConfig.InfrastructureConfig
 
 	// Logging (required)
-	logger zerolog.Logger
+	logger logging.Logger
 }
 
 // NewModuleImporterService creates a new module importer service with transaction capabilities
@@ -62,7 +62,7 @@ func NewModuleImporterService(
 	moduleParser ModuleParser,
 	domainConfig *domainConfig.DomainConfig,
 	infraConfig *infraConfig.InfrastructureConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) (*ModuleImporterService, error) {
 	if processingOrchestrator == nil {
 		return nil, fmt.Errorf("processingOrchestrator cannot be nil")

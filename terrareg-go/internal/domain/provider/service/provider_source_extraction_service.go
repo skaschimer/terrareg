@@ -165,7 +165,7 @@ func (s *ProviderSourceExtractionService) extractArchive(archiveData []byte, des
 			}
 
 			// Create file
-		 outFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
+			outFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
 			if err != nil {
 				return fmt.Errorf("failed to create file %s: %w", destPath, err)
 			}

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
-	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -299,7 +299,7 @@ func TestGetAuthContext(t *testing.T) {
 	t.Run("returns auth context when set", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			username:       "testuser",
+			username:        "testuser",
 		}
 
 		ctx := context.Background()
@@ -335,7 +335,7 @@ func TestGetAuthMethodFromContext(t *testing.T) {
 	t.Run("returns auth method and authenticated status when set", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			authMethod:     auth.AuthMethodGitHub,
+			authMethod:      auth.AuthMethodGitHub,
 		}
 
 		ctx := context.Background()
@@ -362,7 +362,7 @@ func TestGetUserFromContext(t *testing.T) {
 	t.Run("returns username when authenticated", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			username:       "testuser",
+			username:        "testuser",
 		}
 
 		ctx := context.Background()
@@ -389,7 +389,7 @@ func TestGetIsAdminFromContext(t *testing.T) {
 	t.Run("returns true for admin users", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			isAdmin:        true,
+			isAdmin:         true,
 		}
 
 		ctx := context.Background()
@@ -403,7 +403,7 @@ func TestGetIsAdminFromContext(t *testing.T) {
 	t.Run("returns false for non-admin users", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			isAdmin:        false,
+			isAdmin:         false,
 		}
 
 		ctx := context.Background()
@@ -444,7 +444,7 @@ func TestGetSessionIDFromContext(t *testing.T) {
 	t.Run("returns empty string when no session ID", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			providerData:   map[string]interface{}{},
+			providerData:    map[string]interface{}{},
 		}
 
 		ctx := context.Background()
@@ -491,7 +491,7 @@ func TestGetPermissionsFromContext(t *testing.T) {
 func TestSetAuthContextInContext(t *testing.T) {
 	mockAuthCtx := &mockAuthContext{
 		isAuthenticated: true,
-		username:       "testuser",
+		username:        "testuser",
 	}
 
 	ctx := context.Background()
@@ -610,7 +610,7 @@ func TestCheckNamespacePermission(t *testing.T) {
 	t.Run("returns true for admin users", func(t *testing.T) {
 		mockAuthCtx := &mockAuthContext{
 			isAuthenticated: true,
-			isAdmin:        true,
+			isAdmin:         true,
 		}
 
 		ctx := context.Background()
@@ -656,7 +656,7 @@ func TestCheckNamespacePermission(t *testing.T) {
 
 // mockAuthContext is a mock implementation of auth.AuthContext for testing
 type mockAuthContext struct {
-	isAuthenticated        bool
+	isAuthenticated       bool
 	authMethod            auth.AuthMethodType
 	username              string
 	isAdmin               bool
@@ -672,15 +672,15 @@ type mockAuthContext struct {
 	providerData          map[string]interface{}
 }
 
-func (m *mockAuthContext) IsAuthenticated() bool                                         { return m.isAuthenticated }
-func (m *mockAuthContext) GetProviderType() auth.AuthMethodType                         { return m.authMethod }
-func (m *mockAuthContext) GetUsername() string                                          { return m.username }
-func (m *mockAuthContext) IsAdmin() bool                                                { return m.isAdmin }
-func (m *mockAuthContext) IsBuiltInAdmin() bool                                         { return m.isBuiltInAdmin }
-func (m *mockAuthContext) RequiresCSRF() bool                                           { return m.requiresCSRF }
-func (m *mockAuthContext) CheckAuthState() bool                                         { return true }
-func (m *mockAuthContext) CanPublishModuleVersion(module string) bool                   { return m.canPublish }
-func (m *mockAuthContext) CanUploadModuleVersion(module string) bool                    { return m.canUpload }
+func (m *mockAuthContext) IsAuthenticated() bool                      { return m.isAuthenticated }
+func (m *mockAuthContext) GetProviderType() auth.AuthMethodType       { return m.authMethod }
+func (m *mockAuthContext) GetUsername() string                        { return m.username }
+func (m *mockAuthContext) IsAdmin() bool                              { return m.isAdmin }
+func (m *mockAuthContext) IsBuiltInAdmin() bool                       { return m.isBuiltInAdmin }
+func (m *mockAuthContext) RequiresCSRF() bool                         { return m.requiresCSRF }
+func (m *mockAuthContext) CheckAuthState() bool                       { return true }
+func (m *mockAuthContext) CanPublishModuleVersion(module string) bool { return m.canPublish }
+func (m *mockAuthContext) CanUploadModuleVersion(module string) bool  { return m.canUpload }
 func (m *mockAuthContext) CheckNamespaceAccess(permissionType, namespace string) bool {
 	if m.isAdmin {
 		return true
@@ -690,10 +690,10 @@ func (m *mockAuthContext) CheckNamespaceAccess(permissionType, namespace string)
 	}
 	return false
 }
-func (m *mockAuthContext) GetAllNamespacePermissions() map[string]string                { return m.permissions }
-func (m *mockAuthContext) GetUserGroupNames() []string                                 { return m.userGroups }
-func (m *mockAuthContext) CanAccessReadAPI() bool                                       { return m.canAccessReadAPI }
-func (m *mockAuthContext) CanAccessTerraformAPI() bool                                  { return m.canAccessTerraformAPI }
-func (m *mockAuthContext) GetTerraformAuthToken() string                                { return m.terraformToken }
-func (m *mockAuthContext) GetProviderData() map[string]interface{}                      { return m.providerData }
-func (m *mockAuthContext) IsEnabled() bool                                              { return true }
+func (m *mockAuthContext) GetAllNamespacePermissions() map[string]string { return m.permissions }
+func (m *mockAuthContext) GetUserGroupNames() []string                   { return m.userGroups }
+func (m *mockAuthContext) CanAccessReadAPI() bool                        { return m.canAccessReadAPI }
+func (m *mockAuthContext) CanAccessTerraformAPI() bool                   { return m.canAccessTerraformAPI }
+func (m *mockAuthContext) GetTerraformAuthToken() string                 { return m.terraformToken }
+func (m *mockAuthContext) GetProviderData() map[string]interface{}       { return m.providerData }
+func (m *mockAuthContext) IsEnabled() bool                               { return true }

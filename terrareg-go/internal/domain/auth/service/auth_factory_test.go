@@ -8,10 +8,11 @@ import (
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // Helper function to create a test logger
-func newTestLogger() *zerolog.Logger {
+func newTestLogger() logging.Logger {
 	logger := zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger()
 	return &logger
 }
@@ -19,15 +20,15 @@ func newTestLogger() *zerolog.Logger {
 // Helper function to create a test config
 func newTestConfig() *infraConfig.InfrastructureConfig {
 	return &infraConfig.InfrastructureConfig{
-		SecretKey:                       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		SessionCookieName:               "terrareg_session",
-		AdminAuthenticationToken:        "test-admin-key",
-		UploadApiKeys:                   []string{"test-upload-key"},
-		PublishApiKeys:                  []string{"test-publish-key"},
-		AllowUnauthenticatedAccess:      true,
-		AdminSessionExpiryMins:          60,
-		TerraformOidcIdpSigningKeyPath:  "",
-		AnalyticsAuthKeys:               []string{},
+		SecretKey:                        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		SessionCookieName:                "terrareg_session",
+		AdminAuthenticationToken:         "test-admin-key",
+		UploadApiKeys:                    []string{"test-upload-key"},
+		PublishApiKeys:                   []string{"test-publish-key"},
+		AllowUnauthenticatedAccess:       true,
+		AdminSessionExpiryMins:           60,
+		TerraformOidcIdpSigningKeyPath:   "",
+		AnalyticsAuthKeys:                []string{},
 		InternalExtractionAnalyticsToken: "",
 	}
 }
@@ -164,7 +165,7 @@ func TestNewAuthenticationResponseFromAuthContext(t *testing.T) {
 	t.Run("authenticated user", func(t *testing.T) {
 		// Create a mock auth context
 		mockAuthCtx := &mockAuthContext{
-			isAuthenticated:     true,
+			isAuthenticated:    true,
 			authMethod:         auth.AuthMethodAdminApiKey,
 			username:           "admin-user",
 			isAdmin:            true,
@@ -209,8 +210,8 @@ func TestNewAuthenticationResponseFromAuthContext(t *testing.T) {
 		assert.False(t, response.IsAdmin)
 		assert.Empty(t, response.UserGroups)
 		assert.Empty(t, response.Permissions)
-		assert.True(t, response.CanPublish)  // Can publish because RBAC disabled + no API keys + allowed access
-		assert.True(t, response.CanUpload)   // Can upload because RBAC disabled + no API keys + allowed access
+		assert.True(t, response.CanPublish)   // Can publish because RBAC disabled + no API keys + allowed access
+		assert.True(t, response.CanUpload)    // Can upload because RBAC disabled + no API keys + allowed access
 		assert.True(t, response.CanAccessAPI) // because allowUnauthenticatedAccess=true
 		assert.False(t, response.CanAccessTerraform)
 		assert.Nil(t, response.SessionID)
@@ -248,7 +249,7 @@ func TestRegisterAuthMethod_ThreadSafety(t *testing.T) {
 // Mock implementations for testing
 
 type mockAuthContext struct {
-	isAuthenticated     bool
+	isAuthenticated    bool
 	authMethod         auth.AuthMethodType
 	username           string
 	isAdmin            bool

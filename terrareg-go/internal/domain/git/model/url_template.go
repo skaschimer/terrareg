@@ -25,15 +25,19 @@ const (
 	PlaceholderProvider  = "{provider}"
 	PlaceholderGitTag    = "{git_tag}"
 	PlaceholderVersion   = "{version}"
+	PlaceholderTag       = "{tag}"
+	PlaceholderPath      = "{path}"
 )
 
-// ValidPlaceholders defines all supported placeholders
+// ValidPlaceholders defines all supported placeholders for URL templates
 var ValidPlaceholders = map[string]bool{
 	PlaceholderNamespace: true,
 	PlaceholderModule:    true,
 	PlaceholderProvider:  true,
 	PlaceholderGitTag:    true,
 	PlaceholderVersion:   true,
+	PlaceholderTag:       true,
+	PlaceholderPath:      true,
 }
 
 // TemplateRegex matches placeholder patterns in templates

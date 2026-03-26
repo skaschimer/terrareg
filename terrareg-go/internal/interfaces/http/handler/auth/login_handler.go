@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/rs/zerolog"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // LoginHandler handles authentication requests
@@ -16,14 +16,14 @@ type LoginHandler struct {
 	// sessionManagementService handles session and cookie operations (required)
 	sessionManagementService *service.SessionManagementService
 	// logger for logging (required)
-	logger zerolog.Logger
+	logger logging.Logger
 }
 
 // NewLoginHandler creates a new LoginHandler
 // Returns an error if any required dependency is nil
 func NewLoginHandler(
 	sessionManagementService *service.SessionManagementService,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) (*LoginHandler, error) {
 	if sessionManagementService == nil {
 		return nil, fmt.Errorf("sessionManagementService cannot be nil")
@@ -74,10 +74,10 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		auth.AuthMethodSession,
 		req.Username,
 		true, // TODO: Implement proper admin check
-		nil, // userGroups
-		nil, // permissions
-		nil, // providerData
-		nil, // ttl - will use default
+		nil,  // userGroups
+		nil,  // permissions
+		nil,  // providerData
+		nil,  // ttl - will use default
 	)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create session and cookie")

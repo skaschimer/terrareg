@@ -17,7 +17,7 @@ import (
 // Python reference: auth/github_auth_method.py::GithubAuthMethod
 type GitHubAuthMethod struct {
 	providerSourceFactory *provider_source_service.ProviderSourceFactory
-	sessionRepo          repository.SessionRepository
+	sessionRepo           repository.SessionRepository
 }
 
 // NewGitHubAuthMethod creates a new GitHub auth method
@@ -27,7 +27,7 @@ func NewGitHubAuthMethod(
 ) *GitHubAuthMethod {
 	return &GitHubAuthMethod{
 		providerSourceFactory: providerSourceFactory,
-		sessionRepo:          sessionRepo,
+		sessionRepo:           sessionRepo,
 	}
 }
 
@@ -82,9 +82,9 @@ func (g *GitHubAuthMethod) Authenticate(ctx context.Context, sessionData map[str
 
 // GitHubProviderData represents the GitHub provider data stored in session
 type GitHubProviderData struct {
-	ProviderSource string                             `json:"provider_source"`
-	Username       string                             `json:"github_username"`
-	Organizations  map[string]sqldb.NamespaceType     `json:"organisations"`
+	ProviderSource string                         `json:"provider_source"`
+	Username       string                         `json:"github_username"`
+	Organizations  map[string]sqldb.NamespaceType `json:"organisations"`
 }
 
 // parseGitHubProviderData parses the provider_source_auth JSON to extract GitHub user information

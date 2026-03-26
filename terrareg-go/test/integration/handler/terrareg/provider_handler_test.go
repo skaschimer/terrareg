@@ -15,8 +15,8 @@ import (
 	providerCommand "github.com/matthewjohn/terrareg/terrareg-go/internal/application/command/provider"
 	providerQuery "github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/provider"
 	auditservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/service"
-	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/audit"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/audit"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	providerRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
@@ -43,7 +43,7 @@ func TestProviderHandler_HandleProviderList_Success(t *testing.T) {
 	// Create handler
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	listProvidersQuery := providerQuery.NewListProvidersQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers", nil)
 	w := httptest.NewRecorder()
@@ -125,7 +125,7 @@ func TestProviderHandler_HandleProviderList_Empty(t *testing.T) {
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	listProvidersQuery := providerQuery.NewListProvidersQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers", nil)
 	w := httptest.NewRecorder()
@@ -157,7 +157,7 @@ func TestProviderHandler_HandleProviderList_Pagination(t *testing.T) {
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	listProvidersQuery := providerQuery.NewListProvidersQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 	// Request with pagination
 	params := url.Values{}
@@ -278,7 +278,7 @@ func TestProviderHandler_HandleProviderList_PaginationScenarios(t *testing.T) {
 
 			providerRepository := providerRepo.NewProviderRepository(db.DB)
 			listProvidersQuery := providerQuery.NewListProvidersQuery(providerRepository)
-			handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil)
+			handler := terrareg.NewProviderHandler(listProvidersQuery, nil, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 			// Build request with limit/offset
 			requestURL := "/v1/providers"
@@ -350,7 +350,7 @@ func TestProviderHandler_HandleProviderSearch_Success(t *testing.T) {
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	searchProvidersQuery := providerQuery.NewSearchProvidersQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, searchProvidersQuery, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, searchProvidersQuery, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 	params := url.Values{}
 	params.Add("q", "aws")
@@ -375,7 +375,7 @@ func TestProviderHandler_HandleProviderSearch_Empty(t *testing.T) {
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	searchProvidersQuery := providerQuery.NewSearchProvidersQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, searchProvidersQuery, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, searchProvidersQuery, nil, nil, nil, nil, nil, nil, nil, providerRepository)
 
 	params := url.Values{}
 	params.Add("q", "nonexistent")
@@ -399,11 +399,17 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 
 	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	description := "Test provider"
-	testutils.CreateProvider(t, db, namespace.ID, "test-provider", &description, sqldb.ProviderTierOfficial, nil)
+	provider := testutils.CreateProvider(t, db, namespace.ID, "test-provider", &description, sqldb.ProviderTierOfficial, nil)
+
+	// Create provider versions
+	publishedAt := time.Now()
+	testutils.CreateProviderVersion(t, db, provider.ID, "1.0.0", 0, false, &publishedAt)
+	testutils.CreateProviderVersion(t, db, provider.ID, "2.0.0", 0, false, &publishedAt)
 
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	getProviderQuery := providerQuery.NewGetProviderQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, nil, nil, nil, nil, nil)
+	getProviderVersionsQuery := providerQuery.NewGetProviderVersionsQuery(providerRepository)
+	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, getProviderVersionsQuery, nil, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers/test-namespace/test-provider", nil)
 	w := httptest.NewRecorder()
@@ -419,14 +425,29 @@ func TestProviderHandler_HandleProviderDetails_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "namespace")
-	// Note: Handler returns placeholder "namespace-{id}" format, not actual namespace name
-	assert.Equal(t, "namespace-1", response["namespace"])
+	assert.Equal(t, "test-namespace", response["namespace"])
 	assert.Contains(t, response, "name")
 	assert.Equal(t, "test-provider", response["name"])
 	assert.Contains(t, response, "tier")
 	assert.Equal(t, "official", response["tier"])
 	assert.Contains(t, response, "description")
 	assert.Equal(t, "Test provider", response["description"])
+
+	// Verify versions array is present and populated (CRITICAL for frontend)
+	assert.Contains(t, response, "versions")
+	versions := response["versions"].([]interface{})
+	assert.Len(t, versions, 2)
+	// Convert to strings for assertion
+	versionStrings := make([]string, len(versions))
+	for i, v := range versions {
+		versionStrings[i] = v.(string)
+	}
+	assert.Contains(t, versionStrings, "1.0.0")
+	assert.Contains(t, versionStrings, "2.0.0")
+
+	// Verify latest version is set (Python behavior: first version in list)
+	assert.Contains(t, response, "version")
+	assert.Equal(t, "2.0.0", response["version"])
 }
 
 // TestProviderHandler_HandleProviderVersions_Success tests successful provider versions retrieval
@@ -447,7 +468,7 @@ func TestProviderHandler_HandleProviderVersions_Success(t *testing.T) {
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	getProviderQuery := providerQuery.NewGetProviderQuery(providerRepository)
 	getProviderVersionsQuery := providerQuery.NewGetProviderVersionsQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, getProviderVersionsQuery, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, getProviderVersionsQuery, nil, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers/test-namespace/test-provider/versions", nil)
 	w := httptest.NewRecorder()
@@ -472,7 +493,7 @@ func TestProviderHandler_HandleProviderVersions_Success(t *testing.T) {
 // Python reference: /app/test/unit/terrareg/server/test_api_namespace_providers.py
 // Parity gap: Handler needs to be implemented to return actual providers for a namespace
 func TestProviderHandler_HandleNamespaceProviders_ReturnsEmpty(t *testing.T) {
-	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil) // providerRepo not used in this test
 
 	req := httptest.NewRequest("GET", "/v1/providers/test-namespace", nil)
 	w := httptest.NewRecorder()
@@ -501,7 +522,7 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_Success(t *testing.T) {
 	auditHistoryRepository, _ := auditRepo.NewAuditHistoryRepository(db.DB)
 	providerAuditService := auditservice.NewProviderAuditService(auditHistoryRepository)
 	createOrUpdateProviderCmd := providerCommand.NewCreateOrUpdateProviderCommand(providerRepository, namespaceRepository, providerAuditService)
-	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil, providerRepository)
 
 	requestBody := providerCommand.CreateOrUpdateProviderRequest{
 		Namespace: "test-namespace",
@@ -519,8 +540,8 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_Success(t *testing.T) {
 	response := testutils.GetJSONBody(t, w)
 
 	assert.Contains(t, response, "namespace")
-	// Note: Handler returns placeholder "namespace-{id}" format, not actual namespace name
-	assert.Equal(t, "namespace-1", response["namespace"])
+	// Handler now returns actual namespace name (not placeholder)
+	assert.Equal(t, "test-namespace", response["namespace"])
 	assert.Contains(t, response, "name")
 	assert.Equal(t, "new-provider", response["name"])
 	assert.Contains(t, response, "tier")
@@ -537,7 +558,7 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_MissingFields(t *testing.T
 	auditHistoryRepository, _ := auditRepo.NewAuditHistoryRepository(db.DB)
 	providerAuditService := auditservice.NewProviderAuditService(auditHistoryRepository)
 	createOrUpdateProviderCmd := providerCommand.NewCreateOrUpdateProviderCommand(providerRepository, namespaceRepository, providerAuditService)
-	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil, providerRepository)
 
 	requestBody := providerCommand.CreateOrUpdateProviderRequest{
 		Name: "test-provider",
@@ -566,7 +587,7 @@ func TestProviderHandler_HandleCreateOrUpdateProvider_InvalidJSON(t *testing.T) 
 	auditHistoryRepository, _ := auditRepo.NewAuditHistoryRepository(db.DB)
 	providerAuditService := auditservice.NewProviderAuditService(auditHistoryRepository)
 	createOrUpdateProviderCmd := providerCommand.NewCreateOrUpdateProviderCommand(providerRepository, namespaceRepository, providerAuditService)
-	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, nil, nil, nil, createOrUpdateProviderCmd, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("POST", "/v1/providers", strings.NewReader("invalid json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -594,7 +615,7 @@ func TestProviderHandler_HandleGetProviderVersion_Success(t *testing.T) {
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	getProviderQuery := providerQuery.NewGetProviderQuery(providerRepository)
 	getProviderVersionQuery := providerQuery.NewGetProviderVersionQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, getProviderVersionQuery, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, getProviderVersionQuery, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers/test-namespace/test-provider/versions/1.0.0", nil)
 	w := httptest.NewRecorder()
@@ -622,7 +643,7 @@ func TestProviderHandler_HandleGetProviderVersion_MissingParameters(t *testing.T
 	providerRepository := providerRepo.NewProviderRepository(db.DB)
 	getProviderQuery := providerQuery.NewGetProviderQuery(providerRepository)
 	getProviderVersionQuery := providerQuery.NewGetProviderVersionQuery(providerRepository)
-	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, getProviderVersionQuery, nil, nil, nil, nil)
+	handler := terrareg.NewProviderHandler(nil, nil, getProviderQuery, nil, getProviderVersionQuery, nil, nil, nil, nil, providerRepository)
 
 	req := httptest.NewRequest("GET", "/v1/providers///versions/", nil)
 	w := httptest.NewRecorder()

@@ -11,14 +11,14 @@ import (
 
 // ManageGPGKeyCommand handles GPG key management operations
 type ManageGPGKeyCommand struct {
-	gpgKeyService       service.GPGKeyServiceInterface
+	gpgKeyService      service.GPGKeyServiceInterface
 	gpgKeyAuditService auditservice.GpgKeyAuditServiceInterface
 }
 
 // NewManageGPGKeyCommand creates a new command for managing GPG keys
 func NewManageGPGKeyCommand(gpgKeyService service.GPGKeyServiceInterface, gpgKeyAuditService auditservice.GpgKeyAuditServiceInterface) *ManageGPGKeyCommand {
 	return &ManageGPGKeyCommand{
-		gpgKeyService:       gpgKeyService,
+		gpgKeyService:      gpgKeyService,
 		gpgKeyAuditService: gpgKeyAuditService,
 	}
 }

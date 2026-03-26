@@ -12,8 +12,8 @@ type NotAuthenticatedAuthContext struct {
 	BaseAuthContext
 	enableAccessControls       bool
 	allowUnauthenticatedAccess bool
-	publishApiKeysEnabled       bool
-	uploadApiKeysEnabled        bool
+	publishApiKeysEnabled      bool
+	uploadApiKeysEnabled       bool
 }
 
 // NewNotAuthenticatedAuthContext creates a new not authenticated auth context
@@ -24,17 +24,17 @@ func NewNotAuthenticatedAuthContext(ctx context.Context, config *infraConfig.Inf
 		return &NotAuthenticatedAuthContext{
 			BaseAuthContext:            BaseAuthContext{ctx: ctx},
 			enableAccessControls:       false, // Default RBAC disabled
-			allowUnauthenticatedAccess: true, // Default to allow unauthenticated read access
-			publishApiKeysEnabled:       false, // No API keys configured
-			uploadApiKeysEnabled:        false, // No API keys configured
+			allowUnauthenticatedAccess: true,  // Default to allow unauthenticated read access
+			publishApiKeysEnabled:      false, // No API keys configured
+			uploadApiKeysEnabled:       false, // No API keys configured
 		}
 	}
 	return &NotAuthenticatedAuthContext{
 		BaseAuthContext:            BaseAuthContext{ctx: ctx},
 		enableAccessControls:       config.EnableAccessControls,
 		allowUnauthenticatedAccess: config.AllowUnauthenticatedAccess,
-		publishApiKeysEnabled:       len(config.PublishApiKeys) > 0,
-		uploadApiKeysEnabled:        len(config.UploadApiKeys) > 0,
+		publishApiKeysEnabled:      len(config.PublishApiKeys) > 0,
+		uploadApiKeysEnabled:       len(config.UploadApiKeys) > 0,
 	}
 }
 

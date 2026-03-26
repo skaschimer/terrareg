@@ -30,7 +30,7 @@ type SessionManagementServiceInterface interface {
 // ProviderSourceHandler handles provider source OAuth flow
 // Python reference: server/api/github/github_login_callback.py
 type ProviderSourceHandler struct {
-	providerSourceFactory     ProviderSourceFactoryInterface
+	providerSourceFactory    ProviderSourceFactoryInterface
 	sessionManagementService SessionManagementServiceInterface
 }
 
@@ -40,7 +40,7 @@ func NewProviderSourceHandler(
 	sessionManagementService SessionManagementServiceInterface,
 ) *ProviderSourceHandler {
 	return &ProviderSourceHandler{
-		providerSourceFactory:     providerSourceFactory,
+		providerSourceFactory:    providerSourceFactory,
 		sessionManagementService: sessionManagementService,
 	}
 }

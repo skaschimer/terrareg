@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
 )
 
 // TestReadEndpoints_AllAuthMethods tests that read access endpoints work correctly
@@ -39,20 +39,20 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 	}
 
 	authMethods := []struct {
-		name                 string
-		setup                func(t *testing.T, db *sqldb.Database, cont *testutils.TestContainer, req *http.Request)
-		hasReadAPIAccess     bool // true = has can_access_read_api
-		hasTerraformAPIAccess bool // true = has can_access_terraform_api
-		configOptions        []testutils.InfraConfigOption // config options needed for this auth method
-		requiresSigningKey   bool // true = needs a signing key file to be generated for Terraform OIDC
+		name                  string
+		setup                 func(t *testing.T, db *sqldb.Database, cont *testutils.TestContainer, req *http.Request)
+		hasReadAPIAccess      bool                          // true = has can_access_read_api
+		hasTerraformAPIAccess bool                          // true = has can_access_terraform_api
+		configOptions         []testutils.InfraConfigOption // config options needed for this auth method
+		requiresSigningKey    bool                          // true = needs a signing key file to be generated for Terraform OIDC
 	}{
 		{
-			name:                 "unauthenticated",
-			setup:                func(t *testing.T, db *sqldb.Database, cont *testutils.TestContainer, req *http.Request) {},
-			hasReadAPIAccess:     false, // controlled by ALLOW_UNAUTHENTICATED_ACCESS config
+			name:                  "unauthenticated",
+			setup:                 func(t *testing.T, db *sqldb.Database, cont *testutils.TestContainer, req *http.Request) {},
+			hasReadAPIAccess:      false, // controlled by ALLOW_UNAUTHENTICATED_ACCESS config
 			hasTerraformAPIAccess: false,
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "admin_api_key",
@@ -63,10 +63,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				}
 				req.Header.Set("X-Terrareg-ApiKey", apiKey)
 			},
-			hasReadAPIAccess:     true,
+			hasReadAPIAccess:      true,
 			hasTerraformAPIAccess: true,
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "upload_api_key",
@@ -78,10 +78,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				// Python uses X-Terrareg-ApiKey for all API key types (admin, upload, publish)
 				req.Header.Set("X-Terrareg-ApiKey", apiKey)
 			},
-			hasReadAPIAccess:     false, // upload API keys don't have read API access (Python: base_api_key_auth_method.py)
+			hasReadAPIAccess:      false, // upload API keys don't have read API access (Python: base_api_key_auth_method.py)
 			hasTerraformAPIAccess: false,
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "publish_api_key",
@@ -93,10 +93,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				// Python uses X-Terrareg-ApiKey for all API key types (admin, upload, publish)
 				req.Header.Set("X-Terrareg-ApiKey", apiKey)
 			},
-			hasReadAPIAccess:     false, // publish API keys don't have read API access (Python: base_api_key_auth_method.py)
+			hasReadAPIAccess:      false, // publish API keys don't have read API access (Python: base_api_key_auth_method.py)
 			hasTerraformAPIAccess: false,
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "user_session",
@@ -105,10 +105,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				cookie := authHelper.CreateSessionForUser("testuser", false, []string{}, nil)
 				req.Header.Set("Cookie", cookie)
 			},
-			hasReadAPIAccess:     true, // session auth has read API access (Python: base_session_auth_method.py)
+			hasReadAPIAccess:      true, // session auth has read API access (Python: base_session_auth_method.py)
 			hasTerraformAPIAccess: true, // inherits from read API access
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "user_with_read_permission",
@@ -119,10 +119,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				cookie := authHelper.CreateSessionForUser("readuser", false, []string{"read-group"}, nil)
 				req.Header.Set("Cookie", cookie)
 			},
-			hasReadAPIAccess:     true, // session auth has read API access
+			hasReadAPIAccess:      true, // session auth has read API access
 			hasTerraformAPIAccess: true, // inherits from read API access
-			configOptions:        nil,
-			requiresSigningKey:   false,
+			configOptions:         nil,
+			requiresSigningKey:    false,
 		},
 		{
 			name: "terraform_idp_token",
@@ -131,10 +131,10 @@ func TestReadEndpoints_AllAuthMethods(t *testing.T) {
 				token := authHelper.CreateTerraformIDPToken("test-subject", nil)
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 			},
-			hasReadAPIAccess:     false, // terraform IDP tokens don't have read API access (Python: base_terraform_static_token.py)
+			hasReadAPIAccess:      false, // terraform IDP tokens don't have read API access (Python: base_terraform_static_token.py)
 			hasTerraformAPIAccess: true,  // but they do have terraform API access
-			configOptions:        nil,
-			requiresSigningKey:   true, // needs a signing key file to be generated
+			configOptions:         nil,
+			requiresSigningKey:    true, // needs a signing key file to be generated
 		},
 	}
 

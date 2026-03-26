@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
-	"github.com/rs/zerolog"
+	auditRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // AuthEvent represents an authentication event for audit logging
@@ -28,14 +28,14 @@ type AuthEvent struct {
 // AuditLogger handles comprehensive audit logging for authentication events
 // Python reference: /app/terrareg/server/api/github/github_login_callback.py:65 - USER_LOGIN audit
 type AuditLogger struct {
-	logger   zerolog.Logger
+	logger    logging.Logger
 	auditRepo auditRepo.AuditHistoryRepository
 }
 
 // NewAuditLogger creates a new audit logger
-func NewAuditLogger(baseLogger zerolog.Logger, auditRepo auditRepo.AuditHistoryRepository) *AuditLogger {
+func NewAuditLogger(baseLogger logging.Logger, auditRepo auditRepo.AuditHistoryRepository) *AuditLogger {
 	return &AuditLogger{
-		logger:   baseLogger.With().Str("component", "audit").Logger(),
+		logger:    baseLogger,
 		auditRepo: auditRepo,
 	}
 }

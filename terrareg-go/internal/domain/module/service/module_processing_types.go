@@ -26,12 +26,12 @@ type ModuleProcessingMetadata struct {
 
 // ModuleProcessingResult contains the results of processing a module
 type ModuleProcessingResult struct {
-	ModuleMetadata   *ModuleMetadata   // Extracted module metadata
-	Submodules       []SubmoduleInfo   // Detected and processed submodules
-	Examples         []ExampleInfo     // Detected and processed examples
-	ReadmeContent    string            // README file content
-	VariableTemplate string            // JSON template of variables
-	ProcessedFiles   []string          // List of processed files
+	ModuleMetadata   *ModuleMetadata // Extracted module metadata
+	Submodules       []SubmoduleInfo // Detected and processed submodules
+	Examples         []ExampleInfo   // Detected and processed examples
+	ReadmeContent    string          // README file content
+	VariableTemplate string          // JSON template of variables
+	ProcessedFiles   []string        // List of processed files
 }
 
 // ModuleMetadata contains comprehensive metadata about a module

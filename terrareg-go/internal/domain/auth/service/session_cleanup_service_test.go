@@ -9,14 +9,15 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // mockSessionRepoForCleanup is a minimal session repository mock
 type mockSessionRepoForCleanup struct {
-	mu            sync.Mutex
-	cleanupCount  int
-	cleanupError  error
-	sessions      map[string]*auth.Session
+	mu           sync.Mutex
+	cleanupCount int
+	cleanupError error
+	sessions     map[string]*auth.Session
 }
 
 func newMockSessionRepoForCleanup() *mockSessionRepoForCleanup {
@@ -80,7 +81,7 @@ func (m *mockSessionRepoForCleanup) reset() {
 }
 
 // newTestLoggerSessionCleanup creates a test logger with no output
-func newTestLoggerSessionCleanup() zerolog.Logger {
+func newTestLoggerSessionCleanup() logging.Logger {
 	return zerolog.New(zerolog.Nop()).With().Timestamp().Logger()
 }
 
@@ -415,23 +416,23 @@ func TestSessionCleanupService_ActualCleanup(t *testing.T) {
 
 		// Active session
 		activeSession := &auth.Session{
-			ID:     "active-session",
-			Expiry: now.Add(1 * time.Hour),
+			ID:                 "active-session",
+			Expiry:             now.Add(1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, activeSession)
 
 		// Expired sessions
 		expiredSession1 := &auth.Session{
-			ID:     "expired-1",
-			Expiry: now.Add(-1 * time.Hour),
+			ID:                 "expired-1",
+			Expiry:             now.Add(-1 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, expiredSession1)
 
 		expiredSession2 := &auth.Session{
-			ID:     "expired-2",
-			Expiry: now.Add(-2 * time.Hour),
+			ID:                 "expired-2",
+			Expiry:             now.Add(-2 * time.Hour),
 			ProviderSourceAuth: []byte(`{}`),
 		}
 		mockRepo.Create(ctx, expiredSession2)

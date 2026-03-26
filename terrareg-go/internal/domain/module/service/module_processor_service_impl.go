@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rs/zerolog"
 
 	configModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // ModuleDetailsWithID wraps ModuleDetails with a database ID
@@ -42,15 +42,15 @@ type ProcessedExampleFile struct {
 
 // ModuleProcessorServiceImpl implements the ModuleProcessorService interface
 type ModuleProcessorServiceImpl struct {
-	moduleParser         ModuleParser
-	moduleDetailsRepo    repository.ModuleDetailsRepository
-	moduleVersionRepo    repository.ModuleVersionRepository
-	submoduleRepo        repository.SubmoduleRepository
-	exampleFileRepo      repository.ExampleFileRepository
-	infracostService     InfracostService
+	moduleParser            ModuleParser
+	moduleDetailsRepo       repository.ModuleDetailsRepository
+	moduleVersionRepo       repository.ModuleVersionRepository
+	submoduleRepo           repository.SubmoduleRepository
+	exampleFileRepo         repository.ExampleFileRepository
+	infracostService        InfracostService
 	securityScanningService *SecurityScanningService
-	config               *configModel.DomainConfig
-	logger               zerolog.Logger
+	config                  *configModel.DomainConfig
+	logger                  logging.Logger
 }
 
 // NewModuleProcessorServiceImpl creates a new ModuleProcessorService implementation
@@ -63,18 +63,18 @@ func NewModuleProcessorServiceImpl(
 	infracostService InfracostService,
 	securityScanningService *SecurityScanningService,
 	config *configModel.DomainConfig,
-	logger zerolog.Logger,
+	logger logging.Logger,
 ) ModuleProcessorService {
 	return &ModuleProcessorServiceImpl{
-		moduleParser:         moduleParser,
-		moduleDetailsRepo:    moduleDetailsRepo,
-		moduleVersionRepo:    moduleVersionRepo,
-		submoduleRepo:        submoduleRepo,
-		exampleFileRepo:      exampleFileRepo,
-		infracostService:     infracostService,
+		moduleParser:            moduleParser,
+		moduleDetailsRepo:       moduleDetailsRepo,
+		moduleVersionRepo:       moduleVersionRepo,
+		submoduleRepo:           submoduleRepo,
+		exampleFileRepo:         exampleFileRepo,
+		infracostService:        infracostService,
 		securityScanningService: securityScanningService,
-		config:               config,
-		logger:               logger,
+		config:                  config,
+		logger:                  logger,
 	}
 }
 
@@ -127,9 +127,9 @@ func (s *ModuleProcessorServiceImpl) ProcessModule(
 	details := model.NewCompleteModuleDetails(
 		[]byte(parseResult.ReadmeContent),
 		parseResult.RawTerraformDocs,
-		tfsecJSON,                           // tfsec - now populated
-		nil,                                 // infracost - only for examples
-		s.extractTerraformGraph(moduleDir),  // terraform graph
+		tfsecJSON,                          // tfsec - now populated
+		nil,                                // infracost - only for examples
+		s.extractTerraformGraph(moduleDir), // terraform graph
 		s.extractTerraformModules(parseResult.TerraformRequirements),
 		terraformVersion,
 	)

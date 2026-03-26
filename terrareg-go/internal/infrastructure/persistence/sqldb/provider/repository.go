@@ -10,10 +10,14 @@ import (
 
 	"gorm.io/gorm"
 
+	modulemodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	repositoryModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	moduleDb "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 )
 
 // ProviderRepository implements the provider repository interface using GORM
@@ -140,7 +144,7 @@ func (r *ProviderRepository) FindAll(ctx context.Context, offset, limit int) ([]
 	versionData := make(map[int]repository.VersionData, len(results))
 
 	for i, result := range results {
-		// Store namespace name for this provider
+		// Store namespace name for this provider (kept for backwards compatibility)
 		namespaceNames[result.ProviderID] = result.NamespaceName
 
 		// Store version data for this provider (if available)
@@ -180,6 +184,17 @@ func (r *ProviderRepository) FindAll(ctx context.Context, offset, limit int) ([]
 			result.LatestVersionID,
 			defaultProviderSourceAuth,
 		)
+
+		// Create and set namespace entity from result data
+		// This ensures providers from FindAll have their namespace relationship populated
+		namespace := modulemodel.ReconstructNamespace(
+			result.NamespaceID,
+			types.NamespaceName(result.NamespaceName),
+			result.NamespaceDisplayName,
+			modulemodel.NamespaceType(result.NamespaceType),
+		)
+		prov.SetNamespace(namespace)
+
 		providers[i] = prov
 	}
 
@@ -408,7 +423,7 @@ func (r *ProviderRepository) Search(ctx context.Context, params repository.Provi
 	namespaceNames := make(map[int]string, len(results))
 	versionData := make(map[int]repository.VersionData, len(results))
 	for i, result := range results {
-		// Store namespace name for this provider
+		// Store namespace name for this provider (kept for backwards compatibility)
 		namespaceNames[result.ProviderID] = result.NamespaceName
 
 		// Store version data for this provider (if available)
@@ -448,6 +463,17 @@ func (r *ProviderRepository) Search(ctx context.Context, params repository.Provi
 			result.LatestVersionID,
 			defaultProviderSourceAuth,
 		)
+
+		// Create and set namespace entity from search result data
+		// This ensures providers from search have their namespace relationship populated
+		namespace := modulemodel.ReconstructNamespace(
+			result.NamespaceID,
+			types.NamespaceName(result.NamespaceName),
+			result.NamespaceDisplayName,
+			modulemodel.NamespaceType(result.NamespaceType),
+		)
+		prov.SetNamespace(namespace)
+
 		providers[i] = prov
 
 		// Set relevance score if available
@@ -874,6 +900,29 @@ func (r *ProviderRepository) GetBinaryDownloadCount(ctx context.Context, binaryI
 	return 0, nil
 }
 
+// GetTotalDownloads returns total downloads for all versions of a provider
+// Python reference: analytics.py get_provider_total_downloads()
+func (r *ProviderRepository) GetTotalDownloads(ctx context.Context, providerID int) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("analytics").
+		Joins("JOIN provider_version ON analytics.parent_module_version = provider_version.id").
+		Where("provider_version.provider_id = ?", providerID).
+		Count(&count).Error
+	return count, err
+}
+
+// GetVersionDownloads returns downloads for a specific provider version
+// Python reference: analytics.py get_provider_version_total_downloads()
+func (r *ProviderRepository) GetVersionDownloads(ctx context.Context, providerVersionID int) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("analytics").
+		Where("parent_module_version = ?", providerVersionID).
+		Count(&count).Error
+	return count, err
+}
+
 // FindDocumentationByID retrieves documentation by its ID
 func (r *ProviderRepository) FindDocumentationByID(ctx context.Context, id int) (*provider.ProviderVersionDocumentation, error) {
 	var dbDoc sqldb.ProviderVersionDocumentationDB
@@ -1066,8 +1115,49 @@ func toDBProviderDocumentation(d *provider.ProviderVersionDocumentation) *sqldb.
 
 // Mapper functions (DB → domain)
 
+// toDomainRepository converts a RepositoryDB to a domain Repository model
+// Python reference: repository_model.py::Repository
+func toDomainRepository(db *sqldb.RepositoryDB) *repositoryModel.Repository {
+	if db == nil {
+		return nil
+	}
+
+	// Handle nullable fields
+	var owner, name, cloneURL, logoURL string
+	var description *string
+
+	if db.Owner != nil {
+		owner = *db.Owner
+	}
+	if db.Name != nil {
+		name = *db.Name
+	}
+	if db.CloneURL != nil {
+		cloneURL = *db.CloneURL
+	}
+	if db.LogoURL != nil {
+		logoURL = *db.LogoURL
+	}
+	if len(db.Description) > 0 {
+		descStr := string(db.Description)
+		description = &descStr
+	}
+
+	return &repositoryModel.Repository{
+		ID:                 db.ID,
+		ProviderID:         "", // Not stored in repository table for providers
+		Name:               name,
+		Owner:              owner,
+		Description:        description,
+		CloneURL:           cloneURL,
+		LogoURL:            &logoURL,
+		ProviderSourceName: db.ProviderSourceName,
+	}
+}
+
 func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
-	return provider.ReconstructProvider(
+	// Reconstruct provider
+	p := provider.ReconstructProvider(
 		db.ID,
 		db.NamespaceID,
 		db.Name,
@@ -1078,6 +1168,27 @@ func toDomainProvider(db *sqldb.ProviderDB) *provider.Provider {
 		db.LatestVersionID,
 		db.DefaultProviderSourceAuth, // Field name: DefaultProviderSourceAuth
 	)
+
+	// Convert and set namespace if preloaded (via Preload("Namespace"))
+	// This is important for getting the correct namespace name in API responses
+	// Data integrity check: providers must have a namespace
+	if db.Namespace.ID == 0 {
+		// Data integrity issue - provider should always have a namespace
+		// Panic with clear message - Recoverer middleware will convert to 500 error
+		panic(fmt.Sprintf("data integrity error: provider %d (namespace_id=%d) has no namespace loaded - ensure Namespace is preloaded", db.ID, db.NamespaceID))
+	}
+
+	namespace := moduleDb.FromDBNamespace(&db.Namespace)
+	p.SetNamespace(namespace)
+
+	// Set repository if preloaded (via Preload("Repository"))
+	// Python reference: provider_model.py lines 185-187
+	if db.Repository != nil {
+		repository := toDomainRepository(db.Repository)
+		p.SetRepository(repository)
+	}
+
+	return p
 }
 
 func toDomainProviderVersion(db *sqldb.ProviderVersionDB) *provider.ProviderVersion {

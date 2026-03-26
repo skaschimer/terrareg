@@ -20,9 +20,9 @@ import (
 // TestSAMLService_IsConfigured tests configuration detection
 func TestSAMLService_IsConfigured(t *testing.T) {
 	tests := []struct {
-		name            string
-		config          func(*testing.T, *testutils.MockSAMLServer) *config.InfrastructureConfig
-		expectError     bool
+		name             string
+		config           func(*testing.T, *testutils.MockSAMLServer) *config.InfrastructureConfig
+		expectError      bool
 		expectConfigured bool
 		description      string
 	}{
@@ -37,7 +37,7 @@ func TestSAMLService_IsConfigured(t *testing.T) {
 					PublicURL:           "https://terrareg.example.com",
 				}
 			},
-			expectError:     false,
+			expectError:      false,
 			expectConfigured: true,
 			description:      "All required SAML fields present",
 		},

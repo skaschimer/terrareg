@@ -125,7 +125,7 @@ func TestAdminEndpoints_AllAuthMethods(t *testing.T) {
 
 			// Create TestContainer first to get both container and router
 			// Enable RBAC so permission checking works properly
-		cont := testutils.CreateTestServerWithConfig(t, db, testutils.WithEnableAccessControls(true))
+			cont := testutils.CreateTestServerWithConfig(t, db, testutils.WithEnableAccessControls(true))
 			authHelper := testutils.NewAuthHelper(t, db, cont)
 			setupFunc := authMethod.setup(t, db, authHelper)
 
@@ -279,14 +279,13 @@ func TestAdminEndpoints_CreateUserGroup(t *testing.T) {
 			defer testutils.CleanupTestDatabase(t, db)
 
 			// Enable RBAC so permission checking works properly
-		cont := testutils.CreateTestServerWithConfig(t, db, testutils.WithEnableAccessControls(true))
-	authHelper := testutils.NewAuthHelper(t, db, cont)
+			cont := testutils.CreateTestServerWithConfig(t, db, testutils.WithEnableAccessControls(true))
+			authHelper := testutils.NewAuthHelper(t, db, cont)
 			setupFunc := authMethod.setup(t, db, authHelper)
-
 
 			// Try to create user group (admin-only POST endpoint)
 			body := map[string]interface{}{
-				"name":  "test-group",
+				"name":       "test-group",
 				"site_admin": false,
 			}
 			bodyBytes, _ := json.Marshal(body)

@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // MockProviderSource is a mock implementation of ProviderSourceInstance for testing
@@ -15,7 +15,7 @@ type MockProviderSource struct {
 	ReleaseArtifacts map[string][]byte
 
 	// ReleaseArchive stores the archive data and subdirectory
-	ReleaseArchiveData []byte
+	ReleaseArchiveData   []byte
 	ReleaseArchiveSubdir string
 
 	// AccessToken to simulate GitHub authentication
@@ -25,7 +25,7 @@ type MockProviderSource struct {
 // NewMockProviderSource creates a new mock provider source
 func NewMockProviderSource() *MockProviderSource {
 	return &MockProviderSource{
-		ReleaseArtifacts:  make(map[string][]byte),
+		ReleaseArtifacts: make(map[string][]byte),
 		AccessToken:      "test-access-token",
 	}
 }

@@ -14,14 +14,14 @@ import (
 
 // CreateNamespaceCommand handles creating a new namespace
 type CreateNamespaceCommand struct {
-	namespaceRepo       repository.NamespaceRepository
+	namespaceRepo         repository.NamespaceRepository
 	namespaceAuditService *auditservice.NamespaceAuditService
 }
 
 // NewCreateNamespaceCommand creates a new create namespace command
 func NewCreateNamespaceCommand(namespaceRepo repository.NamespaceRepository, namespaceAuditService *auditservice.NamespaceAuditService) *CreateNamespaceCommand {
 	return &CreateNamespaceCommand{
-		namespaceRepo:       namespaceRepo,
+		namespaceRepo:         namespaceRepo,
 		namespaceAuditService: namespaceAuditService,
 	}
 }

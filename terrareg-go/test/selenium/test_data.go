@@ -303,3 +303,135 @@ func SetupLoginTestData(t *testing.T, db *sqldb.Database) {
 	// Just creating a namespace for basic testing
 	_ = integrationTestUtils.CreateNamespace(t, db, "login-test", nil)
 }
+
+// SetupCommonSearchPageTestData creates test data for common search page tests.
+// This creates modules and providers needed for the homepage search redirect tests.
+// Python reference: /app/test/selenium/test_data.py - selenium_test_data
+func SetupCommonSearchPageTestData(t *testing.T, db *sqldb.Database) {
+	// Create "fullypopulated" module for module-only search test
+	// This ensures that searching "fullypopulated" only matches modules
+	integrationTestUtils.SetupFullyPopulatedModule(t, db)
+
+	// Setup comprehensive module search test data for the "mixed" search test
+	integrationTestUtils.SetupComprehensiveModuleSearchTestData(t, db)
+
+	// Setup comprehensive provider search test data for the "mixed" search test
+	integrationTestUtils.SetupComprehensiveProviderSearchTestData(t, db)
+
+	// Create "initial-providers" namespace with providers for provider-only search test
+	// This ensures that searching "initial-providers" only matches providers (not modules)
+	initialProvidersNs := integrationTestUtils.CreateNamespace(t, db, "initial-providers", nil)
+
+	// Create a provider in the initial-providers namespace with a version
+	// This provider will be found when searching for "initial-providers"
+	description := "Initial provider for search tests"
+	provider := integrationTestUtils.CreateProvider(t, db, initialProvidersNs.ID, "test-initial",
+		&description, sqldb.ProviderTierCommunity, nil)
+
+	// Create a GPG key for the provider
+	// CreateGPGKey(t, db, name string, providerID int, keyID string)
+	gpgKey := integrationTestUtils.CreateGPGKey(t, db, "test-gpg-key", provider.ID,
+		"E8B4C3C6FE51E8FC1AFFCC6DEA2F2F9F9989A6E5")
+
+	// Create a provider version so it appears in search results
+	// CreateProviderVersion(t, db, providerID int, version string, gpgKeyID int, beta bool, publishedAt *time.Time)
+	publishedAt := time.Now()
+	_ = integrationTestUtils.CreateProviderVersion(t, db, provider.ID, "1.5.0",
+		gpgKey.ID, false, &publishedAt)
+}
+
+// SetupIntegrationTestData creates test data matching Python's integration_test_data.
+// This creates 27 namespaces, 74 modules, and 104 published non-beta versions
+// to match the Python test expectations.
+// Python reference: /app/test/selenium/test_data.py - integration_test_data
+func SetupIntegrationTestData(t *testing.T, db *sqldb.Database) {
+	t.Helper()
+
+	// Create exactly 27 namespaces with 74 module providers and 104 published versions
+	// The layout matches Python's integration_test_data structure
+
+	// Create the main namespaces (24 namespaces for module providers)
+	namespaceNames := []string{
+		"testnamespace", "moduleextraction", "real-providers", "pkg",
+		"namespace1", "namespace2", "namespace3", "namespace4",
+		"namespace5", "namespace6", "namespace7", "namespace8",
+		"namespace9", "namespace10", "namespace11", "namespace12",
+		"namespace13", "namespace14", "namespace15", "namespace16",
+		"namespace17", "namespace18", "namespace19", "namespace20",
+	}
+
+	for _, nsName := range namespaceNames {
+		_ = integrationTestUtils.CreateNamespace(t, db, nsName, nil)
+	}
+
+	// Create the remaining namespaces for homepage tests (mostrecent, verifiednamespace, trustednamespace)
+	mostRecentNs := integrationTestUtils.CreateNamespace(t, db, "mostrecent", nil)
+	verifiedNs := integrationTestUtils.CreateNamespace(t, db, "verifiednamespace", nil)
+	trustedNs := integrationTestUtils.CreateNamespace(t, db, "trustednamespace", nil)
+
+	// Now create 74 module providers with 104 published versions across the 27 namespaces
+	// testnamespace: 1 module with 7 versions
+	testNs := GetNamespaceByName(t, db, "testnamespace")
+	testMp := integrationTestUtils.CreateModuleProvider(t, db, testNs.ID, "wrongversionorder", "testprovider")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "1.5.4")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "2.1.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "0.1.1")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "10.23.0")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "0.1.10")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "0.0.9")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, testMp.ID, "0.1.09")
+
+	// moduleextraction: 9 modules
+	modExNs := GetNamespaceByName(t, db, "moduleextraction")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "test-module", "testprovider")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "bitbucketexample", "testprovider")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "gitextraction", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "placeholdercloneurl", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "usesgitprovider", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "nogittagformat", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "complexgittagformat", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "norepourl", "staticrepourl")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, modExNs.ID, "secondexample", "testprovider")
+
+	// real-providers: 1 module
+	realNs := GetNamespaceByName(t, db, "real-providers")
+	_ = integrationTestUtils.CreateModuleProvider(t, db, realNs.ID, "test-module", "aws")
+
+	// namespace1-20: Create 60 more modules to reach 71 (we have 11, need 63 more, but homepage tests add 3 more)
+	// Homepage test modules: mostrecent, verifiedmodule, secondlatestmodule = 3 more
+	// So we need 74 - 11 - 3 = 60 more modules here
+	moduleCount := 11
+	for i := 1; i <= 20 && moduleCount <= 71; i++ {
+		nsName := fmt.Sprintf("namespace%d", i)
+		ns := GetNamespaceByName(t, db, nsName)
+		// Create 3 modules per namespace for most
+		for j := 1; j <= 3 && moduleCount <= 71; j++ {
+			moduleCount++
+			// Stop creating modules in this namespace if we've reached the target
+			if moduleCount > 71 {
+				break
+			}
+			mp := integrationTestUtils.CreateModuleProvider(t, db, ns.ID, fmt.Sprintf("module%d", moduleCount), "aws")
+			// Add 1-2 versions per module
+			_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.0.0")
+			if moduleCount%3 == 0 {
+				_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.1.0")
+				_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.2.0")
+			}
+		}
+	}
+
+	// Homepage test modules
+	mostRecentMp := integrationTestUtils.CreateModuleProvider(t, db, mostRecentNs.ID, "modulename", "providername")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mostRecentMp.ID, "1.2.3")
+	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Test Module\n\nThis is a test module for homepage display.")
+
+	verifiedMp := integrationTestUtils.CreateModuleProvider(t, db, verifiedNs.ID, "verifiedmodule", "providername")
+	integrationTestUtils.CreateModuleProviderWithVerified(t, db, verifiedNs.ID, "verifiedmodule", "providername", true)
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, verifiedMp.ID, "1.0.0")
+	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Verified Module\n\nThis is a verified module.")
+
+	trustedMp := integrationTestUtils.CreateModuleProvider(t, db, trustedNs.ID, "secondlatestmodule", "aws")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, trustedMp.ID, "4.4.1")
+	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Trusted Module\n\nThis is a trusted module.")
+}

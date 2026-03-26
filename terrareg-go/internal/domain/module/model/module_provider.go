@@ -120,8 +120,9 @@ func ValidateModuleName(name types.ModuleName) error {
 	nameString := string(name)
 	nameString = strings.ToLower(nameString)
 
+	// Python reference: /app/terrareg/models.py:1509 - raises InvalidModuleNameError('Module name is invalid')
 	if !moduleNameRegex.MatchString(nameString) {
-		return fmt.Errorf("%w: module name must contain only alphanumeric characters, hyphens, and underscores", shared.ErrInvalidName)
+		return fmt.Errorf("%w: Module name is invalid", shared.ErrInvalidName)
 	}
 
 	return nil
@@ -143,8 +144,9 @@ func ValidateProviderName(name types.ModuleProviderName) error {
 
 	stringName := string(name)
 	// Provider names must be lowercase alphanumeric only
+	// Python reference: /app/terrareg/models.py:2188 - raises InvalidModuleProviderNameError('Module provider name is invalid')
 	if !providerNameRegex.MatchString(stringName) {
-		return fmt.Errorf("%w: provider name must contain only lowercase alphanumeric characters", shared.ErrInvalidProvider)
+		return fmt.Errorf("%w: Module provider name is invalid", shared.ErrInvalidProvider)
 	}
 
 	return nil

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
+	defaultTimeout = 5 * time.Second
 	pollInterval   = 100 * time.Millisecond
 )
 
@@ -51,12 +51,12 @@ func NewSeleniumTest(t *testing.T) *SeleniumTest {
 // NewSeleniumTestWithConfig creates a new Selenium test instance with custom config.
 // This allows individual test classes to override configuration like Python's setup_class.
 // Python reference: /app/test/selenium/test_homepage.py - TestHomepage.setup_class
-func NewSeleniumTestWithConfig(t *testing.T, configOverrides map[string]string) *SeleniumTest {
+func NewSeleniumTestWithConfig(t *testing.T, configOverrides map[string]string, opts ...TestServerOption) *SeleniumTest {
 	st := &SeleniumTest{
 		t: t,
 	}
 
-	st.server = NewTestServer(st.t, configOverrides)
+	st.server = NewTestServer(st.t, configOverrides, opts...)
 	st.baseURL = st.server.baseURL
 	st.setupBrowser()
 
@@ -151,7 +151,9 @@ func (st *SeleniumTest) runChromedp(actions ...chromedp.Action) error {
 // NavigateTo navigates the browser to a specific path.
 func (st *SeleniumTest) NavigateTo(path string) {
 	url := st.GetURL(path)
-	err := st.runChromedp(chromedp.Navigate(url))
+	err := st.Retry(chromedp.ActionFunc(func(ctx context.Context) error {
+		return st.runChromedp(chromedp.Navigate(url))
+	}), 50, 3)
 	require.NoError(st.t, err, "Failed to navigate to %s", url)
 }
 
@@ -174,6 +176,9 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 		o(opt)
 	}
 
+	// Detect XPath selector (starts with //)
+	isXPath := strings.HasPrefix(selector, "//")
+
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), opt.timeout)
 	defer cancel()
 
@@ -193,7 +198,11 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 				chromedp.ActionFunc(func(ctx context.Context) error {
 					// Check if element exists
 					var textContent string
-					err := chromedp.Text(selector, &textContent, chromedp.ByQuery).Do(ctx)
+					queryOpts := chromedp.ByQuery
+					if isXPath {
+						queryOpts = chromedp.BySearch
+					}
+					err := chromedp.Text(selector, &textContent, queryOpts).Do(ctx)
 					if err != nil {
 						found = false
 						return nil
@@ -204,15 +213,30 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 						return nil
 					}
 
-					// Check if visible
-					return chromedp.Evaluate(fmt.Sprintf(`
-						(function() {
-							var el = document.querySelector(%q);
-							if (!el) return false;
-							var rect = el.getBoundingClientRect();
-							return rect.width > 0 && rect.height > 0;
-						})()
-					`, selector), &visible).Do(ctx)
+					// Check if visible - for XPath, we need different approach
+					if isXPath {
+						// For XPath, use $x() helper to get element and check visibility
+						return chromedp.Evaluate(fmt.Sprintf(`
+							(function() {
+								var els = document.evaluate(%q, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+								if (!els.snapshotLength) return false;
+								var el = els.snapshotItem(0);
+								if (!el) return false;
+								var rect = el.getBoundingClientRect();
+								return rect.width > 0 && rect.height > 0;
+							})()
+						`, selector), &visible).Do(ctx)
+					} else {
+						// For CSS selectors, use querySelector
+						return chromedp.Evaluate(fmt.Sprintf(`
+							(function() {
+								var el = document.querySelector(%q);
+								if (!el) return false;
+								var rect = el.getBoundingClientRect();
+								return rect.width > 0 && rect.height > 0;
+							})()
+						`, selector), &visible).Do(ctx)
+					}
 				}),
 			)
 
@@ -220,6 +244,7 @@ func (st *SeleniumTest) WaitForElement(selector string, opts ...ElementOption) *
 				if !opt.ensureDisplayed || visible {
 					return &Element{
 						selector: selector,
+						isXPath:  isXPath,
 						ctx:      st.AllocCtx,
 						st:       st,
 					}
@@ -321,9 +346,15 @@ func (st *SeleniumTest) AssertElementExists(selector string) {
 }
 
 // AssertElementNotExists asserts that an element does not exist in the DOM.
+// Uses a short timeout to quickly fail if the element exists.
+// Python reference: /app/test/selenium/test_homepage.py - pytest.raises(NoSuchElementException)
 func (st *SeleniumTest) AssertElementNotExists(selector string) {
+	// Create a context with a short timeout (500ms) to quickly check if element exists
+	ctx, cancel := context.WithTimeout(st.AllocCtx, 500*time.Millisecond)
+	defer cancel()
+
 	var text string
-	err := st.runChromedp(chromedp.Text(selector, &text, chromedp.ByQuery))
+	err := chromedp.Run(ctx, chromedp.Text(selector, &text, chromedp.ByQuery))
 	assert.Error(st.t, err, "Element should not exist: %s", selector)
 }
 
@@ -364,6 +395,7 @@ func WithoutVisibilityCheck() ElementOption {
 // This is the Go equivalent of Python's WebElement.
 type Element struct {
 	selector string
+	isXPath  bool
 	ctx      context.Context
 	st       *SeleniumTest
 }
@@ -371,14 +403,22 @@ type Element struct {
 // Text returns the text content of the element.
 func (e *Element) Text() string {
 	var text string
-	err := e.st.runChromedp(chromedp.Text(e.selector, &text, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Text(e.selector, &text, queryOpts))
 	require.NoError(e.st.t, err, "Failed to get text for element: %s", e.selector)
 	return text
 }
 
 // Click clicks the element.
 func (e *Element) Click() {
-	err := e.st.runChromedp(chromedp.Click(e.selector, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Click(e.selector, queryOpts))
 	require.NoError(e.st.t, err, "Failed to click element: %s", e.selector)
 }
 
@@ -402,26 +442,34 @@ func (e *Element) IsDisplayed() bool {
 // Exists returns true if the element exists in the DOM.
 func (e *Element) Exists() bool {
 	var text string
-	err := e.st.runChromedp(chromedp.Text(e.selector, &text, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.Text(e.selector, &text, queryOpts))
 	return err == nil
 }
 
 // SendKeys sends keystrokes to the element.
 func (e *Element) SendKeys(keys string) {
-	err := e.st.runChromedp(chromedp.SendKeys(e.selector, keys, chromedp.ByQuery))
+	queryOpts := chromedp.ByQuery
+	if e.isXPath {
+		queryOpts = chromedp.BySearch
+	}
+	err := e.st.runChromedp(chromedp.SendKeys(e.selector, keys, queryOpts))
 	require.NoError(e.st.t, err, "Failed to send keys to element: %s", e.selector)
 }
 
 // WaitForURL waits for the current URL to match the expected path.
 func (st *SeleniumTest) WaitForURL(expectedPath string) {
-	timeout := time.After(30 * time.Second)
+	timeout := time.After(2 * time.Second)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-timeout:
-			require.Fail(st.t, "URL did not change to expected path")
+			require.Fail(st.t, fmt.Sprintf("URL did not change to expected path: %s, Current: %s", expectedPath, st.GetCurrentURL()))
 		case <-ticker.C:
 			currentURL := st.GetCurrentURL()
 			if strings.HasSuffix(currentURL, expectedPath) {
@@ -441,6 +489,26 @@ func (st *SeleniumTest) GetAttribute(selector, attr string) string {
 	return value
 }
 
+// GetValue retrieves the current value of an input element (DOM property, not HTML attribute).
+// This is different from GetAttribute which returns the initial HTML attribute value.
+func (st *SeleniumTest) GetValue(selector string) string {
+	var value string
+	err := st.runChromedp(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var el = document.querySelector(%q);
+					return el ? el.value : null;
+				})()
+			`, selector), &value).Do(ctx)
+		}),
+	)
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
 // GetElementAttribute retrieves an attribute value from an element (on Element).
 func (e *Element) GetAttribute(attr string) string {
 	var value string
@@ -453,6 +521,8 @@ func (e *Element) GetAttribute(attr string) string {
 
 // SelectOption selects an option in a select dropdown by value attribute.
 func (st *SeleniumTest) SelectOption(selector, value string) {
+	// Wait for dropdown to be populated with options (async AJAX)
+	st.WaitForDropdownOptions(selector, 3)
 	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(fmt.Sprintf(`
@@ -468,24 +538,56 @@ func (st *SeleniumTest) SelectOption(selector, value string) {
 	require.NoError(st.t, err)
 }
 
+func (st *SeleniumTest) Retry(callback chromedp.ActionFunc, retries int, sleepTimeMillis int) error {
+	var err error
+	for i := 0; i < retries; i++ {
+		err = st.runChromedp(callback)
+		if err == nil {
+			return nil
+		}
+		// chromedp.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
+		time.Sleep(time.Duration(sleepTimeMillis) * time.Millisecond)
+	}
+	return err
+}
+
+// WaitForDropdownOptions waits for a select dropdown to be populated with options.
+// This is needed because dropdowns are populated asynchronously via AJAX.
+func (st *SeleniumTest) WaitForDropdownOptions(selector string, minOptions int) {
+	err := st.Retry(
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var count int
+			err := chromedp.Evaluate(fmt.Sprintf(`
+				(function() {
+					var select = document.querySelector(%q);
+					if (!select || !select.options) {
+						return 0;
+					}
+					return select.options.length;
+				})()
+			`, selector), &count).Do(ctx)
+			if err != nil {
+				return err
+			}
+			if count >= minOptions {
+				return nil
+			}
+			return fmt.Errorf("only %d options available, need at least %d", count, minOptions)
+		}),
+		5,
+		500,
+	)
+	require.NoError(st.t, err, "Dropdown %s did not get populated with at least %d options", selector, minOptions)
+}
+
 // SelectOptionByVisibleText selects an option in a select dropdown by visible text.
 // Matches Python: select.select_by_visible_text(text)
 func (st *SeleniumTest) SelectOptionByVisibleText(selector, text string) {
-	// First wait for the select element to have options populated
-	err := st.runChromedp(
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			return chromedp.Evaluate(fmt.Sprintf(`
-				(function() {
-					var select = document.querySelector(%q);
-					return select && select.options && select.options.length > 0;
-				})()
-			`, selector), nil).Do(ctx)
-		}),
-	)
-	require.NoError(st.t, err, "Select element has no options")
+	// Wait for dropdown to be populated with options (async AJAX)
+	st.WaitForDropdownOptions(selector, 3)
 
 	// Then select the option by visible text
-	err = st.runChromedp(
+	err := st.runChromedp(
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return chromedp.Evaluate(fmt.Sprintf(`
 				(function() {
@@ -668,4 +770,15 @@ func (st *SeleniumTest) WaitForTitle(expectedTitle string) {
 			}
 		}
 	}
+}
+
+// ClearInput clears the value of an input element.
+// This is the Go equivalent of Python's element.clear() method.
+// Python reference: /app/test/selenium/test_create_module_provider.py - input_field.clear()
+func (st *SeleniumTest) ClearInput(selector string) {
+	err := st.runChromedp(
+		chromedp.Focus(selector, chromedp.ByQuery),
+		chromedp.Clear(selector, chromedp.ByQuery),
+	)
+	require.NoError(st.t, err, "Failed to clear input: %s", selector)
 }

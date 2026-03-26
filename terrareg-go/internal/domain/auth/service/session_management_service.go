@@ -76,7 +76,7 @@ func (s *SessionManagementService) CreateSessionAndCookie(
 	// Create session data for cookie
 	sessionData := &auth.SessionData{
 		SessionID:   session.ID,
-	AuthMethod:  string(authMethod),
+		AuthMethod:  string(authMethod),
 		Username:    username,
 		IsAdmin:     isAdmin,
 		SiteAdmin:   false,
@@ -259,8 +259,8 @@ func (s *SessionManagementService) SetCookieForExistingSession(
 	// Note: We don't have full user info here, so we use minimal data
 	// The cookie contains the session ID which is the most important part
 	sessionData := &auth.SessionData{
-		SessionID:  session.ID,
-		AuthMethod: authMethod,
+		SessionID:   session.ID,
+		AuthMethod:  authMethod,
 		Username:    username,
 		IsAdmin:     false,
 		SiteAdmin:   false,
