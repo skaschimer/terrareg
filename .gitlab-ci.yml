@@ -461,6 +461,7 @@ test-docker-image-waitress:
   variables:
     MIGRATE_DATABASE: "True"
     SERVER: "waitress"
+    SECRET_KEY: ec9b8cc5ed0404acb3983b7836844d828728c22c28ecbed9095edef9b7489e85
   script:
     # Wait for Terrareg container to come up
     - sleep 30
@@ -521,6 +522,7 @@ test-golang-docker-image:
     - docker:dind
   variables:
     MIGRATE_DATABASE: "True"
+    SECRET_KEY: ec9b8cc5ed0404acb3983b7836844d828728c22c28ecbed9095edef9b7489e85
   script:
     - docker run -d --name terrareg-go-test -e MIGRATE_DATABASE=True -p 5000:5000 terrareg-go-image:v${CI_COMMIT_SHORT_SHA}
     - sleep 30
