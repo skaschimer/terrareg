@@ -1840,8 +1840,7 @@ EOF
         settings_input.click()
         self._click_save_settings()
 
-        module_provider = ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider')
-        assert module_provider.archive_git_path is True
+        self.assert_equals(lambda: ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider').archive_git_path, True)
 
         self.selenium_instance.refresh()
         self.wait_for_element(By.ID, 'module-tab-link-settings')
@@ -1850,8 +1849,7 @@ EOF
         settings_input.click()
 
         self._click_save_settings()
-        module_provider._cache_db_row = None
-        assert module_provider.archive_git_path is False
+        self.assert_equals(lambda: ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider').archive_git_path, False)
 
     def test_updating_module_name(self):
         """Test changing module name in module provider settings"""
