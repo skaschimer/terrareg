@@ -174,8 +174,8 @@ n9wkhjrvcVuqfzvFSX6JA+BmRuQdXmDll3gPSzfXUtrIEcIy8S40liVXsnQaoJ6C
         # 47F4EC3E116B29893AFD7B80BB5A8B38930DCAEF
         self.assert_equals(lambda: terrareg.models.GpgKey.get_by_fingerprint("47F4EC3E116B29893AFD7B80BB5A8B38930DCAEF") is not None, True)
 
-        self.assert_equals(lambda: self.selenium_instance.find_element(By.ID, "gpg-key-table-data").find_element(By.XPATH, ".//td[text()='BB5A8B38930DCAEF']").is_displayed(), True)
-        gpg_key_row = self.selenium_instance.find_element(By.ID, "gpg-key-table-data").find_element(By.XPATH, ".//td[text()='BB5A8B38930DCAEF']/..")
+        self.assert_equals(lambda: self.selenium_instance.find_element(By.XPATH, '//table[@id="gpg-key-table-data"]//td[text()="BB5A8B38930DCAEF"]').is_displayed(), True)
+        gpg_key_row = self.selenium_instance.find_element(By.XPATH, '//table[@id="gpg-key-table-data"]//td[text()="BB5A8B38930DCAEF"]/..')
         gpg_key_row.find_element(By.XPATH, ".//button[text()='Delete']").click()
 
         self.assert_equals(lambda: terrareg.models.GpgKey.get_by_fingerprint("47F4EC3E116B29893AFD7B80BB5A8B38930DCAEF") is None, True)

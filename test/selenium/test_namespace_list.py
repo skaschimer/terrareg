@@ -157,6 +157,12 @@ class TestNamespaceList(SeleniumTest):
         # Click next button
         self.selenium_instance.find_element(By.ID, 'nextButton').click()
 
+        # Wait for first row of new page to appear before checking all rows
+        self.assert_equals(
+            lambda: self.selenium_instance.find_element(By.XPATH, '//table[@id="namespaces-table-data"]//tbody/tr[1]//a').text,
+            'mostrecentunpublished'
+        )
+
         # Ensure new namespace lists are correct
         expected_namespaces = [
             ['mostrecentunpublished', 'mostrecentunpublished'],

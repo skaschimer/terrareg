@@ -1814,8 +1814,7 @@ EOF
         settings_input.send_keys('test/sub/directory')
         self._click_save_settings()
 
-        module_provider = ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider')
-        assert module_provider.git_path == 'test/sub/directory'
+        self.assert_equals(lambda: ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider').git_path, 'test/sub/directory')
 
         self.selenium_instance.refresh()
         self.wait_for_element(By.ID, 'module-tab-link-settings')
@@ -1824,8 +1823,7 @@ EOF
         settings_input.clear()
 
         self._click_save_settings()
-        module_provider._cache_db_row = None
-        assert module_provider.git_path == None
+        self.assert_equals(lambda: ModuleProvider(Module(Namespace('moduledetails'), 'fullypopulated'), 'testprovider').git_path, None)
 
     def test_archive_git_path_setting(self):
         """Test setting archive git path in module provider settings."""
