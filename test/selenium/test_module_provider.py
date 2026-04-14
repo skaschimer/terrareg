@@ -49,6 +49,8 @@ class TestModuleProvider(SeleniumTest):
         cls._config_allow_forceful_module_provider_redirect_deletion = mock.patch('terrareg.config.Config.ALLOW_FORCEFUL_MODULE_PROVIDER_REDIRECT_DELETION', True)
         cls._config_default_ui_details_view = mock.patch('terrareg.config.Config.DEFAULT_UI_DETAILS_VIEW', terrareg.config.DefaultUiInputOutputView.TABLE)
         cls._config_example_analytics_token = mock.patch('terrareg.config.Config.EXAMPLE_ANALYTICS_TOKEN', 'example-analytics-token')
+        cls._config_public_url = mock.patch('terrareg.config.Config.PUBLIC_URL', 'https://localhost')
+        cls._config_domain_name = mock.patch('terrareg.config.Config.DOMAIN_NAME', 'localhost')
 
         cls.register_patch(mock.patch('terrareg.config.Config.ADMIN_AUTHENTICATION_TOKEN', 'unittest-password'))
         cls.register_patch(mock.patch('terrareg.config.Config.ADDITIONAL_MODULE_TABS', '[["License", ["first-file", "LICENSE", "second-file"]], ["Changelog", ["CHANGELOG.md"]], ["doesnotexist", ["DOES_NOT_EXIST"]]]'))
@@ -64,6 +66,8 @@ class TestModuleProvider(SeleniumTest):
         cls.register_patch(cls._config_allow_forceful_module_provider_redirect_deletion)
         cls.register_patch(cls._config_default_ui_details_view)
         cls.register_patch(cls._config_example_analytics_token)
+        cls.register_patch(cls._config_public_url)
+        cls.register_patch(cls._config_domain_name)
 
         super(TestModuleProvider, cls).setup_class()
 
