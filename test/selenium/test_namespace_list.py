@@ -13,6 +13,19 @@ from .test_data import one_namespace_test_data
 class TestNamespaceList(SeleniumTest):
     """Test module namespace list page."""
 
+    @classmethod
+    def setup_class(cls):
+        """Setup required mocks."""
+        cls._config_debug = mock.patch('terrareg.config.Config.DEBUG', False)
+        cls._config_public_url = mock.patch('terrareg.config.Config.PUBLIC_URL', 'https://localhost')
+        cls._config_domain_name = mock.patch('terrareg.config.Config.DOMAIN_NAME', 'localhost')
+        cls.register_patch(cls._config_debug)
+        cls.register_patch(cls._config_public_url)
+        cls.register_patch(cls._config_domain_name)
+
+        super(TestNamespaceList, cls).setup_class()
+    """Test module namespace list page."""
+
     def test_module_namespace_list_page(self):
         """Test namespace list page."""
         self.selenium_instance.get(self.get_url('/modules'))
@@ -56,7 +69,7 @@ class TestNamespaceList(SeleniumTest):
 
         # Wait for first row of new page to appear before checking all rows
         self.assert_equals(
-            lambda: self.selenium_instance.find_element(By.XPATH, '//table[@id="namespaces-table-data"]//tbody/tr[1]//a').text,
+            lambda: self.selenium_instance.find_element(By.XPATH, '//tbody[@id="namespaces-table-data"]//tr[1]//a').text,
             'trustednamespace'
         )
 
@@ -165,7 +178,7 @@ class TestNamespaceList(SeleniumTest):
 
         # Wait for first row of new page to appear before checking all rows
         self.assert_equals(
-            lambda: self.selenium_instance.find_element(By.XPATH, '//table[@id="namespaces-table-data"]//tbody/tr[1]//a').text,
+            lambda: self.selenium_instance.find_element(By.XPATH, '//tbody[@id="namespaces-table-data"]//tr[1]//a').text,
             'mostrecentunpublished'
         )
 
