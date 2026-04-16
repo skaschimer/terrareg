@@ -2,10 +2,15 @@ package provider_source
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -14,15 +19,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// generatePrivateKey Generate private key and return path
+func generatePrivateKey() (string, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+
+	privateKeyFile, err := os.CreateTemp(os.TempDir(), "private_key_*.pem")
+	if err != nil {
+		return "", err
+	}
+	defer privateKeyFile.Close()
+
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+
+	pemBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	}
+
+	if err := pem.Encode(privateKeyFile, pemBlock); err != nil {
+		return "", err
+	}
+
+	return privateKeyFile.Name(), nil
+}
+
 // TestGithubProviderSource_Config tests that the config is loaded correctly
 func TestGithubProviderSource_Config(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:                "https://github.example-test.com",
 		ApiURL:                 "https://api.github.example-test.com",
 		ClientID:               "unittest-github-client-id",
 		ClientSecret:           "unittest-github-client-secret",
 		LoginButtonText:        "Unit Test Github Login",
-		PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+		PrivateKeyPath:         keyPath,
 		AppID:                  "954956",
 		DefaultAccessToken:     "",
 		DefaultInstallationID:  "",
@@ -56,13 +94,19 @@ func TestGithubProviderSource_Config(t *testing.T) {
 
 // TestGithubProviderSource_LoginButtonText tests the LoginButtonText method
 func TestGithubProviderSource_LoginButtonText(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:         "https://github.example-test.com",
 		ApiURL:          "https://api.github.example-test.com",
 		ClientID:        "unittest-github-client-id",
 		ClientSecret:    "unittest-github-client-secret",
 		LoginButtonText: "Unit Test Github Login",
-		PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+		PrivateKeyPath:  keyPath,
 		AppID:           "954956",
 	}
 
@@ -87,13 +131,19 @@ func TestGithubProviderSource_LoginButtonText(t *testing.T) {
 
 // TestGithubProviderSource_GetLoginRedirectURL tests the GetLoginRedirectURL method
 func TestGithubProviderSource_GetLoginRedirectURL(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:         "https://github.example-test.com",
 		ApiURL:          "https://api.github.example-test.com",
 		ClientID:        "unittest-github-client-id",
 		ClientSecret:    "unittest-github-client-secret",
 		LoginButtonText: "Unit Test Github Login",
-		PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+		PrivateKeyPath:  keyPath,
 		AppID:           "954956",
 	}
 
@@ -122,6 +172,12 @@ func TestGithubProviderSource_GetLoginRedirectURL(t *testing.T) {
 
 // TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces tests the AutoGenerateGithubOrganisationNamespaces method
 func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	tests := []struct {
 		name     string
 		config   *model.ProviderSourceConfig
@@ -135,7 +191,7 @@ func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testin
 				ClientID:               "unittest-github-client-id",
 				ClientSecret:           "unittest-github-client-secret",
 				LoginButtonText:        "Unit Test Github Login",
-				PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:         keyPath,
 				AppID:                  "954956",
 				AutoGenerateNamespaces: true,
 			},
@@ -149,7 +205,7 @@ func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testin
 				ClientID:               "unittest-github-client-id",
 				ClientSecret:           "unittest-github-client-secret",
 				LoginButtonText:        "Unit Test Github Login",
-				PrivateKeyPath:         "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:         keyPath,
 				AppID:                  "954956",
 				AutoGenerateNamespaces: false,
 			},
@@ -182,6 +238,12 @@ func TestGithubProviderSource_AutoGenerateGithubOrganisationNamespaces(t *testin
 
 // TestGithubProviderSource_IsEnabled tests the IsEnabled method
 func TestGithubProviderSource_IsEnabled(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	tests := []struct {
 		name     string
 		config   *model.ProviderSourceConfig
@@ -195,7 +257,7 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			},
 			expected: true,
@@ -207,7 +269,7 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 				ApiURL:          "https://api.github.example-test.com",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			},
 			expected: false,
@@ -219,7 +281,7 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 				ApiURL:          "https://api.github.example-test.com",
 				ClientID:        "unittest-github-client-id",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			},
 			expected: false,
@@ -231,7 +293,7 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			},
 			expected: false,
@@ -243,7 +305,7 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			},
 			expected: false,
@@ -275,13 +337,19 @@ func TestGithubProviderSource_IsEnabled(t *testing.T) {
 
 // TestGithubProviderSource_GetPublicSourceURL tests the GetPublicSourceURL method
 func TestGithubProviderSource_GetPublicSourceURL(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:         "https://github.example-test.com",
 		ApiURL:          "https://api.github.example-test.com",
 		ClientID:        "unittest-github-client-id",
 		ClientSecret:    "unittest-github-client-secret",
 		LoginButtonText: "Unit Test Github Login",
-		PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+		PrivateKeyPath:  keyPath,
 		AppID:           "954956",
 	}
 
@@ -312,13 +380,19 @@ func TestGithubProviderSource_GetPublicSourceURL(t *testing.T) {
 
 // TestGithubProviderSource_GetPublicArtifactDownloadURL tests the GetPublicArtifactDownloadURL method
 func TestGithubProviderSource_GetPublicArtifactDownloadURL(t *testing.T) {
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:         "https://github.example-test.com",
 		ApiURL:          "https://api.github.example-test.com",
 		ClientID:        "unittest-github-client-id",
 		ClientSecret:    "unittest-github-client-secret",
 		LoginButtonText: "Unit Test Github Login",
-		PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+		PrivateKeyPath:  keyPath,
 		AppID:           "954956",
 	}
 
@@ -417,6 +491,12 @@ func TestGithubProviderSource_GetUserAccessToken(t *testing.T) {
 			}))
 			defer server.Close()
 
+			keyPath, err := generatePrivateKey()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.Remove(keyPath)
+
 			// Set baseURL to test server URL
 			expectedConfig := &model.ProviderSourceConfig{
 				BaseURL:         server.URL,
@@ -424,7 +504,7 @@ func TestGithubProviderSource_GetUserAccessToken(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			}
 
@@ -508,6 +588,12 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 			}))
 			defer server.Close()
 
+			keyPath, err := generatePrivateKey()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.Remove(keyPath)
+
 			// Set apiURL to test server URL
 			expectedConfig := &model.ProviderSourceConfig{
 				BaseURL:         "https://github.example-test.com",
@@ -515,7 +601,7 @@ func TestGithubProviderSource_GetUsername(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			}
 
@@ -616,6 +702,12 @@ func TestGithubProviderSource_GetUserOrganisations(t *testing.T) {
 			}))
 			defer server.Close()
 
+			keyPath, err := generatePrivateKey()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.Remove(keyPath)
+
 			// Set apiURL to test server URL
 			expectedConfig := &model.ProviderSourceConfig{
 				BaseURL:         "https://github.example-test.com",
@@ -623,7 +715,7 @@ func TestGithubProviderSource_GetUserOrganisations(t *testing.T) {
 				ClientID:        "unittest-github-client-id",
 				ClientSecret:    "unittest-github-client-secret",
 				LoginButtonText: "Unit Test Github Login",
-				PrivateKeyPath:  "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:  keyPath,
 				AppID:           "954956",
 			}
 
@@ -655,37 +747,68 @@ func TestGithubProviderSource_GetDefaultAccessToken(t *testing.T) {
 		name                  string
 		defaultInstallationID string
 		defaultAccessToken    string
+		responseToken         string
+		responseCode          int
 		expectedToken         string
+		expectedError         bool
 	}{
 		{
 			name:                  "prefer default_installation_id",
 			defaultInstallationID: "test-installation-id",
 			defaultAccessToken:    "fallback-token",
-			expectedToken:         "", // Will be from GenerateAppInstallationToken - returns "" if no key
+			responseToken:         "installation-token",
+			responseCode:          201,
+			expectedToken:         "installation-token",
 		},
 		{
 			name:                  "fallback to default_access_token",
 			defaultInstallationID: "",
 			defaultAccessToken:    "fallback-token",
+			responseToken:         "",
+			responseCode:          0,
 			expectedToken:         "fallback-token",
 		},
 		{
 			name:                  "both empty",
 			defaultInstallationID: "",
 			defaultAccessToken:    "",
+			responseToken:         "",
+			responseCode:          0,
 			expectedToken:         "",
 		},
 	}
 
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tt.defaultInstallationID != "" {
+					assert.Equal(t, "POST", r.Method)
+					assert.Equal(t, "/app/installations/"+tt.defaultInstallationID+"/access_tokens", r.URL.Path)
+					assert.Equal(t, "2022-11-28", r.Header.Get("X-GitHub-Api-Version"))
+					assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+					authHeader := r.Header.Get("Authorization")
+					assert.True(t, len(authHeader) > 0 && authHeader[:7] == "Bearer ")
+					w.WriteHeader(tt.responseCode)
+					json.NewEncoder(w).Encode(map[string]interface{}{"token": tt.responseToken})
+				} else {
+					t.Fatal("Unexpected request when defaultInstallationID is empty")
+				}
+			}))
+			defer server.Close()
+
 			expectedConfig := &model.ProviderSourceConfig{
-				BaseURL:               "https://github.example-test.com",
-				ApiURL:                "https://api.github.example-test.com",
+				BaseURL:               "https://github.example.local",
+				ApiURL:                server.URL,
 				ClientID:              "unittest-github-client-id",
 				ClientSecret:          "unittest-github-client-secret",
 				LoginButtonText:       "Unit Test Github Login",
-				PrivateKeyPath:        "./unittest-path-to-private-key.pem",
+				PrivateKeyPath:        keyPath,
 				AppID:                 "954956",
 				DefaultInstallationID: tt.defaultInstallationID,
 				DefaultAccessToken:    tt.defaultAccessToken,
@@ -706,8 +829,12 @@ func TestGithubProviderSource_GetDefaultAccessToken(t *testing.T) {
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, nil)
 
 			token, err := gh.GetDefaultAccessToken(context.Background())
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedToken, token)
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedToken, token)
+			}
 		})
 	}
 }
@@ -785,7 +912,12 @@ func TestGithubProviderSource_GenerateAppInstallationToken(t *testing.T) {
 
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath = "/tmp/test_github_private_key.pem"
+				keyPath, err := generatePrivateKey()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.Remove(keyPath)
+				privateKeyPath = keyPath
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
@@ -848,7 +980,12 @@ func TestGithubProviderSource_GenerateJWT(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath = "/tmp/test_github_private_key.pem"
+				var err error
+				privateKeyPath, err = generatePrivateKey()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.Remove(privateKeyPath)
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
@@ -951,7 +1088,12 @@ func TestGithubProviderSource_GetAppMetadata(t *testing.T) {
 
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath = "/tmp/test_github_private_key.pem"
+				var err error
+				privateKeyPath, err = generatePrivateKey()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.Remove(privateKeyPath)
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
@@ -1005,13 +1147,19 @@ func TestGithubProviderSource_GetAppInstallationURL(t *testing.T) {
 	}))
 	defer server.Close()
 
+	keyPath, err := generatePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyPath)
+
 	expectedConfig := &model.ProviderSourceConfig{
 		BaseURL:         server.URL,
 		ApiURL:          server.URL,
 		ClientID:        "test-client-id",
 		ClientSecret:    "test-client-secret",
 		LoginButtonText: "Test Login",
-		PrivateKeyPath:  "/tmp/test_github_private_key.pem",
+		PrivateKeyPath:  keyPath,
 		AppID:           "954956",
 	}
 
@@ -1143,7 +1291,12 @@ func TestGithubProviderSource_GetGithubAppInstallationID(t *testing.T) {
 
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath = "/tmp/test_github_private_key.pem"
+				var err error
+				privateKeyPath, err = generatePrivateKey()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.Remove(privateKeyPath)
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
@@ -1252,7 +1405,11 @@ func TestGithubProviderSource_GetAccessTokenForProvider(t *testing.T) {
 
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath = "/tmp/test_github_private_key.pem"
+				privateKeyPath, err := generatePrivateKey()
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.Remove(privateKeyPath)
 			}
 
 			expectedConfig := &model.ProviderSourceConfig{
