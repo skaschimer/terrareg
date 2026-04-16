@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
 // ParseKeyInfo extracts key ID and fingerprint from ASCII armored GPG key
@@ -89,7 +89,7 @@ func VerifySignature(asciiArmor, signature, data []byte) (bool, error) {
 	}
 
 	// Verify the signature
-	_, err = openpgp.CheckDetachedSignature(keyring, bytes.NewReader(data), sigBlock.Body)
+	_, err = openpgp.CheckDetachedSignature(keyring, bytes.NewReader(data), sigBlock.Body, nil)
 	if err != nil {
 		// Signature verification failed
 		return false, nil
