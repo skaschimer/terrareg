@@ -14,7 +14,7 @@ import (
 // Helper function to create a test logger
 func newTestLogger() logging.Logger {
 	logger := zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Logger()
-	return &logger
+	return logging.NewZeroLogger(logger)
 }
 
 // Helper function to create a test config

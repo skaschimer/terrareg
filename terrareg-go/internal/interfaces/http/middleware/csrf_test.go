@@ -8,19 +8,22 @@ import (
 	"testing"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/security/csrf"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
 // newTestCSRFMiddleware creates a test CSRF middleware
 func newTestCSRFMiddleware() *CSRFMiddleware {
-	logger := zerolog.New(nil).With().Timestamp().Logger()
+	zl := zerolog.New(nil).With().Timestamp().Logger()
+	logger := logging.NewZeroLogger(zl)
 	return NewCSRFMiddleware(logger)
 }
 
 // TestNewCSRFMiddleware tests the constructor
 func TestNewCSRFMiddleware(t *testing.T) {
-	logger := zerolog.New(nil).With().Timestamp().Logger()
+	zl := zerolog.New(nil).With().Timestamp().Logger()
+	logger := logging.NewZeroLogger(zl)
 	middleware := NewCSRFMiddleware(logger)
 
 	assert.NotNil(t, middleware)

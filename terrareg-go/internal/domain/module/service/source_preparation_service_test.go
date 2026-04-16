@@ -20,6 +20,7 @@ import (
 	moduleRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -256,7 +257,7 @@ func createTestSourcePreparationService(t *testing.T, moduleProvider *model.Modu
 		GitCloneTimeout: 300,
 	}
 
-	logger := zerolog.New(os.Stderr)
+	logger := logging.NewZeroLogger(zerolog.New(os.Stderr))
 
 	moduleProviderRepo := &mockModuleProviderRepo{
 		moduleProvider: moduleProvider,

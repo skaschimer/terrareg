@@ -5,6 +5,7 @@ import (
 
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -12,7 +13,7 @@ import (
 func TestNewModuleImporterService_NilChecks(t *testing.T) {
 	domainCfg := &domainConfig.DomainConfig{}
 	infraCfg := &infraConfig.InfrastructureConfig{DataDirectory: "/tmp"}
-	logger := zerolog.Nop()
+	logger := logging.NewZeroLogger(zerolog.Nop())
 
 	tests := []struct {
 		name      string

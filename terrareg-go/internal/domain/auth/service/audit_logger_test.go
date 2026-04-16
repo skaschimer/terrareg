@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // mockAuditHistoryRepository is a mock for testing
@@ -47,14 +47,14 @@ func (m *mockAuditHistoryRepository) Create(ctx context.Context, audit *model.Au
 func newAuditTestLogger() (logging.Logger, *strings.Builder) {
 	var output strings.Builder
 	logger := zerolog.New(&output).With().Timestamp().Logger()
-	return &logger, &output
+	return logging.NewZeroLogger(logger), &output
 }
 
 // newTestAuditLogger creates a test audit logger with mock repository
 func newTestAuditLogger() (*AuditLogger, *mockAuditHistoryRepository) {
 	logger, _ := newAuditTestLogger()
 	mockRepo := &mockAuditHistoryRepository{}
-	auditLogger := NewAuditLogger(*logger, mockRepo)
+	auditLogger := NewAuditLogger(logger, mockRepo)
 	return auditLogger, mockRepo
 }
 
@@ -63,7 +63,7 @@ func TestNewAuditLogger(t *testing.T) {
 	logger, _ := newAuditTestLogger()
 	mockRepo := &mockAuditHistoryRepository{}
 
-	auditLogger := NewAuditLogger(*logger, mockRepo)
+	auditLogger := NewAuditLogger(logger, mockRepo)
 
 	assert.NotNil(t, auditLogger)
 	assert.Equal(t, mockRepo, auditLogger.auditRepo)
@@ -74,7 +74,8 @@ func TestLogAuthEvent(t *testing.T) {
 	t.Run("logs successful auth event with all fields", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
+		// Note: The component field setting removed as it uses zerolog-specific methods
 
 		event := AuthEvent{
 			Timestamp: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
@@ -108,7 +109,8 @@ func TestLogAuthEvent(t *testing.T) {
 	t.Run("logs failed auth event with warning level", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
+		// Note: The component field setting removed as it uses zerolog-specific methods
 
 		event := AuthEvent{
 			Provider:  "github",
@@ -131,7 +133,8 @@ func TestLogAuthEvent(t *testing.T) {
 	t.Run("sets default timestamp when not provided", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
+		// Note: The component field setting removed as it uses zerolog-specific methods
 
 		event := AuthEvent{
 			Timestamp: time.Time{}, // Zero time
@@ -152,7 +155,7 @@ func TestLogAuthEvent(t *testing.T) {
 	t.Run("logs minimal event with only required fields", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		event := AuthEvent{
 			Provider:  "test-provider",
@@ -175,7 +178,7 @@ func TestLogLoginAttempt(t *testing.T) {
 	t.Run("logs successful login and creates database audit entry", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLoginAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "session-123", true, "")
@@ -197,7 +200,7 @@ func TestLogLoginAttempt(t *testing.T) {
 	t.Run("does not create database entry for empty username", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLoginAttempt(ctx, "github", "", "192.168.1.1", "test-agent", "session-123", true, "")
@@ -210,7 +213,7 @@ func TestLogLoginAttempt(t *testing.T) {
 	t.Run("logs failed login with error message", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLoginAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "", false, "invalid credentials")
@@ -224,7 +227,7 @@ func TestLogLoginAttempt(t *testing.T) {
 	t.Run("logs failed login without error message", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLoginAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "", false, "")
@@ -238,7 +241,7 @@ func TestLogLoginAttempt(t *testing.T) {
 	t.Run("handles nil old and new values for login events", func(t *testing.T) {
 		auditLogger, mockRepo := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLoginAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "session-123", true, "")
@@ -281,7 +284,7 @@ func TestLogLogoutAttempt(t *testing.T) {
 	t.Run("logs successful logout", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLogoutAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "session-123", true, "")
@@ -296,7 +299,7 @@ func TestLogLogoutAttempt(t *testing.T) {
 	t.Run("logs failed logout with error", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogLogoutAttempt(ctx, "github", "testuser", "192.168.1.1", "test-agent", "session-123", false, "session not found")
@@ -322,7 +325,7 @@ func TestLogAPIAccess(t *testing.T) {
 	t.Run("logs successful API access", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogAPIAccess(ctx, "github", "testuser", "192.168.1.1", "test-agent", "/v1/modules", "GET", "session-123", true, "")
@@ -337,7 +340,7 @@ func TestLogAPIAccess(t *testing.T) {
 	t.Run("logs failed API access with error", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogAPIAccess(ctx, "api-key", "testuser", "192.168.1.1", "test-agent", "/v1/admin", "POST", "", false, "insufficient permissions")
@@ -351,7 +354,7 @@ func TestLogAPIAccess(t *testing.T) {
 	t.Run("logs API access without username", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogAPIAccess(ctx, "api-key", "", "192.168.1.1", "test-agent", "/v1/modules", "GET", "", true, "")
@@ -367,7 +370,7 @@ func TestLogNamespaceAccess(t *testing.T) {
 	t.Run("logs successful namespace access", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogNamespaceAccess(ctx, "github", "testuser", "192.168.1.1", "test-agent", "test-ns", "read", true, "")
@@ -381,7 +384,7 @@ func TestLogNamespaceAccess(t *testing.T) {
 	t.Run("logs failed namespace access", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogNamespaceAccess(ctx, "github", "testuser", "192.168.1.1", "test-agent", "restricted-ns", "delete", false, "access denied")
@@ -396,7 +399,7 @@ func TestLogNamespaceAccess(t *testing.T) {
 	t.Run("logs namespace modify action", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogNamespaceAccess(ctx, "session", "admin", "10.0.0.1", "admin-cli", "prod-ns", "modify", true, "")
@@ -413,7 +416,7 @@ func TestLogSecurityEvent(t *testing.T) {
 	t.Run("logs security event at error level", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogSecurityEvent(ctx, "brute_force", "Multiple failed login attempts", "192.168.1.100", "curl/7.68.0", "")
@@ -429,7 +432,7 @@ func TestLogSecurityEvent(t *testing.T) {
 	t.Run("logs security event with username", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogSecurityEvent(ctx, "suspicious_activity", "Unusual access pattern", "10.0.0.1", "Mozilla/5.0", "user123")
@@ -443,7 +446,7 @@ func TestLogSecurityEvent(t *testing.T) {
 	t.Run("sets success to false for security events", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		ctx := context.Background()
 		auditLogger.LogSecurityEvent(ctx, "intrusion", "Potential SQL injection", "172.16.0.1", "sqlmap/1.0", "attacker")
@@ -461,7 +464,7 @@ func TestAuthEvent_TimestampHandling(t *testing.T) {
 	t.Run("uses provided timestamp", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		fixedTime := time.Date(2024, 6, 15, 14, 30, 0, 0, time.UTC)
 		event := AuthEvent{
@@ -482,7 +485,7 @@ func TestAuthEvent_TimestampHandling(t *testing.T) {
 	t.Run("generates timestamp for zero time", func(t *testing.T) {
 		auditLogger, _ := newTestAuditLogger()
 		logger, output := newAuditTestLogger()
-		auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+		auditLogger.logger = logger
 
 		beforeLog := time.Now()
 		event := AuthEvent{
@@ -508,7 +511,7 @@ func TestAuthEvent_TimestampHandling(t *testing.T) {
 func TestConcurrentLogging(t *testing.T) {
 	auditLogger, mockRepo := newTestAuditLogger()
 	logger, _ := newAuditTestLogger()
-	auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+	auditLogger.logger = logger
 
 	t.Run("concurrent login attempts", func(t *testing.T) {
 		const goroutines = 50
@@ -552,7 +555,7 @@ func TestLogAuthEvent_AllProviders(t *testing.T) {
 		t.Run("logs for provider: "+provider, func(t *testing.T) {
 			auditLogger, _ := newTestAuditLogger()
 			logger, output := newAuditTestLogger()
-			auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+			auditLogger.logger = logger
 
 			event := AuthEvent{
 				Provider:  provider,
@@ -587,7 +590,7 @@ func TestLogAuthEvent_Actions(t *testing.T) {
 		t.Run("logs action: "+action, func(t *testing.T) {
 			auditLogger, _ := newTestAuditLogger()
 			logger, output := newAuditTestLogger()
-			auditLogger.logger = (*logger).With().Str("component", "audit").Logger()
+			auditLogger.logger = logger
 
 			event := AuthEvent{
 				Provider:  "test",

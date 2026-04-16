@@ -82,7 +82,7 @@ func (m *mockSessionRepoForCleanup) reset() {
 
 // newTestLoggerSessionCleanup creates a test logger with no output
 func newTestLoggerSessionCleanup() logging.Logger {
-	return zerolog.New(zerolog.Nop()).With().Timestamp().Logger()
+	return logging.NewZeroLogger(zerolog.New(zerolog.Nop()).With().Timestamp().Logger())
 }
 
 // TestNewSessionCleanupService tests the constructor

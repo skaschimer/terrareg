@@ -12,6 +12,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
 	URLService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
 	InfrastructureConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestNewInfracostService(t *testing.T) {
 		InfracostAPIKey: "test-api-key",
 	}
 	infraConfig := InfrastructureConfig.InfrastructureConfig{}
-	logger := zerolog.Nop()
+	logger := logging.NewZeroLogger(zerolog.Nop())
 	commandService := &MockCommandService{}
 	urlService, err := URLService.NewURLService(&infraConfig)
 	assert.NoError(t, err)
@@ -62,7 +63,7 @@ func TestInfracostService_IsAvailable_WithAPIKey(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	assert.True(t, service.IsAvailable())
@@ -74,7 +75,7 @@ func TestInfracostService_IsAvailable_WithoutAPIKey(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	assert.False(t, service.IsAvailable())
@@ -84,7 +85,7 @@ func TestInfracostService_IsAvailable_NilConfig(t *testing.T) {
 
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(&InfracostConfig{}, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(&InfracostConfig{}, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	assert.False(t, service.IsAvailable())
@@ -96,7 +97,7 @@ func TestInfracostService_AnalyzeExample_NotAvailable(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	result, err := service.AnalyzeExample(context.Background(), "/some/path")
@@ -111,7 +112,7 @@ func TestInfracostService_AnalyzeExample_EmptyPath(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	result, err := service.AnalyzeExample(context.Background(), "")
@@ -127,7 +128,7 @@ func TestInfracostService_AnalyzeExample_NonExistentPath(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	result, err := service.AnalyzeExample(context.Background(), "/nonexistent/path/to/example")
@@ -151,7 +152,7 @@ func TestInfracostService_AnalyzeExample_ExecutableNotFound(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), mockCommand, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), mockCommand, urlService)
 	assert.NoError(t, err)
 
 	// Create a temp directory for the test
@@ -176,7 +177,7 @@ func TestInfracostService_AnalyzeExample_CommandFailure(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), mockCommand, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), mockCommand, urlService)
 	assert.NoError(t, err)
 
 	tempDir := t.TempDir()
@@ -247,7 +248,7 @@ resource "aws_s3_bucket" "example" {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), mockCommand, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), mockCommand, urlService)
 	assert.NoError(t, err)
 
 	result, err := service.AnalyzeExample(context.Background(), examplePath)
@@ -299,7 +300,7 @@ func TestInfracostService_AnalyzeExample_InvalidJSONOutput(t *testing.T) {
 	}
 	urlService, err := URLService.NewURLService(&InfrastructureConfig.InfrastructureConfig{})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), mockCommand, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), mockCommand, urlService)
 	assert.NoError(t, err)
 
 	result, err := service.AnalyzeExample(context.Background(), examplePath)
@@ -319,7 +320,7 @@ func TestInfracostService_buildEnvironment_NoConfig(t *testing.T) {
 		PublicURL: "",
 	})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	env := service.buildEnvironment()
@@ -337,7 +338,7 @@ func TestInfracostService_buildEnvironment_WithTerraformCloud(t *testing.T) {
 		PublicURL: "https://terrareg.example.com",
 	})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	env := service.buildEnvironment()
@@ -365,7 +366,7 @@ func TestInfracostService_buildEnvironment_InvalidPublicURL(t *testing.T) {
 		PublicURL: "://invalid-url",
 	})
 	assert.NoError(t, err)
-	service, err := NewInfracostService(config, zerolog.Nop(), &MockCommandService{}, urlService)
+	service, err := NewInfracostService(config, logging.NewZeroLogger(zerolog.Nop()), &MockCommandService{}, urlService)
 	assert.NoError(t, err)
 
 	env := service.buildEnvironment()
