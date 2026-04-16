@@ -9,12 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
-
 	configModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // ModuleDetailsWithID wraps ModuleDetails with a database ID
@@ -643,7 +642,7 @@ func (s *ModuleProcessorServiceImpl) extractExampleFiles(exampleDir string, exam
 	var files []ProcessedExampleFile
 
 	// Use provided file extensions (matching Python behavior)
-	if exampleFileExtensions == nil || len(exampleFileExtensions) == 0 {
+	if len(exampleFileExtensions) == 0 {
 		// Fallback to Python defaults if not provided
 		exampleFileExtensions = []string{"tf", "tfvars", "sh", "json"}
 	}

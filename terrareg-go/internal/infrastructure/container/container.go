@@ -513,7 +513,7 @@ func NewContainer(
 	moduleStorageAdapter := storageInfrastructure.NewModuleStorageAdapter(c.DomainStorageService, c.PathBuilder)
 	c.ModuleStorageService = moduleStorageAdapter
 
-	c.ModuleParser = parser.NewModuleParserImpl(c.ModuleStorageService, c.DomainConfig)
+	c.ModuleParser = parser.NewModuleParserImpl(c.ModuleStorageService, c.DomainConfig, c.SystemCommandService, logger)
 
 	// Create infracost service for cost analysis of examples
 	infracostConfig := &moduleService.InfracostConfig{

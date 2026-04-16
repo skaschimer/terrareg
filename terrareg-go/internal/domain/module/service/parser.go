@@ -12,6 +12,10 @@ type ModuleParser interface {
 	DetectSubmodules(modulePath string) ([]string, error)
 	// DetectExamples finds example directories in the module
 	DetectExamples(modulePath string) ([]string, error)
+	// ParseSubmodule parses a single submodule directory
+	ParseSubmodule(submodulePath string) (*ParseResult, error)
+	// ParseExample parses a single example directory
+	ParseExample(examplePath string, infracostJSON []byte) (*ExampleParseResult, error)
 }
 
 // ParseResult contains the results of parsing a module
@@ -59,4 +63,11 @@ type Resource struct {
 type TerraformRequirement struct {
 	Name    string
 	Version string
+}
+
+// ExampleParseResult contains parsed example data with optional infracost
+// Python: ModuleExtractor._process_submodule() for Example returns module_details with infracost
+type ExampleParseResult struct {
+	*ParseResult
+	InfracostJSON []byte `json:"infracost_json,omitempty"`
 }
