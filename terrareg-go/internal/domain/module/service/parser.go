@@ -16,6 +16,8 @@ type ModuleParser interface {
 	ParseSubmodule(submodulePath string) (*ParseResult, error)
 	// ParseExample parses a single example directory
 	ParseExample(examplePath string, infracostJSON []byte) (*ExampleParseResult, error)
+	// ExtractExampleFiles extracts all terraform-related files from an example directory
+	ExtractExampleFiles(examplePath string) ([]*model.ExampleFile, error)
 }
 
 // ParseResult contains the results of parsing a module

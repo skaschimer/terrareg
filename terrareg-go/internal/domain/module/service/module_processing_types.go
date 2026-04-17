@@ -83,10 +83,9 @@ type DependencyInfo struct {
 }
 
 // SubmoduleInfo represents a detected submodule
+// Python: terrareg.models.Submodule (partial - path only, source/version are not applicable for submodules)
 type SubmoduleInfo struct {
-	Path    string // Submodule path
-	Source  string // Submodule source (if known)
-	Version string // Submodule version (if known)
+	Path string // Submodule path (relative to module root)
 }
 
 // ExampleInfo represents a detected example

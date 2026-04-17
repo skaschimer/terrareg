@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	configModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	sharedService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
@@ -33,11 +33,6 @@ type ProcessedSubmoduleInfo struct {
 	Outputs       []OutputInfo   `json:"outputs,omitempty"`
 }
 
-// ProcessedExampleFile represents a file within an example directory
-type ProcessedExampleFile struct {
-	Path    string `json:"path"`
-	Content string `json:"content"`
-}
 
 // ModuleProcessorServiceImpl implements the ModuleProcessorService interface
 type ModuleProcessorServiceImpl struct {
@@ -48,11 +43,13 @@ type ModuleProcessorServiceImpl struct {
 	exampleFileRepo         repository.ExampleFileRepository
 	infracostService        InfracostService
 	securityScanningService *SecurityScanningService
+	commandService          sharedService.SystemCommandService
 	config                  *configModel.DomainConfig
 	logger                  logging.Logger
 }
 
 // NewModuleProcessorServiceImpl creates a new ModuleProcessorService implementation
+// Python: No direct equivalent (constructor pattern)
 func NewModuleProcessorServiceImpl(
 	moduleParser ModuleParser,
 	moduleDetailsRepo repository.ModuleDetailsRepository,
@@ -61,6 +58,7 @@ func NewModuleProcessorServiceImpl(
 	exampleFileRepo repository.ExampleFileRepository,
 	infracostService InfracostService,
 	securityScanningService *SecurityScanningService,
+	commandService sharedService.SystemCommandService,
 	config *configModel.DomainConfig,
 	logger logging.Logger,
 ) ModuleProcessorService {
@@ -72,12 +70,16 @@ func NewModuleProcessorServiceImpl(
 		exampleFileRepo:         exampleFileRepo,
 		infracostService:        infracostService,
 		securityScanningService: securityScanningService,
+		commandService:          commandService,
 		config:                  config,
 		logger:                  logger,
 	}
 }
 
-// ProcessModule processes a module directory and extracts metadata
+// ProcessModule processes a module directory and extracts metadata.
+// This is the main entry point for module processing, coordinating parsing, security scanning,
+// and database persistence for the main module, submodules, and examples.
+// Python: ModuleExtractor.process_upload() (partial - main module processing)
 func (s *ModuleProcessorServiceImpl) ProcessModule(
 	ctx context.Context,
 	moduleDir string,
@@ -199,7 +201,9 @@ func (s *ModuleProcessorServiceImpl) ProcessModule(
 	return result, nil
 }
 
-// ValidateModuleStructure validates that a module directory has the required structure
+// ValidateModuleStructure validates that a module directory has the required structure.
+// Checks that the directory exists and contains at least one .tf file.
+// Python: Basic validation before ModuleExtractor.process_upload()
 func (s *ModuleProcessorServiceImpl) ValidateModuleStructure(ctx context.Context, moduleDir string) error {
 	// Check if module directory exists
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
@@ -229,7 +233,9 @@ func (s *ModuleProcessorServiceImpl) ValidateModuleStructure(ctx context.Context
 	return nil
 }
 
-// ExtractMetadata extracts metadata from a module directory
+// ExtractMetadata extracts metadata from a module directory.
+// Returns a ModuleMetadata struct with variables, outputs, providers, resources, and dependencies.
+// Python: ModuleExtractor.process_upload() (metadata extraction part)
 func (s *ModuleProcessorServiceImpl) ExtractMetadata(ctx context.Context, moduleDir string) (*ModuleMetadata, error) {
 	parseResult, err := s.moduleParser.ParseModule(moduleDir)
 	if err != nil {
@@ -359,45 +365,57 @@ func (s *ModuleProcessorServiceImpl) generateVariableTemplate(variables []Variab
 	return string(jsonBytes)
 }
 
-// extractTerraformVersion extracts the terraform version for a module directory
+// extractTerraformVersion extracts the terraform version for a module directory.
+// Python: ModuleExtractor._get_terraform_version()
 func (s *ModuleProcessorServiceImpl) extractTerraformVersion(moduleDir string) (string, error) {
-	// Run terraform version command
-	cmd := exec.Command("terraform", "version")
-	cmd.Dir = moduleDir
-	output, err := cmd.Output()
+	// Run terraform version command using SystemCommandService
+	cmd := &sharedService.Command{
+		Name: "terraform",
+		Args: []string{"-version", "-json"},
+		Dir:  moduleDir,
+	}
+	cmdResult, err := s.commandService.Execute(context.Background(), cmd)
 	if err != nil {
 		return "", fmt.Errorf("failed to get terraform version: %w", err)
 	}
-
-	// Parse terraform version output
-	// Expected format: "Terraform v1.14.3 on linux_arm64"
-	outputStr := string(output)
-	lines := strings.Split(outputStr, "\n")
-	if len(lines) > 0 {
-		versionLine := strings.TrimSpace(lines[0])
-		if strings.HasPrefix(versionLine, "Terraform v") {
-			version := strings.TrimPrefix(versionLine, "Terraform v")
-			// Remove platform information if present
-			if spaceIdx := strings.Index(version, " "); spaceIdx > 0 {
-				version = version[:spaceIdx]
-			}
-			return version, nil
-		}
+	if cmdResult.ExitCode != 0 {
+		return "", fmt.Errorf("terraform version command failed with exit code %d: %s", cmdResult.ExitCode, cmdResult.Stderr)
 	}
 
-	return "", fmt.Errorf("unable to parse terraform version from output: %s", outputStr)
+	// Parse terraform version output
+	// Expected format: JSON with "terraform_version" field
+	outputStr := cmdResult.Stdout
+	if outputStr == "" {
+		return "", fmt.Errorf("empty terraform version output")
+	}
+
+	return outputStr, nil
 }
 
-// extractTerraformGraph generates terraform graph for the module
+// extractTerraformGraph generates terraform graph for the module.
+// Python: ModuleExtractor._get_graph_data()
 func (s *ModuleProcessorServiceImpl) extractTerraformGraph(moduleDir string) []byte {
-	cmd := exec.Command("terraform", "graph")
-	cmd.Dir = moduleDir
-	output, err := cmd.Output()
+	// Run terraform graph command using SystemCommandService
+	cmd := &sharedService.Command{
+		Name: "terraform",
+		Args: []string{"graph"},
+		Dir:  moduleDir,
+	}
+	cmdResult, err := s.commandService.Execute(context.Background(), cmd)
 	if err != nil {
 		s.logger.Warn().Err(err).Str("module_dir", moduleDir).Msg("Failed to generate terraform graph")
 		return nil
 	}
-	return output
+	if cmdResult.ExitCode != 0 {
+		s.logger.Warn().
+			Str("module_dir", moduleDir).
+			Int("exit_code", cmdResult.ExitCode).
+			Str("stderr", cmdResult.Stderr).
+			Msg("terraform graph command failed")
+		return nil
+	}
+
+	return []byte(cmdResult.Stdout)
 }
 
 // extractTerraformModules creates a JSON representation of terraform requirements
@@ -414,7 +432,9 @@ func (s *ModuleProcessorServiceImpl) extractTerraformModules(requirements []Terr
 	return jsonBytes
 }
 
-// processSubmodules detects and processes submodules in the module directory
+// processSubmodules detects and processes submodules in the module directory.
+// Scans for submodules, parses their content, runs security scans, and persists to database.
+// Python: ModuleExtractor._scan_submodules() for MODULES_DIRECTORY + _process_submodule()
 func (s *ModuleProcessorServiceImpl) processSubmodules(ctx context.Context, moduleDir string, moduleVersionID int) ([]SubmoduleInfo, error) {
 	// Detect submodules
 	submoduleNames, err := s.moduleParser.DetectSubmodules(moduleDir)
@@ -498,10 +518,9 @@ func (s *ModuleProcessorServiceImpl) processSubmodules(ctx context.Context, modu
 		}
 
 		// Create SubmoduleInfo for response
+		// Python: submodule path only - source/version are not applicable for submodules
 		submodule := SubmoduleInfo{
-			Path:    submoduleName,
-			Source:  "", // TODO: Add source logic if needed
-			Version: "", // TODO: Add version logic if needed
+			Path: submoduleName,
 		}
 
 		submodules = append(submodules, submodule)
@@ -515,7 +534,9 @@ func (s *ModuleProcessorServiceImpl) processSubmodules(ctx context.Context, modu
 	return submodules, nil
 }
 
-// processExamples detects and processes examples in the module directory
+// processExamples detects and processes examples in the module directory.
+// Scans for examples, extracts their files using module parser, runs infracost analysis, and persists to database.
+// Python: ModuleExtractor._scan_submodules() for EXAMPLES_DIRECTORY + _process_submodule()
 func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, moduleDir string, moduleVersionID int) ([]ExampleInfo, error) {
 	// Detect examples
 	exampleNames, err := s.moduleParser.DetectExamples(moduleDir)
@@ -537,8 +558,9 @@ func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, module
 		}
 		examplePath := filepath.Join(moduleDir, examplesDir, exampleName)
 
-		// Extract all files from example directory
-		exampleFiles, err := s.extractExampleFiles(examplePath, s.config.ExampleFileExtensions)
+		// Extract all files from example directory using module parser
+		// Python: ModuleExtractor._extract_example_files()
+		exampleFiles, err := s.moduleParser.ExtractExampleFiles(examplePath)
 		if err != nil {
 			s.logger.Warn().Err(err).
 				Str("example", exampleName).
@@ -568,8 +590,8 @@ func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, module
 		for _, exampleFile := range exampleFiles {
 			exampleFileDBs = append(exampleFileDBs, &sqldb.ExampleFileDB{
 				SubmoduleID: savedSubmodule.ID,
-				Path:        exampleFile.Path,
-				Content:     []byte(exampleFile.Content), // Convert string to []byte
+				Path:        exampleFile.Path(),
+				Content:     exampleFile.Content(),
 			})
 		}
 
@@ -622,7 +644,7 @@ func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, module
 		}
 
 		for i, file := range exampleFiles {
-			example.Files[i] = file.Path
+			example.Files[i] = file.Path()
 		}
 
 		examples = append(examples, example)
@@ -636,57 +658,3 @@ func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, module
 	return examples, nil
 }
 
-// extractExampleFiles extracts files from an example directory
-// Matches Python implementation: non-recursive extraction of specific file extensions
-func (s *ModuleProcessorServiceImpl) extractExampleFiles(exampleDir string, exampleFileExtensions []string) ([]ProcessedExampleFile, error) {
-	var files []ProcessedExampleFile
-
-	// Use provided file extensions (matching Python behavior)
-	if len(exampleFileExtensions) == 0 {
-		// Fallback to Python defaults if not provided
-		exampleFileExtensions = []string{"tf", "tfvars", "sh", "json"}
-	}
-
-	// Read the example directory (non-recursive)
-	entries, err := os.ReadDir(exampleDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read example directory %s: %w", exampleDir, err)
-	}
-
-	for _, entry := range entries {
-		// Skip directories and hidden files
-		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
-			continue
-		}
-
-		// Check if file has one of the allowed extensions
-		hasValidExtension := false
-		for _, ext := range exampleFileExtensions {
-			if strings.HasSuffix(entry.Name(), "."+ext) {
-				hasValidExtension = true
-				break
-			}
-		}
-
-		if !hasValidExtension {
-			continue
-		}
-
-		// Read file content
-		filePath := filepath.Join(exampleDir, entry.Name())
-		contentBytes, err := os.ReadFile(filePath)
-		if err != nil {
-			s.logger.Warn().Err(err).
-				Str("file_path", filePath).
-				Msg("Failed to read example file, skipping")
-			continue
-		}
-
-		files = append(files, ProcessedExampleFile{
-			Path:    entry.Name(),
-			Content: string(contentBytes),
-		})
-	}
-
-	return files, nil
-}

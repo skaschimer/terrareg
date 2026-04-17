@@ -669,6 +669,7 @@ func NewContainer(
 		c.ExampleFileRepo,
 		c.InfracostService,
 		securityScanningService,
+		c.SystemCommandService,
 		c.DomainConfig,
 		logger,
 	)
