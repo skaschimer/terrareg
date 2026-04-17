@@ -1,18 +1,79 @@
 services:
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: "${DOCKER_NAME}_socket-proxy"
+    hostname: docker-socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+    networks:
+      - dockerProxy
+      
+  traefik:
+    image: traefik:v2.8
+    restart: always
+    container_name: "${DOCKER_NAME}_traefik"
+    command:
+      - --providers.docker=true
+      # Enable the API handler in insecure mode,
+      # which means that the Traefik API will be available directly
+      # on the entry point named traefik.
+      - --api.insecure=true
+      # Defines the path to the configuration file with the certificates list.
+      - --providers.file.filename=/root/.config/ssl.toml
+      # Define Traefik entry points to port [80] for http and port [443] for https.
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+    depends_on:
+      - socket-proxy
+    networks:
+      - dockerProxy
+      - web
+      - default
+    ports:
+      # Open traefik http [80] and https [443] ports.
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - ./traefik/dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml:ro
+      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./certs:/etc/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${DOCKER_NAME}_traefik.rule=Host(`traefik.${DOCKER_BASE_URL}`)"
+      - "traefik.http.routers.${DOCKER_NAME}_traefik.tls=true"
+      # # Enable Traefik API handler entrypoint on http.
+      - "traefik.http.routers.${DOCKER_NAME}_traefik-http.entrypoints=web"
+      # # By default the Traefik API handler operates on the port [8080].
+      # # Define a load balancer to route the entry point to [8080].
+      - "traefik.http.services.${DOCKER_NAME}_traefik.loadbalancer.server.port=8080"
+
   terrareg:
     container_name: "${DOCKER_NAME}_app"
     restart: unless-stopped
     build: .
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${DOCKER_NAME}_app.tls=true"
+      - "traefik.http.routers.${DOCKER_NAME}_app.rule=Host(`terrareg.${DOCKER_BASE_URL}`)"
+      - "traefik.http.services.${DOCKER_NAME}_app.loadbalancer.server.port=5000"
+      - "traefik.http.routers.${DOCKER_NAME}_app.service=${DOCKER_NAME}_app"
     depends_on:
       - mysql
+      - traefik
       - minio
     env_file:
       - ./.env
     volumes:
       - ./:/app
       # - ~/.ssh/:/root/.ssh/:ro
-    ports:
-     - 5000:5000
+    networks:
+      web:
     healthcheck:
       test: curl --fail http://localhost:5000 || exit 1
       interval: 5s
@@ -34,6 +95,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      web:
 
   minio:
     image: minio/minio
@@ -49,6 +112,19 @@ services:
     command: server /data --console-address ":9001"
     volumes:
      - 'minio:/data'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${DOCKER_NAME}_minio.tls=true"
+      - "traefik.http.routers.${DOCKER_NAME}_minio.rule=Host(`minio.${DOCKER_BASE_URL}`)"
+      - "traefik.http.services.${DOCKER_NAME}_minio.loadbalancer.server.port=9000"
+      - "traefik.http.routers.${DOCKER_NAME}_minio.service=${DOCKER_NAME}_minio"
+
+      - "traefik.http.routers.${DOCKER_NAME}_minioui.tls=true"
+      - "traefik.http.routers.${DOCKER_NAME}_minioui.rule=Host(`minio-ui.${DOCKER_BASE_URL}`)"
+      - "traefik.http.services.${DOCKER_NAME}_minioui.loadbalancer.server.port=9001"
+      - "traefik.http.routers.${DOCKER_NAME}_minioui.service=${DOCKER_NAME}_minio"
+    networks:
+      web:
 
   createbucket:
     image: minio/mc
@@ -62,6 +138,8 @@ services:
       /usr/bin/mc mb terrareg/$AWS_BUCKET_NAME;
       exit 0;
       "
+    networks:
+      web:
 
 volumes:
   terrareg:
@@ -73,3 +151,12 @@ volumes:
   minio:
     driver: local
     name: "${DOCKER_NAME}_s3"
+
+networks:
+  web: 
+    name: "${DOCKER_NAME}_web"
+  dockerProxy:
+    name: "${DOCKER_NAME}_docker-proxy"
+  default:
+    name: "${DOCKER_NAME}_default"
+    driver: bridge
