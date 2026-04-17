@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"gorm.io/gorm"
-
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
@@ -29,7 +27,7 @@ type TransactionProcessingOrchestrator struct {
 
 	// Foundation services
 	moduleCreationWrapper *ModuleCreationWrapperService
-	savepointHelper       *transaction.SavepointHelper
+	txManager             transaction.TransactionManager
 
 	// Configuration
 	domainConfig *configmodel.DomainConfig
@@ -50,7 +48,7 @@ func NewTransactionProcessingOrchestrator(
 	archiveGenService *ArchiveGenerationTransactionService,
 	moduleProcessor ModuleProcessorService,
 	moduleCreationWrapper *ModuleCreationWrapperService,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	domainConfig *configmodel.DomainConfig,
 	logger logging.Logger,
 	moduleVersionRepo repository.ModuleVersionRepository,
@@ -65,7 +63,7 @@ func NewTransactionProcessingOrchestrator(
 		archiveGenService:     archiveGenService,
 		moduleProcessor:       moduleProcessor,
 		moduleCreationWrapper: moduleCreationWrapper,
-		savepointHelper:       savepointHelper,
+		txManager:             txManager,
 		domainConfig:          domainConfig,
 		logger:                logger,
 		moduleVersionRepo:     moduleVersionRepo,
@@ -151,7 +149,7 @@ func (o *TransactionProcessingOrchestrator) ProcessModuleWithTransaction(
 		Msg("Starting module processing")
 
 	// Use the smart transaction wrapper that properly handles nested transactions
-	err := o.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := o.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Find the module provider to get its ID for proper module version creation
 		moduleProvider, err := o.moduleProviderRepo.FindByNamespaceModuleProvider(ctx, req.Namespace, req.ModuleName, req.Provider)
 		if err != nil {

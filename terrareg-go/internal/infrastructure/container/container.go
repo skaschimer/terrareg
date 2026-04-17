@@ -39,6 +39,7 @@ import (
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	configService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
+	domainTransaction "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	gpgkeyRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/repository"
 	gpgkeyService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/service"
@@ -168,7 +169,7 @@ type Container struct {
 	MarkdownService       *sharedService.MarkdownService
 
 	// Transaction Services
-	SavepointHelper                     *transaction.SavepointHelper
+	TransactionManager                  domainTransaction.TransactionManager
 	SecurityScanningService             *moduleService.SecurityScanningService
 	ModuleCreationWrapper               *moduleService.ModuleCreationWrapperService
 	ArchiveGenerationTransactionService *moduleService.ArchiveGenerationTransactionService
@@ -527,17 +528,17 @@ func NewContainer(
 	}
 
 	// Initialize foundation transaction services
-	savepointHelper, err := transaction.NewSavepointHelper(db.DB)
+	txManager, err := transaction.NewGormTransactionManager(db.DB)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create savepoint helper: %w", err)
+		return nil, fmt.Errorf("failed to create transaction manager: %w", err)
 	}
-	c.SavepointHelper = savepointHelper
+	c.TransactionManager = txManager
 
 	// Initialize module creation wrapper for atomic module creation
 	moduleCreationWrapper := moduleService.NewModuleCreationWrapperService(
 		c.ModuleVersionRepo,
 		c.ModuleProviderRepo,
-		savepointHelper,
+		txManager,
 		domainConfig,
 	)
 	c.ModuleCreationWrapper = moduleCreationWrapper
@@ -545,11 +546,11 @@ func NewContainer(
 	// Note: SecurityScanningService will be initialized after ModuleFileService is created
 
 	// Initialize archive generation transaction service
-	archiveGenService := moduleService.NewArchiveGenerationTransactionService(savepointHelper)
+	archiveGenService := moduleService.NewArchiveGenerationTransactionService(txManager)
 	c.ArchiveGenerationTransactionService = archiveGenService
 
 	// Initialize metadata processing service
-	metadataService := moduleService.NewMetadataProcessingService(savepointHelper)
+	metadataService := moduleService.NewMetadataProcessingService(txManager)
 	c.MetadataProcessingService = metadataService
 
 	// Use terraform binary path from config, or default to bin/terraform relative to CWD
@@ -604,7 +605,7 @@ func NewContainer(
 
 	terraformLockTimeout := time.Duration(infraConfig.TerraformLockTimeoutSeconds) * time.Second
 	terraformExecutorService := moduleService.NewTerraformExecutorService(
-		savepointHelper,
+		txManager,
 		c.SystemCommandService,
 		terraformBinaryPath,
 		terraformLockTimeout,
@@ -633,7 +634,7 @@ func NewContainer(
 		c.ModuleVersionRepo,
 		fileProcessingService,
 		c.PathBuilder,
-		savepointHelper,
+		txManager,
 	)
 
 	// Initialize transaction processing orchestrator now that all dependencies are ready
@@ -652,7 +653,7 @@ func NewContainer(
 		c.ModuleFileService,
 		c.ModuleVersionRepo,
 		c.ModuleDetailsRepo,
-		savepointHelper,
+		txManager,
 		c.SystemCommandService,
 	)
 	if err != nil {
@@ -684,7 +685,7 @@ func NewContainer(
 		archiveGenService,
 		c.ModuleProcessorService,
 		moduleCreationWrapper,
-		savepointHelper,
+		txManager,
 		c.DomainConfig,
 		c.Logger,
 		c.ModuleVersionRepo,
@@ -698,7 +699,7 @@ func NewContainer(
 	// Initialize archive extraction service
 	archiveExtractionService := moduleService.NewArchiveExtractionService(
 		archiveProcessor,
-		savepointHelper,
+		txManager,
 	)
 	c.ArchiveExtractionService = archiveExtractionService
 
@@ -725,7 +726,7 @@ func NewContainer(
 	moduleImporterService, err := moduleService.NewModuleImporterService(
 		processingOrchestrator,
 		moduleCreationWrapper,
-		savepointHelper,
+		txManager,
 		c.ModuleProviderRepo,
 		c.GitClient,
 		c.ModuleStorageService,
@@ -745,7 +746,7 @@ func NewContainer(
 		c.ModuleProviderRepo,
 		c.ModuleVersionRepo,
 		infraConfig,
-		savepointHelper,
+		txManager,
 		moduleCreationWrapper,
 	)
 

@@ -11,23 +11,21 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // ArchiveGenerationTransactionService handles archive generation with transaction safety
 // and rollback capabilities for partial failures during archive creation
 type ArchiveGenerationTransactionService struct {
-	savepointHelper *transaction.SavepointHelper
+	txManager transaction.TransactionManager
 }
 
 // NewArchiveGenerationTransactionService creates a new archive generation transaction service
 func NewArchiveGenerationTransactionService(
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 ) *ArchiveGenerationTransactionService {
 	return &ArchiveGenerationTransactionService{
-		savepointHelper: savepointHelper,
+		txManager: txManager,
 	}
 }
 
@@ -143,7 +141,7 @@ func (s *ArchiveGenerationTransactionService) GenerateArchivesWithTransaction(
 		return result, nil
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Scan source files
 		sourceFiles, err := s.scanSourceFiles(req.SourcePath, req.PathspecFilter)
 		if err != nil {
@@ -226,7 +224,7 @@ func (s *ArchiveGenerationTransactionService) GenerateMultipleFormats(
 	// Generate each format with its own savepoint
 	for _, format := range formats {
 
-		err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+		err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 			archiveResult, err := s.generateArchiveFormat(ctx, sourcePath, archivePath, format, sourceFiles)
 			if err != nil {
 				result.Formats[format.String()] = &ArchiveResult{

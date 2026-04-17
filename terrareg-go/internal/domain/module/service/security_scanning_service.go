@@ -12,9 +12,8 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
-	"gorm.io/gorm"
 )
 
 // SecurityScanningService handles tfsec security scanning of module versions with transaction safety
@@ -22,7 +21,7 @@ type SecurityScanningService struct {
 	moduleFileService *ModuleFileService
 	moduleVersionRepo moduleRepo.ModuleVersionRepository
 	moduleDetailsRepo moduleRepo.ModuleDetailsRepository
-	savepointHelper   *transaction.SavepointHelper
+	txManager         transaction.TransactionManager
 	commandService    service.SystemCommandService
 }
 
@@ -31,7 +30,7 @@ func NewSecurityScanningService(
 	moduleFileService *ModuleFileService,
 	moduleVersionRepo moduleRepo.ModuleVersionRepository,
 	moduleDetailsRepo moduleRepo.ModuleDetailsRepository,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	commandService service.SystemCommandService,
 ) (*SecurityScanningService, error) {
 	// Nil checks for required dependencies
@@ -41,13 +40,13 @@ func NewSecurityScanningService(
 	if moduleDetailsRepo == nil {
 		return nil, fmt.Errorf("moduleDetailsRepo cannot be nil")
 	}
-	// moduleFileService, savepointHelper, and commandService are optional - some operations may not need them
+	// moduleFileService, txManager, and commandService are optional - some operations may not need them
 
 	return &SecurityScanningService{
 		moduleFileService: moduleFileService,
 		moduleVersionRepo: moduleVersionRepo,
 		moduleDetailsRepo: moduleDetailsRepo,
-		savepointHelper:   savepointHelper,
+		txManager:         txManager,
 		commandService:    commandService,
 	}, nil
 }
@@ -474,7 +473,7 @@ func (s *SecurityScanningService) ScanWithTransaction(
 		Timestamp:           startTime,
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Execute the security scan
 		scanReq := &SecurityScanRequest{
 			Namespace:  req.Namespace,

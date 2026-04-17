@@ -8,17 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
@@ -29,8 +27,8 @@ type ModuleImporterService struct {
 	processingOrchestrator *TransactionProcessingOrchestrator
 	// Wraps module creation with transaction safety (required)
 	moduleCreationWrapper *ModuleCreationWrapperService
-	// Provides transaction savepoint management (required)
-	savepointHelper *transaction.SavepointHelper
+	// Provides transaction management (required)
+	txManager transaction.TransactionManager
 
 	// Legacy git operations (for compatibility during transition)
 	// Repository for module provider operations (required)
@@ -55,7 +53,7 @@ type ModuleImporterService struct {
 func NewModuleImporterService(
 	processingOrchestrator *TransactionProcessingOrchestrator,
 	moduleCreationWrapper *ModuleCreationWrapperService,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	moduleProviderRepo repository.ModuleProviderRepository,
 	gitClient gitService.GitClient,
 	storageService StorageService,
@@ -70,8 +68,8 @@ func NewModuleImporterService(
 	if moduleCreationWrapper == nil {
 		return nil, fmt.Errorf("moduleCreationWrapper cannot be nil")
 	}
-	if savepointHelper == nil {
-		return nil, fmt.Errorf("savepointHelper cannot be nil")
+	if txManager == nil {
+		return nil, fmt.Errorf("txManager cannot be nil")
 	}
 	if moduleProviderRepo == nil {
 		return nil, fmt.Errorf("moduleProviderRepo cannot be nil")
@@ -95,7 +93,7 @@ func NewModuleImporterService(
 	return &ModuleImporterService{
 		processingOrchestrator: processingOrchestrator,
 		moduleCreationWrapper:  moduleCreationWrapper,
-		savepointHelper:        savepointHelper,
+		txManager:        txManager,
 		moduleProviderRepo:     moduleProviderRepo,
 		gitClient:              gitClient,
 		storageService:         storageService,
@@ -166,7 +164,7 @@ func (s *ModuleImporterService) ImportModuleVersionWithTransaction(
 	}
 
 	// Use smart transaction wrapper for the entire import process
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Phase 1: Pre-import setup and validation
 		if err := s.validateImportRequest(ctx, req); err != nil {
 			return fmt.Errorf("import validation failed: %w", err)

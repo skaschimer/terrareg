@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
 )
 
 // WebhookResult represents the result of webhook processing
@@ -31,7 +29,7 @@ type WebhookService struct {
 	moduleProviderRepo    repository.ModuleProviderRepository
 	moduleVersionRepo     repository.ModuleVersionRepository
 	config                *infraConfig.InfrastructureConfig
-	savepointHelper       *transaction.SavepointHelper
+	txManager             transaction.TransactionManager
 	moduleCreationWrapper *ModuleCreationWrapperService
 }
 
@@ -41,7 +39,7 @@ func NewWebhookService(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	moduleVersionRepo repository.ModuleVersionRepository,
 	config *infraConfig.InfrastructureConfig,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	moduleCreationWrapper *ModuleCreationWrapperService,
 ) *WebhookService {
 	return &WebhookService{
@@ -49,7 +47,7 @@ func NewWebhookService(
 		moduleProviderRepo:    moduleProviderRepo,
 		moduleVersionRepo:     moduleVersionRepo,
 		config:                config,
-		savepointHelper:       savepointHelper,
+		txManager:             txManager,
 		moduleCreationWrapper: moduleCreationWrapper,
 	}
 }
@@ -276,7 +274,7 @@ func (ws *WebhookService) ProcessMultipleVersionsWithSavepoints(
 
 		// Create savepoint for this version
 
-		err := ws.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+		err := ws.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 			// Use module creation wrapper for this version
 			// Convert GitTag to string pointer (empty string becomes nil)
 			var gitTagStr *string

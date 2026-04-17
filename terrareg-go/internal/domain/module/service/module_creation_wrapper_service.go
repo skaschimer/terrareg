@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
-	"gorm.io/gorm"
 
 	configModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // ModuleCreationWrapperService handles module creation with prepare/extract/publish pattern
@@ -18,7 +17,7 @@ import (
 type ModuleCreationWrapperService struct {
 	moduleVersionRepo  repository.ModuleVersionRepository
 	moduleProviderRepo repository.ModuleProviderRepository
-	savepointHelper    *transaction.SavepointHelper
+	txManager          transaction.TransactionManager
 	domainConfig       *configModel.DomainConfig
 }
 
@@ -26,13 +25,13 @@ type ModuleCreationWrapperService struct {
 func NewModuleCreationWrapperService(
 	moduleVersionRepo repository.ModuleVersionRepository,
 	moduleProviderRepo repository.ModuleProviderRepository,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	domainConfig *configModel.DomainConfig,
 ) *ModuleCreationWrapperService {
 	return &ModuleCreationWrapperService{
 		moduleVersionRepo:  moduleVersionRepo,
 		moduleProviderRepo: moduleProviderRepo,
-		savepointHelper:    savepointHelper,
+		txManager:          txManager,
 		domainConfig:       domainConfig,
 	}
 }
@@ -64,7 +63,7 @@ func (s *ModuleCreationWrapperService) PrepareModule(ctx context.Context, req Pr
 	}
 
 	var result *PrepareModuleResult
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Find the module provider to associate with this module version
 		moduleProvider, err := s.moduleProviderRepo.FindByID(ctx, *req.ModuleProviderID)
 		if err != nil {
@@ -269,7 +268,7 @@ func (s *ModuleCreationWrapperService) WithModuleCreationWrapper(
 	extractionFunc func(ctx context.Context, moduleVersion *moduleModel.ModuleVersion) error,
 ) error {
 	// Wrap the entire operation in a single transaction
-	return s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Prepare the module within the transaction
 		prepareResult, err := s.PrepareModule(ctx, req)
 		if err != nil {

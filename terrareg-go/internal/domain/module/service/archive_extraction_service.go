@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"gorm.io/gorm"
-
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // ArchiveType represents the type of archive
@@ -70,17 +68,17 @@ type ArchiveProcessor interface {
 // ArchiveExtractionService handles archive extraction with transaction safety
 type ArchiveExtractionService struct {
 	archiveProcessor ArchiveProcessor
-	savepointHelper  *transaction.SavepointHelper
+	txManager        transaction.TransactionManager
 }
 
 // NewArchiveExtractionService creates a new archive extraction service
 func NewArchiveExtractionService(
 	archiveProcessor ArchiveProcessor,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 ) *ArchiveExtractionService {
 	return &ArchiveExtractionService{
 		archiveProcessor: archiveProcessor,
-		savepointHelper:  savepointHelper,
+		txManager:        txManager,
 	}
 }
 
@@ -97,7 +95,7 @@ func (s *ArchiveExtractionService) ExtractAndProcessWithTransaction(
 
 	// Create savepoint for this archive operation
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Detect archive type
 		archiveType, err := s.archiveProcessor.DetectArchiveType(req.ArchivePath)
 		if err != nil {
@@ -182,7 +180,7 @@ func (s *ArchiveExtractionService) extractArchiveWithSavepoint(
 		Duration: 0,
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		return s.extractArchive(ctx, req)
 	})
 

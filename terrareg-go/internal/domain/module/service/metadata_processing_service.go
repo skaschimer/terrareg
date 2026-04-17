@@ -9,9 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // TerraregMetadata represents terrareg.json metadata
@@ -53,13 +51,13 @@ type PathspecFilter struct {
 
 // MetadataProcessingService handles metadata processing with validation rollback
 type MetadataProcessingService struct {
-	savepointHelper *transaction.SavepointHelper
+	txManager transaction.TransactionManager
 }
 
 // NewMetadataProcessingService creates a new metadata processing service
-func NewMetadataProcessingService(savepointHelper *transaction.SavepointHelper) *MetadataProcessingService {
+func NewMetadataProcessingService(txManager transaction.TransactionManager) *MetadataProcessingService {
 	return &MetadataProcessingService{
-		savepointHelper: savepointHelper,
+		txManager: txManager,
 	}
 }
 
@@ -77,7 +75,7 @@ func (s *MetadataProcessingService) ProcessMetadataWithTransaction(
 		Duration:          0,
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Check if metadata file exists
 		metadataPath := s.findMetadataFile(req.MetadataPath)
 		if metadataPath == "" {

@@ -7,12 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	storageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // FileContentTransactionService handles file content operations with transaction safety
@@ -23,7 +21,7 @@ type FileContentTransactionService struct {
 	moduleVersionRepo     repository.ModuleVersionRepository
 	fileProcessingService model.FileProcessingService
 	pathBuilder           storageService.PathBuilder
-	savepointHelper       *transaction.SavepointHelper
+	txManager             transaction.TransactionManager
 }
 
 // NewFileContentTransactionService creates a new file content transaction service
@@ -32,14 +30,14 @@ func NewFileContentTransactionService(
 	moduleVersionRepo repository.ModuleVersionRepository,
 	fileProcessingService model.FileProcessingService,
 	pathBuilder storageService.PathBuilder,
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 ) *FileContentTransactionService {
 	return &FileContentTransactionService{
 		moduleVersionFileRepo: moduleVersionFileRepo,
 		moduleVersionRepo:     moduleVersionRepo,
 		fileProcessingService: fileProcessingService,
 		pathBuilder:           pathBuilder,
-		savepointHelper:       savepointHelper,
+		txManager:             txManager,
 	}
 }
 
@@ -139,7 +137,7 @@ func (s *FileContentTransactionService) StoreFilesWithTransaction(
 		TotalFiles:          len(req.Files),
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		for _, fileItem := range req.Files {
 			fileStart := time.Now()
 
@@ -256,7 +254,7 @@ func (s *FileContentTransactionService) ProcessExampleFiles(
 
 	for _, example := range examples {
 		// Each example gets its own savepoint for isolation
-		err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+		err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 			// Validate example file
 			if err := s.validateExampleFile(example); err != nil {
 				return fmt.Errorf("example validation failed: %w", err)
@@ -355,7 +353,7 @@ func (s *FileContentTransactionService) UpdateFileContent(
 	filePath string,
 	newContent string,
 ) error {
-	return s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Find existing file
 		existingFile, err := s.moduleVersionFileRepo.FindByPath(ctx, moduleVersionID, filePath)
 		if err != nil {
@@ -392,7 +390,7 @@ func (s *FileContentTransactionService) DeleteFilesWithTransaction(
 	moduleVersionID int,
 	filePaths []string,
 ) error {
-	return s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	return s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		for _, filePath := range filePaths {
 			// Find the file
 			file, err := s.moduleVersionFileRepo.FindByPath(ctx, moduleVersionID, filePath)

@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"gorm.io/gorm"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/transaction"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 )
 
 // TerraformOperation represents a single terraform operation
@@ -94,7 +93,7 @@ type TfswitchConfig struct {
 
 // TerraformExecutorService handles terraform operations with transaction safety
 type TerraformExecutorService struct {
-	savepointHelper *transaction.SavepointHelper
+	txManager       transaction.TransactionManager
 	commandService  service.SystemCommandService
 	terraformBin    string
 	lockTimeout     time.Duration
@@ -103,7 +102,7 @@ type TerraformExecutorService struct {
 
 // NewTerraformExecutorService creates a new terraform executor service
 func NewTerraformExecutorService(
-	savepointHelper *transaction.SavepointHelper,
+	txManager transaction.TransactionManager,
 	commandService service.SystemCommandService,
 	terraformBin string,
 	lockTimeout time.Duration,
@@ -114,11 +113,11 @@ func NewTerraformExecutorService(
 	}
 
 	return &TerraformExecutorService{
-		savepointHelper: savepointHelper,
-		commandService:  commandService,
-		terraformBin:    terraformBin,
-		lockTimeout:     lockTimeout,
-		tfswitchConfig:  tfswitchConfig,
+		txManager:      txManager,
+		commandService: commandService,
+		terraformBin:   terraformBin,
+		lockTimeout:    lockTimeout,
+		tfswitchConfig: tfswitchConfig,
 	}
 }
 
@@ -141,7 +140,7 @@ func (s *TerraformExecutorService) ProcessTerraformWithTransaction(
 		Duration:       0,
 	}
 
-	err := s.savepointHelper.WithTransaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+	err := s.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 		// Use single global lock callback for entire terraform operation
 		return s.RunTerraformWithCallback(ctx, req.ModulePath, func(ctx context.Context) error {
 			logger.Debug().
