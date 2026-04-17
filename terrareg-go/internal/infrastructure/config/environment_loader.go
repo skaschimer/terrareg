@@ -24,7 +24,7 @@ func (e *EnvironmentLoader) LoadAllEnvironmentVariables() map[string]string {
 		"LISTEN_PORT", "PUBLIC_URL", "DOMAIN_NAME", "DEBUG",
 
 		// Database settings
-		"DATABASE_URL",
+		"DATABASE_URL", "MIGRATE_DATABASE",
 
 		// Storage settings
 		"DATA_DIRECTORY", "UPLOAD_DIRECTORY",

@@ -17,7 +17,8 @@ type InfrastructureConfig struct {
 	Debug      bool   `env:"DEBUG"`
 
 	// Database settings
-	DatabaseURL string `env:"DATABASE_URL"`
+	DatabaseURL     string `env:"DATABASE_URL"`
+	MigrateDatabase bool   `env:"MIGRATE_DATABASE"`
 
 	// Storage settings
 	DataDirectory   string `env:"DATA_DIRECTORY"`

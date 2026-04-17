@@ -79,11 +79,11 @@ func bootstrap(logger logging.Logger, sslCertPrivateKey, sslCertPublicKey string
 	logger.Info().Msg("Database connected successfully")
 
 	// Auto-migrate database schema (for development)
-	if infraConfig.Debug {
+	if infraConfig.MigrateDatabase {
 		logger.Info().Msg("Running database auto-migration")
-		// if err := autoMigrate(db); err != nil {
-		// 	logger.Fatal().Err(err).Msg("Failed to auto-migrate database")
-		// }
+		if err := autoMigrate(db); err != nil {
+			logger.With().Error().Err(err).Msg("Failed to auto-migrate database")
+		}
 	}
 
 	// Initialize dependency injection container with new configuration architecture
