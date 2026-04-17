@@ -23,36 +23,7 @@ func NewTestDatabase(t *testing.T) *DatabaseTestHelper {
 	require.NoError(t, err)
 
 	// Run auto-migration for all models
-	err = db.DB.AutoMigrate(
-		&sqldb.SessionDB{},
-		&sqldb.TerraformIDPAuthorizationCodeDB{},
-		&sqldb.TerraformIDPAccessTokenDB{},
-		&sqldb.TerraformIDPSubjectIdentifierDB{},
-		&sqldb.UserGroupDB{},
-		&sqldb.NamespaceDB{},
-		&sqldb.UserGroupNamespacePermissionDB{},
-		&sqldb.GitProviderDB{},
-		&sqldb.NamespaceRedirectDB{},
-		&sqldb.ModuleDetailsDB{},
-		&sqldb.ModuleProviderDB{},
-		&sqldb.ModuleVersionDB{},
-		&sqldb.ModuleProviderRedirectDB{},
-		&sqldb.SubmoduleDB{},
-		&sqldb.AnalyticsDB{},
-		&sqldb.ProviderAnalyticsDB{},
-		&sqldb.ExampleFileDB{},
-		&sqldb.ModuleVersionFileDB{},
-		&sqldb.GPGKeyDB{},
-		&sqldb.ProviderSourceDB{},
-		&sqldb.ProviderCategoryDB{},
-		&sqldb.RepositoryDB{},
-		&sqldb.ProviderDB{},
-		&sqldb.ProviderVersionDB{},
-		&sqldb.ProviderVersionDocumentationDB{},
-		&sqldb.ProviderVersionBinaryDB{},
-		&sqldb.AuthenticationTokenDB{},
-		&sqldb.AuditHistoryDB{},
-	)
+	err = db.AutoMigrate()
 	require.NoError(t, err)
 
 	return &DatabaseTestHelper{

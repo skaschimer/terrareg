@@ -308,38 +308,8 @@ func (ts *TestServer) bootstrap() {
 }
 
 // autoMigrate runs GORM auto-migration for all models
-// From cmd/server/main.go
 func (ts *TestServer) autoMigrate() error {
-	return ts.db.DB.AutoMigrate(
-		&sqldb.SessionDB{},
-		&sqldb.TerraformIDPAuthorizationCodeDB{},
-		&sqldb.TerraformIDPAccessTokenDB{},
-		&sqldb.TerraformIDPSubjectIdentifierDB{},
-		&sqldb.UserGroupDB{},
-		&sqldb.NamespaceDB{},
-		&sqldb.UserGroupNamespacePermissionDB{},
-		&sqldb.GitProviderDB{},
-		&sqldb.NamespaceRedirectDB{},
-		&sqldb.ModuleDetailsDB{},
-		&sqldb.ModuleProviderDB{},
-		&sqldb.ModuleVersionDB{},
-		&sqldb.ModuleProviderRedirectDB{},
-		&sqldb.SubmoduleDB{},
-		&sqldb.AnalyticsDB{},
-		&sqldb.ProviderAnalyticsDB{},
-		&sqldb.ExampleFileDB{},
-		&sqldb.ModuleVersionFileDB{},
-		&sqldb.GPGKeyDB{},
-		&sqldb.ProviderSourceDB{},
-		&sqldb.ProviderCategoryDB{},
-		&sqldb.RepositoryDB{},
-		&sqldb.ProviderDB{},
-		&sqldb.ProviderVersionDB{},
-		&sqldb.ProviderVersionDocumentationDB{},
-		&sqldb.ProviderVersionBinaryDB{},
-		// Note: AuthenticationTokenDB excluded due to ENUM type incompatibility with SQLite
-		&sqldb.AuditHistoryDB{},
-	)
+	return ts.db.AutoMigrate()
 }
 
 // findAvailablePort finds an available port in the range 20000-21000 (like Python tests).

@@ -104,37 +104,7 @@ func bootstrap(logger logging.Logger, sslCertPrivateKey, sslCertPublicKey string
 
 // autoMigrate runs GORM auto-migration for all models
 func autoMigrate(db *sqldb.Database) error {
-	// Import all models and run AutoMigrate
-	return db.DB.AutoMigrate(
-		&sqldb.SessionDB{},
-		&sqldb.TerraformIDPAuthorizationCodeDB{},
-		&sqldb.TerraformIDPAccessTokenDB{},
-		&sqldb.TerraformIDPSubjectIdentifierDB{},
-		&sqldb.UserGroupDB{},
-		&sqldb.NamespaceDB{},
-		&sqldb.UserGroupNamespacePermissionDB{},
-		&sqldb.GitProviderDB{},
-		&sqldb.NamespaceRedirectDB{},
-		&sqldb.ModuleDetailsDB{},
-		&sqldb.ModuleProviderDB{},
-		&sqldb.ModuleVersionDB{},
-		&sqldb.ModuleProviderRedirectDB{},
-		&sqldb.SubmoduleDB{},
-		&sqldb.AnalyticsDB{},
-		&sqldb.ProviderAnalyticsDB{},
-		&sqldb.ExampleFileDB{},
-		&sqldb.ModuleVersionFileDB{},
-		&sqldb.GPGKeyDB{},
-		&sqldb.ProviderSourceDB{},
-		&sqldb.ProviderCategoryDB{},
-		&sqldb.RepositoryDB{},
-		&sqldb.ProviderDB{},
-		&sqldb.ProviderVersionDB{},
-		&sqldb.ProviderVersionDocumentationDB{},
-		&sqldb.ProviderVersionBinaryDB{},
-		&sqldb.AuthenticationTokenDB{},
-		&sqldb.AuditHistoryDB{},
-	)
+	return db.AutoMigrate()
 }
 
 // maskDatabaseURL masks sensitive information in database URL

@@ -128,7 +128,7 @@ func TestRefreshNamespaceRepositories(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -187,7 +187,7 @@ func TestRefreshNamespaceRepositoriesNoAccessToken(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -242,7 +242,7 @@ func TestRefreshNamespaceRepositoriesNoType(t *testing.T) {
 	// Create test database with migrations
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -298,7 +298,7 @@ func TestRefreshNamespaceRepositoriesInvalidResponse(t *testing.T) {
 	// Create test database with migrations
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 

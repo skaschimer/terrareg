@@ -80,7 +80,7 @@ func TestGetCommitHashByRelease(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -162,7 +162,7 @@ func TestGetReleaseArtifactsMetadata(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -239,7 +239,7 @@ func TestGetReleaseArtifact(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -318,7 +318,7 @@ func TestGetReleaseArchive(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -406,7 +406,7 @@ func TestAddRepository(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-source-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -493,7 +493,7 @@ func TestUpdateRepositories(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -557,7 +557,7 @@ func TestUpdateRepositoriesInvalidResponse(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -706,7 +706,7 @@ func TestProcessRelease(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -842,7 +842,7 @@ func TestGetNewReleases(t *testing.T) {
 			// Create test database
 			sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 			require.NoError(t, err)
-			err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+			err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 			require.NoError(t, err)
 			gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -933,7 +933,7 @@ func TestGetNewReleasesSkipInvalidReleases(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -988,7 +988,7 @@ func TestGetNewReleasesInvalidResponse(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 	gh := NewGithubProviderSource("test-name", mockPSRepo, ghClass, sqldbDB)
 
@@ -1183,7 +1183,7 @@ func TestGetNewReleasesBreakIfAlreadyExists(t *testing.T) {
 	// Create test database
 	sqldbDB, err := sqldb.NewDatabase("sqlite://:memory:", false)
 	require.NoError(t, err)
-	err = sqldbDB.DB.AutoMigrate(&sqldb.RepositoryDB{})
+	err = sqldbDB.AutoMigrateModels(&sqldb.RepositoryDB{})
 	require.NoError(t, err)
 
 	// Create the base GithubProviderSource
