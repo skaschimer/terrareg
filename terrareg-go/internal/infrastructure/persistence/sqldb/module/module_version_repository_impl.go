@@ -236,7 +236,8 @@ func (r *ModuleVersionRepositoryImpl) mapToDomainModel(ctx context.Context, dbVe
 	}
 
 	// Load submodules and examples using shared service
-	if err := r.submoduleLoader.LoadSubmodulesAndExamples(moduleVersion, dbVersion.ID); err != nil {
+	db := r.GetDBFromContext(ctx)
+	if err := r.submoduleLoader.LoadSubmodulesAndExamples(db, moduleVersion, dbVersion.ID); err != nil {
 		return nil, err
 	}
 

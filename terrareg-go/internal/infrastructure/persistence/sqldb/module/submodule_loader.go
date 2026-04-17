@@ -26,11 +26,12 @@ func NewSubmoduleLoader(db *gorm.DB) (*SubmoduleLoader, error) {
 }
 
 // LoadSubmodulesAndExamples loads submodules and examples from the database
-// and populates them on the given module version
-func (s *SubmoduleLoader) LoadSubmodulesAndExamples(moduleVersion *model.ModuleVersion, moduleVersionID int) error {
+// and populates them on the given module version.
+// The provided db must include the transaction context if called within a transaction.
+func (s *SubmoduleLoader) LoadSubmodulesAndExamples(db *gorm.DB, moduleVersion *model.ModuleVersion, moduleVersionID int) error {
 	// Load submodules from database (examples are also stored as submodules with type="example")
 	var submodulesDB []sqldb.SubmoduleDB
-	if err := s.db.Where("parent_module_version = ?", moduleVersionID).Find(&submodulesDB).Error; err != nil {
+	if err := db.Where("parent_module_version = ?", moduleVersionID).Find(&submodulesDB).Error; err != nil {
 		return fmt.Errorf("failed to load submodules: %w", err)
 	}
 
@@ -42,7 +43,7 @@ func (s *SubmoduleLoader) LoadSubmodulesAndExamples(moduleVersion *model.ModuleV
 		var submoduleDetails *model.ModuleDetails
 		if submoduleDB.ModuleDetailsID != nil {
 			var detailsDB sqldb.ModuleDetailsDB
-			err := s.db.First(&detailsDB, *submoduleDB.ModuleDetailsID).Error
+			err := db.First(&detailsDB, *submoduleDB.ModuleDetailsID).Error
 			if err == nil {
 				submoduleDetails = fromDBModuleDetails(&detailsDB)
 			}
@@ -65,7 +66,7 @@ func (s *SubmoduleLoader) LoadSubmodulesAndExamples(moduleVersion *model.ModuleV
 
 			// Load example files for this example (submodule)
 			var exampleFilesDB []sqldb.ExampleFileDB
-			if err := s.db.Where("submodule_id = ?", submoduleDB.ID).Find(&exampleFilesDB).Error; err != nil {
+			if err := db.Where("submodule_id = ?", submoduleDB.ID).Find(&exampleFilesDB).Error; err != nil {
 				return fmt.Errorf("failed to load example files: %w", err)
 			}
 

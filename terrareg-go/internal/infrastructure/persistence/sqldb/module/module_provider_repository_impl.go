@@ -580,7 +580,7 @@ func (r *ModuleProviderRepositoryImpl) loadVersions(ctx context.Context, moduleP
 
 	versions := make([]*model.ModuleVersion, len(dbVersions))
 	for i, dbVersion := range dbVersions {
-		v, err := r.toVersionDomain(&dbVersion)
+		v, err := r.toVersionDomain(dbCtx, &dbVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -591,7 +591,7 @@ func (r *ModuleProviderRepositoryImpl) loadVersions(ctx context.Context, moduleP
 }
 
 // toVersionDomain converts database version to domain version
-func (r *ModuleProviderRepositoryImpl) toVersionDomain(db *sqldb.ModuleVersionDB) (*model.ModuleVersion, error) {
+func (r *ModuleProviderRepositoryImpl) toVersionDomain(ctx context.Context, db *sqldb.ModuleVersionDB) (*model.ModuleVersion, error) {
 	var details *model.ModuleDetails
 	if db.ModuleDetails != nil {
 		details = fromDBModuleDetails(db.ModuleDetails)
@@ -625,7 +625,8 @@ func (r *ModuleProviderRepositoryImpl) toVersionDomain(db *sqldb.ModuleVersionDB
 	}
 
 	// Load submodules and examples using shared service
-	if err := r.submoduleLoader.LoadSubmodulesAndExamples(moduleVersion, db.ID); err != nil {
+	gormDB := r.GetDBFromContext(ctx)
+	if err := r.submoduleLoader.LoadSubmodulesAndExamples(gormDB, moduleVersion, db.ID); err != nil {
 		return nil, err
 	}
 
