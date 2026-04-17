@@ -959,19 +959,27 @@ func (mv *ModuleVersion) GetSecurityResults() []SecurityResult {
 	}
 
 	// Define struct for unmarshaling tfsec JSON results
+	// All fields from tfsec output
 	type TfsecResults struct {
 		Results []struct {
-			Description string `json:"description"`
-			Impact      string `json:"impact"`
-			Location    struct {
-				EndLine   int    `json:"end_line"`
+			RuleID          string   `json:"rule_id"`
+			LongID          string   `json:"long_id"`
+			RuleDescription string   `json:"rule_description"`
+			RuleProvider    string   `json:"rule_provider"`
+			RuleService     string   `json:"rule_service"`
+			Impact          string   `json:"impact"`
+			Resolution      string   `json:"resolution"`
+			Links           []string `json:"links"`
+			Description     string   `json:"description"`
+			Severity        string   `json:"severity"`
+			Warning         bool     `json:"warning"`
+			Status          int      `json:"status"`
+			Resource        string   `json:"resource"`
+			Location        struct {
 				Filename  string `json:"filename"`
 				StartLine int    `json:"start_line"`
+				EndLine   int    `json:"end_line"`
 			} `json:"location"`
-			RuleID   string `json:"rule_id"`
-			Severity string `json:"severity"`
-			Status   int    `json:"status"`
-			Title    string `json:"title"`
 		} `json:"results"`
 	}
 
@@ -982,19 +990,34 @@ func (mv *ModuleVersion) GetSecurityResults() []SecurityResult {
 	}
 
 	// Convert tfsec results to domain SecurityResult structs
-	securityResults := make([]SecurityResult, len(tfsecResults.Results))
-	for i, result := range tfsecResults.Results {
-		securityResults[i] = SecurityResult{
-			RuleID:      result.RuleID,
-			Severity:    result.Severity,
-			Title:       result.Title,
-			Description: result.Description,
+	// Only include failed results (status == 0), matching Python behavior
+	var securityResults []SecurityResult
+	for _, result := range tfsecResults.Results {
+		// Only return failed results (status == 0 means FAIL)
+		// Python reference: terrareg/models.py get_tfsec_failures()
+		if result.Status != 0 {
+			continue
+		}
+		securityResults = append(securityResults, SecurityResult{
+			RuleID:          result.RuleID,
+			LongID:          result.LongID,
+			RuleDescription: result.RuleDescription,
+			RuleProvider:    result.RuleProvider,
+			RuleService:     result.RuleService,
+			Impact:          result.Impact,
+			Resolution:      result.Resolution,
+			Links:           result.Links,
+			Description:     result.Description,
+			Severity:        result.Severity,
+			Warning:         result.Warning,
+			Status:          result.Status,
+			Resource:        result.Resource,
 			Location: SecurityLocation{
 				Filename:  result.Location.Filename,
 				StartLine: result.Location.StartLine,
 				EndLine:   result.Location.EndLine,
 			},
-		}
+		})
 	}
 
 	return securityResults
@@ -1402,13 +1425,24 @@ type Requirement struct {
 	Version string `json:"version"`
 }
 
-// SecurityResult represents a security scan result
+// SecurityResult represents a security scan result (tfsec)
+// Python reference: /app/terrareg/models.py get_tfsec_failures()
+// Contains all fields from tfsec JSON output
 type SecurityResult struct {
-	RuleID      string           `json:"rule_id"`
-	Severity    string           `json:"severity"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Location    SecurityLocation `json:"location"`
+	RuleID          string           `json:"rule_id"`
+	LongID          string           `json:"long_id"`
+	RuleDescription string           `json:"rule_description"`
+	RuleProvider    string           `json:"rule_provider"`
+	RuleService     string           `json:"rule_service"`
+	Impact          string           `json:"impact"`
+	Resolution      string           `json:"resolution"`
+	Links           []string         `json:"links"`
+	Description     string           `json:"description"`
+	Severity        string           `json:"severity"`
+	Warning         bool             `json:"warning"`
+	Status          int              `json:"status"`
+	Resource        string           `json:"resource"`
+	Location        SecurityLocation `json:"location"`
 }
 
 // SecurityLocation represents the location of a security issue

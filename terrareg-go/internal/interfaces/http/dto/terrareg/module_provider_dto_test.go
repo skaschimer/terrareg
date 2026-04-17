@@ -214,16 +214,26 @@ func TestTerraregModuleSpecs_JSON(t *testing.T) {
 }
 
 func TestTerraregSecurityResult_JSON(t *testing.T) {
-	// Test TerraregSecurityResult JSON serialization
+	// Test TerraregSecurityResult JSON serialization with all fields
+	// Python reference: /app/test/selenium/test_data.py withsecurityissues test data
 	result := TerraregSecurityResult{
-		RuleID:      "AWS009",
-		Severity:    "HIGH",
-		Title:       "resource should not use plaintext credentials",
-		Description: "The resource contains plaintext credentials",
+		RuleID:          "AVD-TRG-001",
+		LongID:          "first-security-medium-issue",
+		RuleDescription: "This type of first issue is Medium",
+		RuleProvider:    "aws",
+		RuleService:     "s3",
+		Impact:          "First security issue is Medium",
+		Resolution:      "Remove first security issue",
+		Links:           []string{"https://example.com/first-issue/"},
+		Description:     "First security issue.",
+		Severity:        "MEDIUM",
+		Warning:         false,
+		Status:          0,
+		Resource:        "aws_s3.first",
 		Location: TerraregSecurityLocation{
-			Filename:  "main.tf",
-			StartLine: 10,
-			EndLine:   15,
+			Filename:  "first.tf",
+			StartLine: 1,
+			EndLine:   2,
 		},
 	}
 
@@ -238,15 +248,54 @@ func TestTerraregSecurityResult_JSON(t *testing.T) {
 		t.Fatalf("Failed to unmarshal TerraregSecurityResult: %v", err)
 	}
 
-	// Verify key fields
+	// Verify all key fields
 	if unmarshaled.RuleID != result.RuleID {
 		t.Errorf("Expected RuleID to be %s, got %s", result.RuleID, unmarshaled.RuleID)
+	}
+	if unmarshaled.LongID != result.LongID {
+		t.Errorf("Expected LongID to be %s, got %s", result.LongID, unmarshaled.LongID)
+	}
+	if unmarshaled.RuleDescription != result.RuleDescription {
+		t.Errorf("Expected RuleDescription to be %s, got %s", result.RuleDescription, unmarshaled.RuleDescription)
+	}
+	if unmarshaled.RuleProvider != result.RuleProvider {
+		t.Errorf("Expected RuleProvider to be %s, got %s", result.RuleProvider, unmarshaled.RuleProvider)
+	}
+	if unmarshaled.RuleService != result.RuleService {
+		t.Errorf("Expected RuleService to be %s, got %s", result.RuleService, unmarshaled.RuleService)
+	}
+	if unmarshaled.Impact != result.Impact {
+		t.Errorf("Expected Impact to be %s, got %s", result.Impact, unmarshaled.Impact)
+	}
+	if unmarshaled.Resolution != result.Resolution {
+		t.Errorf("Expected Resolution to be %s, got %s", result.Resolution, unmarshaled.Resolution)
+	}
+	if len(unmarshaled.Links) != len(result.Links) {
+		t.Errorf("Expected %d links, got %d", len(result.Links), len(unmarshaled.Links))
+	}
+	if unmarshaled.Description != result.Description {
+		t.Errorf("Expected Description to be %s, got %s", result.Description, unmarshaled.Description)
 	}
 	if unmarshaled.Severity != result.Severity {
 		t.Errorf("Expected Severity to be %s, got %s", result.Severity, unmarshaled.Severity)
 	}
+	if unmarshaled.Warning != result.Warning {
+		t.Errorf("Expected Warning to be %v, got %v", result.Warning, unmarshaled.Warning)
+	}
+	if unmarshaled.Status != result.Status {
+		t.Errorf("Expected Status to be %d, got %d", result.Status, unmarshaled.Status)
+	}
+	if unmarshaled.Resource != result.Resource {
+		t.Errorf("Expected Resource to be %s, got %s", result.Resource, unmarshaled.Resource)
+	}
+	if unmarshaled.Location.Filename != result.Location.Filename {
+		t.Errorf("Expected Filename to be %s, got %s", result.Location.Filename, unmarshaled.Location.Filename)
+	}
 	if unmarshaled.Location.StartLine != result.Location.StartLine {
 		t.Errorf("Expected StartLine to be %d, got %d", result.Location.StartLine, unmarshaled.Location.StartLine)
+	}
+	if unmarshaled.Location.EndLine != result.Location.EndLine {
+		t.Errorf("Expected EndLine to be %d, got %d", result.Location.EndLine, unmarshaled.Location.EndLine)
 	}
 }
 

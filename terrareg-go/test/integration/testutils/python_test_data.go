@@ -786,33 +786,53 @@ func createVersionWithTfsec(t *testing.T, db *sqldb.Database, moduleProviderID i
 	t.Helper()
 
 	// Create module details with Tfsec data
+	// Includes all fields from tfsec JSON output
+	// Python reference: /app/test/selenium/test_data.py withsecurityissues test data
 	tfsecJSON := `{
 		"results": [
 			{
 				"description": "Secret explicitly uses the default key.",
 				"impact": "Using AWS managed keys reduces the flexibility and control over the encryption key",
+				"links": [
+					"https://aquasecurity.github.io/tfsec/v1.26.0/checks/aws/ssm/secret-use-customer-key/"
+				],
 				"location": {
 					"end_line": 4,
 					"filename": "main.tf",
 					"start_line": 2
 				},
+				"long_id": "aws-ssm-secret-use-customer-key",
+				"resolution": "Use customer managed keys",
+				"resource": "aws_ssm_parameter.default_key",
+				"rule_description": "SSM Parameter secrets should use customer managed keys",
 				"rule_id": "AVD-AWS-0098",
 				"rule_provider": "aws",
 				"rule_service": "ssm",
-				"severity": "LOW"
+				"severity": "LOW",
+				"status": 0,
+				"warning": false
 			},
 			{
 				"description": "Some security issue 2.",
 				"impact": "Entire project is compromised",
+				"links": [
+					"https://example.com/security-issue-2/"
+				],
 				"location": {
-					"end_line": 1,
+					"end_line": 10,
 					"filename": "main.tf",
 					"start_line": 6
 				},
+				"long_id": "bad-code-security-issue",
+				"resolution": "Fix the security issue",
+				"resource": "bad_resource.example",
+				"rule_description": "This is a bad security issue",
 				"rule_id": "DDG-ANC-001",
 				"rule_provider": "bad",
 				"rule_service": "code",
-				"severity": "HIGH"
+				"severity": "HIGH",
+				"status": 0,
+				"warning": false
 			}
 		]
 	}`

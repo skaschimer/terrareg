@@ -319,10 +319,19 @@ func (p *ModuleVersionPresenter) ToTerraregProviderDetailsDTO(
 	securityResults := mv.GetSecurityResults()
 	for _, result := range securityResults {
 		response.SecurityResults = append(response.SecurityResults, terrareg.TerraregSecurityResult{
-			RuleID:      result.RuleID,
-			Severity:    result.Severity,
-			Title:       result.Title,
-			Description: result.Description,
+			RuleID:          result.RuleID,
+			LongID:          result.LongID,
+			RuleDescription: result.RuleDescription,
+			RuleProvider:    result.RuleProvider,
+			RuleService:     result.RuleService,
+			Impact:          result.Impact,
+			Resolution:      result.Resolution,
+			Links:           result.Links,
+			Description:     result.Description,
+			Severity:        result.Severity,
+			Warning:         result.Warning,
+			Status:          result.Status,
+			Resource:        result.Resource,
 			Location: terrareg.TerraregSecurityLocation{
 				Filename:  result.Location.Filename,
 				StartLine: result.Location.StartLine,

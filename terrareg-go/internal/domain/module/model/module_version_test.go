@@ -424,6 +424,7 @@ func TestModuleVersion_GetSecurityResults(t *testing.T) {
 					"severity": "HIGH",
 					"title": "Test security issue",
 					"description": "This is a test security issue",
+					"status": 0,
 					"location": {
 						"filename": "main.tf",
 						"start_line": 10,
@@ -440,6 +441,48 @@ func TestModuleVersion_GetSecurityResults(t *testing.T) {
 		assert.Len(t, results, 1)
 		assert.Equal(t, "AWS003", results[0].RuleID)
 		assert.Equal(t, "HIGH", results[0].Severity)
+		assert.Equal(t, 1, mv.GetSecurityFailures())
+	})
+
+	t.Run("filters out passed results", func(t *testing.T) {
+		// Test that only failed results (status == 0) are returned
+		// matching Python behavior in get_tfsec_failures()
+		tfsecJSON := []byte(`{
+			"results": [
+				{
+					"rule_id": "AWS001",
+					"severity": "HIGH",
+					"title": "Failed issue",
+					"description": "This should be included",
+					"status": 0,
+					"location": {
+						"filename": "main.tf",
+						"start_line": 10,
+						"end_line": 15
+					}
+				},
+				{
+					"rule_id": "AWS002",
+					"severity": "LOW",
+					"title": "Passed check",
+					"description": "This should be filtered out",
+					"status": 2,
+					"location": {
+						"filename": "main.tf",
+						"start_line": 20,
+						"end_line": 25
+					}
+				}
+			]
+		}`)
+		details := NewModuleDetails([]byte{}).WithTfsec(tfsecJSON)
+		mv, _ := NewModuleVersion("1.0.0", details, false)
+
+		results := mv.GetSecurityResults()
+
+		// Only the failed result should be returned
+		assert.Len(t, results, 1)
+		assert.Equal(t, "AWS001", results[0].RuleID)
 		assert.Equal(t, 1, mv.GetSecurityFailures())
 	})
 }
