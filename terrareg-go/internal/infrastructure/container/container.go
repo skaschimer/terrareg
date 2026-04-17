@@ -98,6 +98,9 @@ type Container struct {
 	Logger logging.Logger
 	DB     *sqldb.Database
 
+	// Transaction Engine (infrastructure-level transaction management)
+	txEngine *transaction.GormTransactionEngine
+
 	// Repositories
 	NamespaceRepo                     moduleRepo.NamespaceRepository
 	ModuleProviderRepo                moduleRepo.ModuleProviderRepository
@@ -527,12 +530,17 @@ func NewContainer(
 		return nil, fmt.Errorf("failed to create InfracostService: %w", err)
 	}
 
-	// Initialize foundation transaction services
-	txManager, err := transaction.NewGormTransactionManager(db.DB)
+	// Initialize transaction manager
+	// The GormTransactionEngine implements the domain.TransactionManager interface directly
+	txManager, err := transaction.NewGormTransactionEngine(db.DB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transaction manager: %w", err)
 	}
 	c.TransactionManager = txManager
+
+	// Store the engine for use in infrastructure components (like BaseRepository)
+	// Type assert to get the concrete GormTransactionEngine
+	c.txEngine = txManager.(*transaction.GormTransactionEngine)
 
 	// Initialize module creation wrapper for atomic module creation
 	moduleCreationWrapper := moduleService.NewModuleCreationWrapperService(
