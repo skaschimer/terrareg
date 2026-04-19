@@ -9,22 +9,23 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/audit/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	baserepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/repository"
 )
 
 // auditHistoryRepositoryImpl implements the audit history repository interface
 type auditHistoryRepositoryImpl struct {
-	// db provides database access (required)
-	db *gorm.DB
+	*baserepo.BaseRepository
 }
 
 // NewAuditHistoryRepository creates a new audit history repository
 // Returns an error if db is nil
 func NewAuditHistoryRepository(db *gorm.DB) (repository.AuditHistoryRepository, error) {
-	if db == nil {
-		return nil, fmt.Errorf("db cannot be nil")
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
 	}
 	return &auditHistoryRepositoryImpl{
-		db: db,
+		BaseRepository: baseRepo,
 	}, nil
 }
 
@@ -32,7 +33,7 @@ func NewAuditHistoryRepository(db *gorm.DB) (repository.AuditHistoryRepository, 
 func (r *auditHistoryRepositoryImpl) Create(ctx context.Context, audit *model.AuditHistory) error {
 	dbModel := audit.ToDBModel()
 
-	if err := r.db.WithContext(ctx).Create(dbModel).Error; err != nil {
+	if err := r.GetDBFromContext(ctx).Create(dbModel).Error; err != nil {
 		return fmt.Errorf("failed to create audit history entry: %w", err)
 	}
 
@@ -48,12 +49,12 @@ func (r *auditHistoryRepositoryImpl) Search(ctx context.Context, query model.Aud
 	var filteredCount int64
 
 	// Get total count
-	if err := r.db.WithContext(ctx).Model(&sqldb.AuditHistoryDB{}).Count(&totalCount).Error; err != nil {
+	if err := r.GetDBFromContext(ctx).Model(&sqldb.AuditHistoryDB{}).Count(&totalCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to get total count: %w", err)
 	}
 
 	// Build base query
-	dbQuery := r.db.WithContext(ctx).Model(&sqldb.AuditHistoryDB{})
+	dbQuery := r.GetDBFromContext(ctx).Model(&sqldb.AuditHistoryDB{})
 
 	// Apply search filter if provided
 	if query.SearchValue != "" {
@@ -117,7 +118,7 @@ func (r *auditHistoryRepositoryImpl) Search(ctx context.Context, query model.Aud
 // GetTotalCount returns the total number of audit history entries
 func (r *auditHistoryRepositoryImpl) GetTotalCount(ctx context.Context) (int, error) {
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&sqldb.AuditHistoryDB{}).Count(&count).Error; err != nil {
+	if err := r.GetDBFromContext(ctx).Model(&sqldb.AuditHistoryDB{}).Count(&count).Error; err != nil {
 		return 0, fmt.Errorf("failed to get total count: %w", err)
 	}
 	return int(count), nil
@@ -125,7 +126,7 @@ func (r *auditHistoryRepositoryImpl) GetTotalCount(ctx context.Context) (int, er
 
 // GetFilteredCount returns the number of audit history entries matching the search criteria
 func (r *auditHistoryRepositoryImpl) GetFilteredCount(ctx context.Context, searchValue string) (int, error) {
-	dbQuery := r.db.WithContext(ctx).Model(&sqldb.AuditHistoryDB{})
+	dbQuery := r.GetDBFromContext(ctx).Model(&sqldb.AuditHistoryDB{})
 
 	if searchValue != "" {
 		searchPattern := "%" + searchValue + "%"

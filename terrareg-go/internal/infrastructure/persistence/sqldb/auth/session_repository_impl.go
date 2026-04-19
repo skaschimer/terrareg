@@ -11,23 +11,24 @@ import (
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
+	baserepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/repository"
 )
 
 const SessionIDLength = 32
 
 // SessionRepositoryImpl implements the session repository using GORM
 type SessionRepositoryImpl struct {
-	// db provides database access (required)
-	db *gorm.DB
+	*baserepo.BaseRepository
 }
 
 // NewSessionRepository creates a new session repository
 // Returns an error if db is nil
 func NewSessionRepository(db *gorm.DB) (*SessionRepositoryImpl, error) {
-	if db == nil {
-		return nil, fmt.Errorf("db cannot be nil")
+	baseRepo, err := baserepo.NewBaseRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create base repository: %w", err)
 	}
-	return &SessionRepositoryImpl{db: db}, nil
+	return &SessionRepositoryImpl{BaseRepository: baseRepo}, nil
 }
 
 // Create creates a new session
@@ -38,7 +39,7 @@ func (r *SessionRepositoryImpl) Create(ctx context.Context, session *auth.Sessio
 		ProviderSourceAuth: session.ProviderSourceAuth,
 	}
 
-	return r.db.WithContext(ctx).Create(&sessionDB).Error
+	return r.GetDBFromContext(ctx).Create(&sessionDB).Error
 }
 
 // FindByID retrieves a session by ID if it hasn't expired
@@ -48,7 +49,7 @@ func (r *SessionRepositoryImpl) FindByID(ctx context.Context, sessionID string) 
 	}
 
 	var sessionDB sqldb.SessionDB
-	err := r.db.WithContext(ctx).
+	err := r.GetDBFromContext(ctx).
 		Where("id = ? AND expiry >= ?", sessionID, time.Now()).
 		First(&sessionDB).Error
 
@@ -66,21 +67,21 @@ func (r *SessionRepositoryImpl) FindByID(ctx context.Context, sessionID string) 
 
 // Delete deletes a session
 func (r *SessionRepositoryImpl) Delete(ctx context.Context, sessionID string) error {
-	return r.db.WithContext(ctx).
+	return r.GetDBFromContext(ctx).
 		Where("id = ?", sessionID).
 		Delete(&sqldb.SessionDB{}).Error
 }
 
 // CleanupExpired removes all expired sessions
 func (r *SessionRepositoryImpl) CleanupExpired(ctx context.Context) error {
-	return r.db.WithContext(ctx).
+	return r.GetDBFromContext(ctx).
 		Where("expiry < ?", time.Now()).
 		Delete(&sqldb.SessionDB{}).Error
 }
 
 // UpdateProviderSourceAuth updates provider source auth data for a session
 func (r *SessionRepositoryImpl) UpdateProviderSourceAuth(ctx context.Context, sessionID string, data []byte) error {
-	return r.db.WithContext(ctx).
+	return r.GetDBFromContext(ctx).
 		Model(&sqldb.SessionDB{}).
 		Where("id = ?", sessionID).
 		Update("provider_source_auth", data).Error
