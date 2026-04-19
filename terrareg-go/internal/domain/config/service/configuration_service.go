@@ -199,6 +199,10 @@ func (s *ConfigurationService) buildInfrastructureConfig(rawConfig map[string]st
 		PublishApiKeys:           s.parseStringSlice(rawConfig["PUBLISH_API_KEYS"], ","),
 		SecretKey:                rawConfig["SECRET_KEY"],
 
+		// Analytics authentication (infrastructure concerns)
+		AnalyticsAuthKeys:                s.parseStringSlice(rawConfig["ANALYTICS_AUTH_KEYS"], ","),
+		InternalExtractionAnalyticsToken: s.getEnvStringWithDefault(rawConfig, "INTERNAL_EXTRACTION_ANALYTICS_TOKEN", "internal-terrareg-analytics-token"),
+
 		// Feature flags (infrastructure)
 		AllowProviderHosting:   s.parseBool(rawConfig["ALLOW_PROVIDER_HOSTING"], true),
 		AllowCustomGitProvider: s.parseBool(rawConfig["ALLOW_CUSTOM_GIT_PROVIDER"], true),
