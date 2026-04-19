@@ -12,7 +12,7 @@ WORKDIR /app
 # Install build dependencies
 RUN apt-get update && \
     apt-get install --assume-yes \
-        pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl \
+        gcc pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl \
         xmlsec1 libgraphviz-dev libmagic1 && \
     apt-get clean all
 
@@ -28,7 +28,7 @@ COPY terrareg-go/ ./
 
 # Build the Go binary
 RUN http_proxy=$http_proxy https_proxy=$https_proxy \
-    CGO_ENABLED=0 GOOS=linux go build \
+    CGO_ENABLED=1 GOOS=linux go build \
     -o server ./cmd/server/main.go
 
 
