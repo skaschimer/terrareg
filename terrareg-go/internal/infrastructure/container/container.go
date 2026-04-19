@@ -39,7 +39,6 @@ import (
 	authservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/auth/service"
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	configService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/service"
-	domainTransaction "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	gpgkeyRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/repository"
 	gpgkeyService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/gpgkey/service"
@@ -55,6 +54,7 @@ import (
 	providerSourceService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider_source/service"
 	repositoryRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/repository"
 	sharedService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/service"
+	domainTransaction "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/transaction"
 	storageModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/model"
 	storageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
 	urlservice "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/url/service"
@@ -683,9 +683,17 @@ func NewContainer(
 		logger,
 	)
 
+	// Initialize archive processor
 	// Initialize transaction processing orchestrator now that all dependencies are ready
+	archiveProcessor := moduleService.NewDefaultArchiveProcessor()
+	archiveExtractionService := moduleService.NewArchiveExtractionService(
+		archiveProcessor,
+		txManager,
+	)
+	c.ArchiveExtractionService = archiveExtractionService
+
 	processingOrchestrator = moduleService.NewTransactionProcessingOrchestrator(
-		nil, // archiveService - TODO: implement ArchiveProcessor
+		archiveExtractionService,
 		c.TerraformExecutorService,
 		metadataService,
 		securityScanningService,
@@ -699,17 +707,8 @@ func NewContainer(
 		c.ModuleVersionRepo,
 		c.ModuleProviderRepo,
 	)
+
 	c.TransactionProcessingOrchestrator = processingOrchestrator
-
-	// Initialize archive processor
-	archiveProcessor := moduleService.NewDefaultArchiveProcessor()
-
-	// Initialize archive extraction service
-	archiveExtractionService := moduleService.NewArchiveExtractionService(
-		archiveProcessor,
-		txManager,
-	)
-	c.ArchiveExtractionService = archiveExtractionService
 
 	// Initialize source preparation service
 	sourcePreparationService := moduleService.NewSourcePreparationService(
