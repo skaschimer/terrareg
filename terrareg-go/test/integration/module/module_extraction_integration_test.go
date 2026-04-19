@@ -1031,7 +1031,6 @@ func unzipFile(zipPath, destDir string) error {
 		fileReader.Close()
 		destFile.Close()
 
-
 		fileReader.Close()
 		destFile.Close()
 
@@ -1041,4 +1040,198 @@ func unzipFile(zipPath, destDir string) error {
 	}
 
 	return nil
+}
+
+// TestModuleExtraction_CustomDirectories tests module extraction with custom MODULES_DIRECTORY and EXAMPLES_DIRECTORY
+func TestModuleExtraction_CustomDirectories(t *testing.T) {
+	tempDir := t.TempDir()
+	dbPath := filepath.Join(tempDir, "test.db")
+	db, err := sqldb.NewDatabase("sqlite://"+dbPath, true)
+	require.NoError(t, err)
+	defer func() {
+		testutils.CleanupTestDatabase(t, db)
+		os.Remove(dbPath)
+	}()
+
+	// Run auto-migration
+	err = db.DB.AutoMigrate(
+		&sqldb.NamespaceDB{},
+		&sqldb.ModuleProviderDB{},
+		&sqldb.ModuleVersionDB{},
+		&sqldb.ModuleDetailsDB{},
+		&sqldb.SubmoduleDB{},
+		&sqldb.ExampleFileDB{},
+	)
+	require.NoError(t, err)
+
+	// Create a test git repository with custom directory structure
+	repoDir := t.TempDir()
+	createModuleRepoWithCustomDirectories(t, repoDir)
+
+	// Create container with custom directory config
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	// Set custom directories
+	domainConfig.ModulesDirectory = "subcomponents"
+	domainConfig.ExamplesDirectory = "demos"
+
+	infraConfig := testutils.CreateTestInfraConfig(t)
+	infraConfig.DataDirectory = repoDir
+	logger := logging.NewTestLogger(t)
+
+	cont, err := container.NewContainer(domainConfig, infraConfig, nil, logger, db)
+	require.NoError(t, err)
+
+	// Create namespace, module provider, and version
+	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
+	moduleVersion := testutils.CreateModuleVersion(t, db, moduleProvider.ID, "2.0.0")
+
+	ctx := context.Background()
+
+	// Process the module
+	metadata := &service.ModuleProcessingMetadata{
+		ModuleVersionID: moduleVersion.ID,
+		GitTag:          "v2.0.0",
+	}
+	result, err := cont.ModuleProcessorService.ProcessModule(ctx, repoDir, metadata)
+
+	// Assert successful processing
+	assert.NoError(t, err, "Module processing with custom directories should complete")
+	assert.NotNil(t, result)
+
+	// Verify submodules were indexed from custom "subcomponents" directory
+	var submodulesDB []sqldb.SubmoduleDB
+	err = db.DB.Where("parent_module_version = ? AND (type IS NULL OR type != 'example')", moduleVersion.ID).Find(&submodulesDB).Error
+	require.NoError(t, err)
+	assert.Greater(t, len(submodulesDB), 0, "Submodules should be indexed from custom directory")
+
+	// Verify submodules have correct paths (should start with "subcomponents/")
+	for _, submodule := range submodulesDB {
+		assert.Contains(t, submodule.Path, "subcomponents", "Submodule path should start with custom 'subcomponents' directory")
+		assert.NotContains(t, submodule.Path, "modules", "Submodule path should not contain default 'modules' directory")
+	}
+
+	// Verify examples were indexed from custom "demos" directory
+	var examplesDB []sqldb.SubmoduleDB
+	err = db.DB.Where("parent_module_version = ? AND type = 'example'", moduleVersion.ID).Find(&examplesDB).Error
+	require.NoError(t, err)
+	assert.Greater(t, len(examplesDB), 0, "Examples should be indexed from custom directory")
+
+	// Verify examples have correct paths (should start with "demos/")
+	for _, example := range examplesDB {
+		assert.Contains(t, example.Path, "demos", "Example path should start with custom 'demos' directory")
+		assert.NotContains(t, example.Path, "examples", "Example path should not contain default 'examples' directory")
+	}
+
+	t.Log("Module extraction with custom directories completed successfully")
+}
+
+// createModuleRepoWithCustomDirectories creates a test git repository with custom directory names
+func createModuleRepoWithCustomDirectories(t *testing.T, dir string) {
+	t.Helper()
+
+	// Initialize git repo
+	runCommand(t, dir, "git", "init", "-b", "main")
+	runCommand(t, dir, "git", "config", "user.email", "test@example.com")
+	runCommand(t, dir, "git", "config", "user.name", "Test User")
+	runCommand(t, dir, "git", "config", "commit.gpgsign", "false")
+
+	// Create basic module files
+	mainTF := `
+variable "test_input" {
+  description = "Test input variable"
+  type        = string
+  default     = "test_value"
+}
+
+resource "null_resource" "example" {
+}
+`
+	err := os.WriteFile(filepath.Join(dir, "main.tf"), []byte(mainTF), 0644)
+	require.NoError(t, err)
+
+	// Create README.md
+	readme := `# Test Module
+
+This is a test module for custom directory testing.
+`
+	err = os.WriteFile(filepath.Join(dir, "README.md"), []byte(readme), 0644)
+	require.NoError(t, err)
+
+	// Create custom modules directory ("subcomponents" instead of "modules")
+	subcomponentsDir := filepath.Join(dir, "subcomponents")
+	err = os.MkdirAll(subcomponentsDir, 0755)
+	require.NoError(t, err)
+
+	// Create a submodule in custom directory
+	submoduleDir := filepath.Join(subcomponentsDir, "database")
+	err = os.MkdirAll(submoduleDir, 0755)
+	require.NoError(t, err)
+
+	submoduleTF := `
+variable "subnet_id" {
+  description = "VPC subnet ID"
+  type        = string
+}
+
+resource "aws_db_instance" "example" {
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  engine               = "mysql"
+  instance_class       = "db.t2.micro"
+  db_name              = "mydb"
+}
+`
+	err = os.WriteFile(filepath.Join(submoduleDir, "main.tf"), []byte(submoduleTF), 0644)
+	require.NoError(t, err)
+
+	// Create default modules directory (should be ignored with custom config)
+	defaultModulesDir := filepath.Join(dir, "modules")
+	err = os.MkdirAll(defaultModulesDir, 0755)
+	require.NoError(t, err)
+
+	ignoredSubmodule := filepath.Join(defaultModulesDir, "ignored")
+	err = os.MkdirAll(ignoredSubmodule, 0755)
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath.Join(ignoredSubmodule, "main.tf"), []byte("resource \"aws_s3_bucket\" \"ignored\" {}"), 0644)
+	require.NoError(t, err)
+
+	// Create custom examples directory ("demos" instead of "examples")
+	demosDir := filepath.Join(dir, "demos")
+	err = os.MkdirAll(demosDir, 0755)
+	require.NoError(t, err)
+
+	// Create an example in custom directory
+	exampleDir := filepath.Join(demosDir, "simple")
+	err = os.MkdirAll(exampleDir, 0755)
+	require.NoError(t, err)
+
+	exampleTF := `# Simple example usage of the module
+
+module "test_module" {
+  source = "../../."
+
+  instance_type = "t2.micro"
+}
+`
+	err = os.WriteFile(filepath.Join(exampleDir, "main.tf"), []byte(exampleTF), 0644)
+	require.NoError(t, err)
+
+	// Create default examples directory (should be ignored with custom config)
+	defaultExamplesDir := filepath.Join(dir, "examples")
+	err = os.MkdirAll(defaultExamplesDir, 0755)
+	require.NoError(t, err)
+
+	ignoredExample := filepath.Join(defaultExamplesDir, "ignored")
+	err = os.MkdirAll(ignoredExample, 0755)
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath.Join(ignoredExample, "main.tf"), []byte("resource \"null_resource\" \"ignored\" {}"), 0644)
+	require.NoError(t, err)
+
+	// Commit all files
+	runCommand(t, dir, "git", "add", ".")
+	runCommand(t, dir, "git", "commit", "-m", "Add custom directories")
+	runCommand(t, dir, "git", "tag", "v2.0.0")
 }

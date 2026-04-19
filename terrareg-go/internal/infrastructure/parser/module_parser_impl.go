@@ -460,8 +460,37 @@ func (p *ModuleParserImpl) DetectSubmodules(modulePath string) ([]string, error)
 	var submodules []string
 	submoduleSet := make(map[string]bool)
 
-	// Walk through the directory looking for .tf files recursively
-	err := filepath.Walk(modulePath, func(path string, info os.FileInfo, err error) error {
+	// Get the configured modules directory
+	modulesDir := p.config.ModulesDirectory
+	if modulesDir == "" {
+		modulesDir = "modules" // fallback to default
+	}
+
+	// Determine the scan path based on MODULES_DIRECTORY configuration
+	var scanPath string
+	if modulesDir == "" {
+		// If MODULES_DIRECTORY is empty, scan the root module directory
+		scanPath = modulePath
+	} else {
+		// Otherwise, only scan within the configured modules directory
+		scanPath = filepath.Join(modulePath, modulesDir)
+
+		// Check if the configured directory exists
+		_, err := p.storageService.Stat(scanPath)
+		if err != nil {
+			// Modules directory doesn't exist, return empty list (Python behavior)
+			return submodules, nil
+		}
+	}
+
+	// Get examples directory name for exclusion
+	examplesDir := p.config.ExamplesDirectory
+	if examplesDir == "" {
+		examplesDir = "examples" // fallback to default
+	}
+
+	// Walk through the scan path looking for .tf files recursively
+	err := filepath.Walk(scanPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -474,21 +503,13 @@ func (p *ModuleParserImpl) DetectSubmodules(modulePath string) ([]string, error)
 		// Get the parent directory of the .tf file
 		parentDir := filepath.Dir(path)
 
-		// Skip if parent directory is the root module path (Python warns about this)
-		if parentDir == modulePath {
+		// Skip if parent directory is the scan path (i.e., root of scan)
+		// Python: "WARNING: submodule is in root of submodules directory."
+		if parentDir == scanPath {
 			return nil
 		}
 
-		// Skip if parent directory is examples directory
-		examplesDir := p.config.ExamplesDirectory
-		if examplesDir == "" {
-			examplesDir = "examples" // fallback to default
-		}
-		if filepath.Base(filepath.Dir(parentDir)) == examplesDir {
-			return nil
-		}
-
-		// Get relative path from module root
+		// Get relative path from module root (not scan path)
 		relativePath, err := filepath.Rel(modulePath, parentDir)
 		if err != nil {
 			return nil
@@ -496,6 +517,13 @@ func (p *ModuleParserImpl) DetectSubmodules(modulePath string) ([]string, error)
 
 		// Skip hidden directories
 		if strings.HasPrefix(relativePath, ".") {
+			return nil
+		}
+
+		// Skip if parent directory is examples directory
+		// Check if the first path component is the examples directory
+		firstComponent := strings.Split(relativePath, string(filepath.Separator))[0]
+		if firstComponent == examplesDir {
 			return nil
 		}
 

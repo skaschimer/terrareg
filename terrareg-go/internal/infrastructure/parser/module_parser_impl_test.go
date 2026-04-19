@@ -55,6 +55,10 @@ func (m *mockStorageService) Stat(name string) (os.FileInfo, error) {
 	if ok := m.dirs[name]; ok {
 		return &mockFileInfo{isDir: true, size: 0}, nil
 	}
+	// Fall back to real file system for directories created during tests
+	if info, err := os.Stat(name); err == nil {
+		return info, nil
+	}
 	return nil, os.ErrNotExist
 }
 
@@ -75,6 +79,7 @@ func (m *mockStorageService) ReadFile(filename string) ([]byte, error) {
 
 func (m *mockStorageService) ReadDir(dirname string) ([]os.DirEntry, error) {
 	var entries []os.DirEntry
+	// Add entries from mock data
 	for path := range m.files {
 		if filepath.Dir(path) == dirname {
 			entries = append(entries, &mockDirEntry{name: filepath.Base(path), isDir: false})
@@ -83,6 +88,19 @@ func (m *mockStorageService) ReadDir(dirname string) ([]os.DirEntry, error) {
 	for path := range m.dirs {
 		if filepath.Dir(path) == dirname && path != dirname {
 			entries = append(entries, &mockDirEntry{name: filepath.Base(path), isDir: true})
+		}
+	}
+	// Fall back to real file system for directories created during tests
+	if realEntries, err := os.ReadDir(dirname); err == nil {
+		// Add real entries that aren't already in our mock list
+		existing := make(map[string]bool)
+		for _, e := range entries {
+			existing[e.Name()] = true
+		}
+		for _, e := range realEntries {
+			if !existing[e.Name()] {
+				entries = append(entries, e)
+			}
 		}
 	}
 	return entries, nil
@@ -409,6 +427,100 @@ func TestExtractDescriptionFromReadme(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+// TestDetectSubmodules_DefaultDirectory tests that submodules are detected from the default "modules" directory
+func TestDetectSubmodules_DefaultDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+	modulesDir := filepath.Join(tempDir, "modules")
+	err := os.MkdirAll(modulesDir, 0755)
+	require.NoError(t, err)
+
+	submodule1 := filepath.Join(modulesDir, "database")
+	err = os.MkdirAll(submodule1, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(submodule1, "main.tf"), []byte("resource \"aws_db_instance\" \"example\" {}"), 0644)
+	require.NoError(t, err)
+
+	submodule2 := filepath.Join(modulesDir, "network")
+	err = os.MkdirAll(submodule2, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(submodule2, "main.tf"), []byte("resource \"aws_vpc\" \"example\" {}"), 0644)
+	require.NoError(t, err)
+
+	otherDir := filepath.Join(tempDir, "other_stuff")
+	err = os.MkdirAll(otherDir, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(otherDir, "main.tf"), []byte("resource \"aws_s3_bucket\" \"example\" {}"), 0644)
+	require.NoError(t, err)
+
+	config := &configModel.DomainConfig{
+		ModulesDirectory:  "modules",
+		ExamplesDirectory: "examples",
+	}
+	storage := newMockStorageService()
+	cmdService := newMockSystemCommandService()
+	logger := &mockLogger{}
+	parser := NewModuleParserImpl(storage, config, cmdService, logger)
+
+	submodules, err := parser.DetectSubmodules(tempDir)
+	require.NoError(t, err)
+	assert.Len(t, submodules, 2)
+	assert.Contains(t, submodules, filepath.Join("modules", "database"))
+	assert.Contains(t, submodules, filepath.Join("modules", "network"))
+	assert.NotContains(t, submodules, "other_stuff")
+}
+
+// TestDetectSubmodules_CustomDirectory tests that submodules are detected from a custom MODULES_DIRECTORY
+func TestDetectSubmodules_CustomDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+	customModulesDir := filepath.Join(tempDir, "subcomponents")
+	err := os.MkdirAll(customModulesDir, 0755)
+	require.NoError(t, err)
+
+	submodule1 := filepath.Join(customModulesDir, "auth")
+	err = os.MkdirAll(submodule1, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(submodule1, "main.tf"), []byte("resource \"aws_iam_role\" \"example\" {}"), 0644)
+	require.NoError(t, err)
+
+	defaultModulesDir := filepath.Join(tempDir, "modules")
+	err = os.MkdirAll(defaultModulesDir, 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defaultModulesDir, "main.tf"), []byte("resource \"aws_s3_bucket\" \"default\" {}"), 0644)
+	require.NoError(t, err)
+
+	config := &configModel.DomainConfig{
+		ModulesDirectory:  "subcomponents",
+		ExamplesDirectory: "examples",
+	}
+	storage := newMockStorageService()
+	cmdService := newMockSystemCommandService()
+	logger := &mockLogger{}
+	parser := NewModuleParserImpl(storage, config, cmdService, logger)
+
+	submodules, err := parser.DetectSubmodules(tempDir)
+	require.NoError(t, err)
+	assert.Len(t, submodules, 1)
+	assert.Contains(t, submodules, filepath.Join("subcomponents", "auth"))
+	assert.NotContains(t, submodules, filepath.Join("modules", "main"))
+}
+
+// TestDetectSubmodules_NonExistentDirectory tests that non-existent MODULES_DIRECTORY returns empty list
+func TestDetectSubmodules_NonExistentDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+	config := &configModel.DomainConfig{
+		ModulesDirectory:  "non_existent_modules",
+		ExamplesDirectory: "examples",
+	}
+	storage := newMockStorageService()
+	cmdService := newMockSystemCommandService()
+	logger := &mockLogger{}
+	parser := NewModuleParserImpl(storage, config, cmdService, logger)
+
+	submodules, err := parser.DetectSubmodules(tempDir)
+	require.NoError(t, err)
+	assert.Empty(t, submodules)
 }
 
 func TestParseTerraregMetadata(t *testing.T) {

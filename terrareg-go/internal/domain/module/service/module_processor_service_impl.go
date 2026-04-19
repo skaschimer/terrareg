@@ -572,7 +572,7 @@ func (s *ModuleProcessorServiceImpl) processExamples(ctx context.Context, module
 		exampleType := "example"
 		exampleSubmodule := &sqldb.SubmoduleDB{
 			Type: &exampleType,
-			Path: filepath.Join("examples", exampleName),
+			Path: filepath.Join(examplesDir, exampleName),
 			Name: &exampleName,
 		}
 
