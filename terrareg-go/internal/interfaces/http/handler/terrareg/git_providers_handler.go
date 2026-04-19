@@ -2,7 +2,6 @@ package terrareg
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
@@ -54,9 +53,5 @@ func (h *GitProvidersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Return JSON response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+	RespondJSON(w, http.StatusOK, response)
 }

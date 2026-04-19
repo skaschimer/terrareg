@@ -1,7 +1,6 @@
 package terrareg
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/application/query/config"
@@ -39,11 +38,5 @@ func (h *ConfigHandler) HandleConfig(w http.ResponseWriter, r *http.Request) {
 	configResponse := terrareg.NewConfigResponse(response.Config)
 
 	// Write JSON response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(configResponse); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	RespondJSON(w, http.StatusOK, configResponse)
 }

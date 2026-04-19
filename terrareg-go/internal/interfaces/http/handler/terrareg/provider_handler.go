@@ -578,11 +578,5 @@ func (h *ProviderHandler) HandleProviderDownload(w http.ResponseWriter, r *http.
 	}
 
 	// Set content type and respond with JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		RespondError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+	RespondJSON(w, http.StatusOK, resp)
 }
