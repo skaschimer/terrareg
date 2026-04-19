@@ -194,9 +194,9 @@ func (e *EnvironmentLoader) parseModuleHostingMode(value string) string {
 
 	value = strings.ToLower(value)
 	switch value {
-	case "true", "allow":
+	case "true":
 		return "allow"
-	case "false", "disallow":
+	case "false":
 		return "disallow"
 	case "enforce":
 		return "enforce"
