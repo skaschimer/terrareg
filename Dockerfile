@@ -84,7 +84,7 @@ RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock .
+COPY pyproject.toml poetry.lock ./
 ARG PYPI_PROXY
 RUN if test ! -z "$PYPI_PROXY"; then pip_args="--index=$PYPI_PROXY --trusted-host=$(echo $PYPI_PROXY | sed 's#https*://##g' | sed 's#/.*##g')"; else pip_args=""; fi; \
   http_proxy= https_proxy="" pip install poetry $pip_args
