@@ -143,18 +143,12 @@ func (s *SecurityService) removeDangerousElements(content string) string {
 	return content
 }
 
-// removeDangerousProtocols removes javascript:, vbscript:, data:, file: protocols
+// removeDangerousProtocols removes javascript:, vbscript:, data:, file: protocols and their payloads
 func (s *SecurityService) removeDangerousProtocols(content string) string {
-	dangerousProtocols := []string{
-		"javascript:", "vbscript:", "data:", "file:",
-	}
-
-	for _, protocol := range dangerousProtocols {
-		re := regexp.MustCompile(`(?i)` + regexp.QuoteMeta(protocol))
-		content = re.ReplaceAllString(content, "")
-	}
-
-	return content
+	// Match protocol + everything up to next tag or whitespace
+	// This removes javascript:alert(2) not just javascript:
+	re := regexp.MustCompile(`(?i)(javascript:|vbscript:|data:|file:)[^\s<]*`)
+	return re.ReplaceAllString(content, "")
 }
 
 // removeEventHandlers removes all on* event handlers
