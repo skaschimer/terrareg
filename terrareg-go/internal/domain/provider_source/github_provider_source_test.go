@@ -1405,7 +1405,8 @@ func TestGithubProviderSource_GetAccessTokenForProvider(t *testing.T) {
 
 			privateKeyPath := ""
 			if tt.providePrivateKey {
-				privateKeyPath, err := generatePrivateKey()
+				var err error
+				privateKeyPath, err = generatePrivateKey()
 				if err != nil {
 					t.Fatal(err)
 				}

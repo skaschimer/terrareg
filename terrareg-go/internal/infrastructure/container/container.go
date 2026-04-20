@@ -814,13 +814,18 @@ func NewContainer(
 	// Initialize GPG key service
 	c.GPGKeyService = gpgkeyService.NewGPGKeyService(c.GPGKeyRepo, c.NamespaceRepo)
 
-	c.TerraformIdpService = authservice.NewTerraformIdpService(
-		c.TerraformIdpAuthorizationCodeRepo,
-		c.TerraformIdpAccessTokenRepo,
-		c.TerraformIdpSubjectIdentifierRepo,
-		infraConfig.TerraformOidcIdpSigningKeyPath,
-		infraConfig.PublicURL,
-	)
+	// Initialize Terraform IDP service (may be nil if not configured)
+	var terraformIdpService *authservice.TerraformIdpService
+	if infraConfig.TerraformOidcIdpSigningKeyPath != "" {
+		terraformIdpService = authservice.NewTerraformIdpService(
+			c.TerraformIdpAuthorizationCodeRepo,
+			c.TerraformIdpAccessTokenRepo,
+			c.TerraformIdpSubjectIdentifierRepo,
+			infraConfig.TerraformOidcIdpSigningKeyPath,
+			infraConfig.PublicURL,
+		)
+	}
+	c.TerraformIdpService = terraformIdpService
 
 	// Initialize OIDC and SAML services (these may return nil if not configured)
 	ctx := context.Background()
