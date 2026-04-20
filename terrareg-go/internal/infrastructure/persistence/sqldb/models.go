@@ -685,7 +685,7 @@ func (AuditHistoryDB) TableName() string {
 // AuthenticationTokenDB represents authentication tokens for API access
 type AuthenticationTokenDB struct {
 	ID          int        `gorm:"primaryKey;autoIncrement"`
-	TokenType   string     `gorm:"type:enum('admin','upload','publish');not null"`
+	TokenType   string     `gorm:"type:varchar(50);not null;check:token_type IN ('admin','upload','publish')"`
 	TokenValue  string     `gorm:"type:varchar(255);not null;uniqueIndex"`
 	NamespaceID *int       `gorm:"default:null"` // Only for publish tokens
 	Description string     `gorm:"type:text;not null"`
