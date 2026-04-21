@@ -196,14 +196,13 @@ func TestSearchFilters_UnpublishedModule(t *testing.T) {
 	counts, err := searchFiltersQuery.Execute(ctx, "contributedmodule-unpublished")
 	require.NoError(t, err)
 
-	// Contributed count should be 0 because module has no published versions
+	// Module with unpublished versions should not be found at all (matching Python behavior)
+	// Python reference: expects empty providers and namespaces for unpublished modules
 	assert.Equal(t, 0, counts.Verified)
 	assert.Equal(t, 0, counts.TrustedNamespaces)
 	assert.Equal(t, 0, counts.Contributed)
-	// Note: The Go implementation still finds the module provider even without published versions,
-	// so providers/namespaces are still counted. This is a known difference from Python behavior.
-	assert.Equal(t, map[string]int{"aws": 1}, counts.Providers)
-	assert.Equal(t, map[string]int{"modulesearch": 1}, counts.Namespaces)
+	assert.Equal(t, map[string]int{}, counts.Providers)
+	assert.Equal(t, map[string]int{}, counts.Namespaces)
 }
 
 // TestSearchFilters_TrustedModuleOneVersion tests search with one trusted module with one version

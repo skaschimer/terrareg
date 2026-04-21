@@ -311,11 +311,14 @@ func createVersion(t *testing.T, db *sqldb.Database, moduleProviderID int, versi
 	require.NoError(t, err)
 
 	// Set this version as the latest version for the module provider
-	// This is required for the search query to find the module
-	err = db.DB.Model(&sqldb.ModuleProviderDB{}).
-		Where("id = ?", moduleProviderID).
-		Update("latest_version_id", moduleVersion.ID).Error
-	require.NoError(t, err)
+	// Only non-beta versions should be set as latest (matching Python behavior)
+	// Beta versions should not overwrite the latest_version_id
+	if !moduleVersion.Beta {
+		err = db.DB.Model(&sqldb.ModuleProviderDB{}).
+			Where("id = ?", moduleProviderID).
+			Update("latest_version_id", moduleVersion.ID).Error
+		require.NoError(t, err)
+	}
 }
 
 // CreateModuleProviderWithVerified creates a module provider with specified verified status
@@ -337,7 +340,7 @@ func CreateModuleProviderWithVerified(t *testing.T, db *sqldb.Database, namespac
 
 // SetupComprehensiveProviderSearchTestData creates comprehensive provider search test data
 // matching Python's integration_test_data.py provider search data.
-// This creates providers in providersearch-trusted and contributed-providersearch namespaces.
+// Python reference: /app/test/selenium/test_data.py - 'providersearch' namespace
 func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) {
 	t.Helper()
 
@@ -345,62 +348,48 @@ func SetupComprehensiveProviderSearchTestData(t *testing.T, db *sqldb.Database) 
 	createProviderCategory(t, db, "Visible Monitoring", "visible-monitoring", true)
 	createProviderCategory(t, db, "Second Visible Cloud", "second-visible-cloud", true)
 
-	// Create providersearch-trusted namespace (for trusted providers)
-	// Python reference: /app/test/selenium/test_data.py - 'providersearch-trusted'
-	providersearchTrustedNs := CreateNamespace(t, db, "providersearch-trusted", nil)
+	// Create providersearch namespace (matching Python's test_data.py)
+	// Python reference: /app/test/selenium/test_data.py - 'providersearch'
+	providersearchNs := CreateNamespace(t, db, "providersearch", nil)
 
-	// Create contributed-providersearch namespace (for contributed providers)
-	// Python reference: /app/test/selenium/test_data.py - 'contributed-providersearch'
-	contributedProvidersearchNs := CreateNamespace(t, db, "contributed-providersearch", nil)
-
-	// Create GPG keys directly in namespaces (not linked to providers yet)
-	gpgKeyProviderSearchTrusted := createGPGKeyInNamespace(t, db, providersearchTrustedNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
-	gpgKeyContributed := createGPGKeyInNamespace(t, db, contributedProvidersearchNs.ID, "D7AA1BEFF16FA788760E54F5591EF84DC5EDCD68")
+	// Create GPG key in namespace
+	gpgKey := createGPGKeyInNamespace(t, db, providersearchNs.ID, "D8A89D97BB7526F33C8A2D8C39C57A3D0D24B532")
 
 	// Get category IDs
 	visibleMonitoringCat := getProviderCategoryBySlug(t, db, "visible-monitoring")
+	secondVisibleCloudCat := getProviderCategoryBySlug(t, db, "second-visible-cloud")
 
-	// ===== providersearch-trusted namespace providers =====
-	// Python reference: /app/test/selenium/test_data.py - providersearch-trusted providers
+	// ===== providersearch namespace providers (matching Python test_data.py) =====
 
-	// mixedsearch-trusted-result (one version)
-	// Python: terraform-provider-mixedsearch-trusted-result
-	provider1 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result",
-		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider1.ID, "1.0.0", gpgKeyProviderSearchTrusted.ID, false)
+	// contributedprovider-oneversion (one version, description "DESCRIPTION-Search")
+	// Python reference: terraform-provider-contributedprovider-oneversion
+	provider1 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-oneversion",
+		stringPtr("DESCRIPTION-Search"), sqldb.ProviderTierOfficial, &visibleMonitoringCat)
+	createProviderVersion(t, db, provider1.ID, "1.2.0", gpgKey.ID, false)
 
-	// mixedsearch-trusted-second-result (one version)
-	// Python: terraform-provider-mixedsearch-trusted-second-result
-	provider2 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-second-result",
-		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider2.ID, "5.2.1", gpgKeyProviderSearchTrusted.ID, false)
+	// contributedprovider-multiversion (multiple versions, description "DESCRIPTION-MultiVersion")
+	// Python reference: terraform-provider-contributedprovider-multiversion
+	provider2 := CreateProvider(t, db, providersearchNs.ID, "contributedprovider-multiversion",
+		stringPtr("DESCRIPTION-MultiVersion"), sqldb.ProviderTierOfficial, &secondVisibleCloudCat)
+	createProviderVersion(t, db, provider2.ID, "1.2.0", gpgKey.ID, false)
+	createProviderVersion(t, db, provider2.ID, "2.0.0", gpgKey.ID, false)
 
-	// mixedsearch-trusted-result-multiversion (multiple versions)
-	// Python: terraform-provider-mixedsearch-trusted-result-multiversion
-	provider3 := CreateProvider(t, db, providersearchTrustedNs.ID, "mixedsearch-trusted-result-multiversion",
-		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider3.ID, "1.2.3", gpgKeyProviderSearchTrusted.ID, false)
-	createProviderVersion(t, db, provider3.ID, "2.0.0", gpgKeyProviderSearchTrusted.ID, false)
-
-	// ===== contributed-providersearch namespace providers =====
-	// Python reference: /app/test/selenium/test_data.py - contributed-providersearch providers
+	// Also create the "mixedsearch" providers for backward compatibility with existing tests
+	// These are used by tests that expect these specific provider names
 
 	// mixedsearch-result (one version)
-	// Python: terraform-provider-mixedsearch-result
-	provider4 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result",
+	provider3 := CreateProvider(t, db, providersearchNs.ID, "mixedsearch-result",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider4.ID, "1.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider3.ID, "1.0.0", gpgKey.ID, false)
 
 	// mixedsearch-result-multiversion (multiple versions - IMPORTANT for duplicate bug testing)
-	// Python: terraform-provider-mixedsearch-result-multiversion
-	provider5 := CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-multiversion",
+	provider4 := CreateProvider(t, db, providersearchNs.ID, "mixedsearch-result-multiversion",
 		stringPtr("Test Multiple Versions"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
-	createProviderVersion(t, db, provider5.ID, "1.2.3", gpgKeyContributed.ID, false)
-	createProviderVersion(t, db, provider5.ID, "2.0.0", gpgKeyContributed.ID, false)
+	createProviderVersion(t, db, provider4.ID, "1.2.3", gpgKey.ID, false)
+	createProviderVersion(t, db, provider4.ID, "2.0.0", gpgKey.ID, false)
 
 	// mixedsearch-result-no-version (no versions - should be excluded from search)
-	// Python: terraform-provider-mixedsearch-result-no-version
-	_ = CreateProvider(t, db, contributedProvidersearchNs.ID, "mixedsearch-result-no-version",
+	_ = CreateProvider(t, db, providersearchNs.ID, "mixedsearch-result-no-version",
 		stringPtr("DESCRIPTION-NoVersion"), sqldb.ProviderTierCommunity, &visibleMonitoringCat)
 }
 
@@ -464,10 +453,14 @@ func createProviderVersion(t *testing.T, db *sqldb.Database, providerID int, ver
 	require.NoError(t, err)
 
 	// Set this version as the latest version for the provider
-	err = db.DB.Model(&sqldb.ProviderDB{}).
-		Where("id = ?", providerID).
-		Update("latest_version_id", providerVersion.ID).Error
-	require.NoError(t, err)
+	// Only non-beta versions should be set as latest (matching Python behavior)
+	// Beta versions should not overwrite the latest_version_id
+	if !providerVersion.Beta {
+		err = db.DB.Model(&sqldb.ProviderDB{}).
+			Where("id = ?", providerID).
+			Update("latest_version_id", providerVersion.ID).Error
+		require.NoError(t, err)
+	}
 }
 
 // createProviderCategory creates a provider category
@@ -873,10 +866,14 @@ func createVersionWithTfsec(t *testing.T, db *sqldb.Database, moduleProviderID i
 	require.NoError(t, err)
 
 	// Set this version as the latest version for the module provider
-	err = db.DB.Model(&sqldb.ModuleProviderDB{}).
-		Where("id = ?", moduleProviderID).
-		Update("latest_version_id", moduleVersion.ID).Error
-	require.NoError(t, err)
+	// Only non-beta versions should be set as latest (matching Python behavior)
+	// Beta versions should not overwrite the latest_version_id
+	if !moduleVersion.Beta {
+		err = db.DB.Model(&sqldb.ModuleProviderDB{}).
+			Where("id = ?", moduleProviderID).
+			Update("latest_version_id", moduleVersion.ID).Error
+		require.NoError(t, err)
+	}
 }
 
 // CreateModuleVersionWithSecurityIssues creates a module version with tfsec security data.

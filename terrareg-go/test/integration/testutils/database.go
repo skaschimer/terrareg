@@ -54,6 +54,7 @@ func CreateTestDomainConfig(t *testing.T) *model.DomainConfig {
 		OpenIDConnectEnabled:     true,
 		SAMLEnabled:              true,
 		AdminLoginEnabled:        true,
+		ModuleVersionReindexMode: model.ModuleVersionReindexModeLegacy,
 		AutoPublishModuleVersions: true, // Enable auto-publish for tests
 	}
 }

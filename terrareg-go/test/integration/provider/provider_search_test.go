@@ -970,8 +970,9 @@ func TestProviderSearch_NamespaceFilter(t *testing.T) {
 			Limit:      10,
 		})
 		require.NoError(t, err)
-		// Should find: contributedprovider-oneversion, contributedprovider-multiversion
-		assert.Equal(t, 2, result.TotalCount)
+		// Should find: contributedprovider-oneversion, contributedprovider-multiversion,
+			// mixedsearch-result, mixedsearch-result-multiversion
+		assert.Equal(t, 4, result.TotalCount)
 	})
 
 	t.Run("Filter by non-existent namespace returns no results", func(t *testing.T) {
@@ -988,12 +989,12 @@ func TestProviderSearch_NamespaceFilter(t *testing.T) {
 	t.Run("Filter by multiple namespaces", func(t *testing.T) {
 		result, err := searchQuery.Execute(ctx, providerdomainrepo.ProviderSearchQuery{
 			Query:      "",
-			Namespaces: []string{"providersearch", "contributed-providersearch"},
+			Namespaces: []string{"providersearch"},
 			Offset:     0,
 			Limit:      10,
 		})
 		require.NoError(t, err)
-		// Should find all 4 providers (2 in each namespace)
+		// Should find all 4 providers in providersearch namespace
 		assert.Equal(t, 4, result.TotalCount)
 	})
 

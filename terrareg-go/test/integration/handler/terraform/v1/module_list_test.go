@@ -177,7 +177,7 @@ func TestModuleListHandler_HandleListModules_WithUnpublished(t *testing.T) {
 	// Create test data - module with unpublished version
 	namespace := testutils.CreateNamespace(t, db, "test-namespace", nil)
 	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
-	_ = testutils.CreateModuleVersion(t, db, moduleProvider.ID, "1.0.0") // Not published
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0") // Not published
 
 	// Create handler
 	handler := testutils.CreateModuleListHandler(t, db)

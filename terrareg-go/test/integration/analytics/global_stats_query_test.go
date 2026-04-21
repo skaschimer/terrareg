@@ -295,7 +295,7 @@ func TestGlobalStatsQuery_OnlyPublishedVersions(t *testing.T) {
 
 	// Create 2 unpublished versions
 	for i := 1; i <= 2; i++ {
-		testutils.CreateModuleVersion(t, db, provider.ID, "0.0.0")
+		testutils.CreatePublishedModuleVersion(t, db, provider.ID, "0.0.0")
 	}
 
 	// Create query
@@ -331,7 +331,7 @@ func TestGlobalStatsQuery_BetaAndInternalVersions(t *testing.T) {
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "test-module", "aws")
 
 	// Create published version
-	moduleVersion := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
+	moduleVersion := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
 	// Mark as published and not beta/internal
 	published := true

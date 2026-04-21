@@ -883,9 +883,14 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 
 	// Create test data with multiple providers
 	namespace := testutils.CreateNamespace(t, db, "multins", nil)
-	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "aws")
-	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "azure")
-	testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "gcp")
+	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "aws")
+	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "azure")
+	provider3 := testutils.CreateModuleProvider(t, db, namespace.ID, "multimodule", "gcp")
+
+	// Create published versions for each provider (required for search to find them)
+	testutils.CreatePublishedModuleVersion(t, db, provider1.ID, "1.0.0")
+	testutils.CreatePublishedModuleVersion(t, db, provider2.ID, "1.0.0")
+	testutils.CreatePublishedModuleVersion(t, db, provider3.ID, "1.0.0")
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)

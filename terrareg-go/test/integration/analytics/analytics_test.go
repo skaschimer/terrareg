@@ -68,10 +68,10 @@ func TestGetGlobalModuleUsage_ExcludingNoEnvironment(t *testing.T) {
 	provider3 := testutils.CreateModuleProvider(t, db, namespace1.ID, "secondmodule", "testprovider")
 	provider4 := testutils.CreateModuleProvider(t, db, namespace2.ID, "othernamespacemodule", "anotherprovider")
 
-	version1 := testutils.CreateModuleVersion(t, db, provider1.ID, "1.0.0")
-	version2 := testutils.CreateModuleVersion(t, db, provider2.ID, "1.0.0")
-	version3 := testutils.CreateModuleVersion(t, db, provider3.ID, "1.0.0")
-	version4 := testutils.CreateModuleVersion(t, db, provider4.ID, "1.0.0")
+	version1 := testutils.CreatePublishedModuleVersion(t, db, provider1.ID, "1.0.0")
+	version2 := testutils.CreatePublishedModuleVersion(t, db, provider2.ID, "1.0.0")
+	version3 := testutils.CreatePublishedModuleVersion(t, db, provider3.ID, "1.0.0")
+	version4 := testutils.CreatePublishedModuleVersion(t, db, provider4.ID, "1.0.0")
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
@@ -188,8 +188,8 @@ func TestGetGlobalModuleUsage_IncludingEmptyAuthToken(t *testing.T) {
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "publishedmodule", "testprovider")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "noanalyticstoken", "testprovider")
 
-	version1 := testutils.CreateModuleVersion(t, db, provider1.ID, "1.0.0")
-	version2 := testutils.CreateModuleVersion(t, db, provider2.ID, "1.0.0")
+	version1 := testutils.CreatePublishedModuleVersion(t, db, provider1.ID, "1.0.0")
+	version2 := testutils.CreatePublishedModuleVersion(t, db, provider2.ID, "1.0.0")
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
@@ -262,7 +262,7 @@ func TestRecordModuleDownload_BasicUse(t *testing.T) {
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "test-download-namespace", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "testprovider")
-	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
+	version := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
 	// Create repositories and command
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
@@ -356,10 +356,10 @@ func TestGetDownloadStats(t *testing.T) {
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "teststats", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "statsmodule", "statsprovider")
-	version := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
+	version := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
 	otherProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "othermodle", "statsprovider")
-	otherVersion := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
+	otherVersion := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
@@ -436,8 +436,8 @@ func TestGetDownloadsByVersionID(t *testing.T) {
 	// Create test data
 	namespace := testutils.CreateNamespace(t, db, "testversionid", nil)
 	provider := testutils.CreateModuleProvider(t, db, namespace.ID, "vermodule", "verprovider")
-	version1 := testutils.CreateModuleVersion(t, db, provider.ID, "1.0.0")
-	version2 := testutils.CreateModuleVersion(t, db, provider.ID, "2.0.0")
+	version1 := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "1.0.0")
+	version2 := testutils.CreatePublishedModuleVersion(t, db, provider.ID, "2.0.0")
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)
@@ -503,8 +503,8 @@ func TestGetMostDownloadedThisWeek(t *testing.T) {
 	provider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "weekmodule1", "weekprovider")
 	provider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "weekmodule2", "weekprovider")
 
-	version1 := testutils.CreateModuleVersion(t, db, provider1.ID, "1.0.0")
-	version2 := testutils.CreateModuleVersion(t, db, provider2.ID, "1.0.0")
+	version1 := testutils.CreatePublishedModuleVersion(t, db, provider1.ID, "1.0.0")
+	version2 := testutils.CreatePublishedModuleVersion(t, db, provider2.ID, "1.0.0")
 
 	// Create analytics repository
 	namespaceRepo := moduleRepo.NewNamespaceRepository(db.DB)

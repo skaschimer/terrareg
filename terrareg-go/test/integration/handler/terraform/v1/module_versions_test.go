@@ -174,16 +174,9 @@ func TestModuleVersionsHandler_NonExistentModuleVersion(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	response := testutils.GetJSONBody(t, w)
-	// Go's error format uses "error" key
-	if errMsg, ok := response["error"].(string); ok {
-		assert.Contains(t, errMsg, "Not Found")
-	} else if errMsgs, ok := response["errors"].([]interface{}); ok {
-		// Python format - also handle for compatibility
-		assert.Len(t, errMsgs, 1)
-		assert.Equal(t, "Not Found", errMsgs[0])
-	} else {
-		t.Fatalf("Response should contain 'error' or 'errors' field, got: %v", response)
-	}
+	// Go implementation uses "message" field for errors
+	assert.Contains(t, response, "message")
+	assert.Contains(t, response["message"].(string), "Not Found")
 }
 
 // TestModuleVersionsHandler_AnalyticsToken tests analytics token handling

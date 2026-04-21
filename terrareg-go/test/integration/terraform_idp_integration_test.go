@@ -210,14 +210,13 @@ func TestTerraformIDPConfigurationValidation(t *testing.T) {
 		// Use non-existent key file
 		infraConfig.TerraformOidcIdpSigningKeyPath = "/non-existent/key.pem"
 
-		// Container creation will panic due to missing key
-		// This is expected behavior - the service panics when it can't load the signing key
-		assert.Panics(t, func() {
-			container, err := container.NewContainer(domainConfig, infraConfig, nil, testutils.GetTestLogger(t), db)
-			if err == nil {
-				_ = container
-			}
-		}, "Container creation should panic when signing key file doesn't exist")
+		// Container creation should NOT panic - it should disable the service gracefully
+		container, err := container.NewContainer(domainConfig, infraConfig, nil, testutils.GetTestLogger(t), db)
+		require.NoError(t, err)
+		require.NotNil(t, container)
+
+		// Verify that the Terraform IDP service is disabled (nil)
+		assert.Nil(t, container.TerraformIdpService, "Terraform IDP Service should be disabled when signing key doesn't exist")
 	})
 
 	t.Run("Invalid Key File", func(t *testing.T) {
