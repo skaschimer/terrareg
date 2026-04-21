@@ -549,8 +549,8 @@ func TestModuleHandler_HandleModuleProviderDetails_NotFound(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Contains(t, response, "error")
-	assert.Contains(t, response["error"], "not found")
+	assert.Contains(t, response, "message")
+	assert.Contains(t, response["message"], "not found")
 }
 
 // TestModuleHandler_HandleModuleSearch_Success tests the module search endpoint

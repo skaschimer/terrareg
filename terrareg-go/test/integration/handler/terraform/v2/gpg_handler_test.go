@@ -137,7 +137,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_MissingFilter(t *te
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
-	assert.Contains(t, response["error"], "Missing required parameter")
+	assert.Contains(t, response["message"], "Missing required parameter")
 }
 
 // TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_EmptyFilter tests empty filter parameter
@@ -162,7 +162,7 @@ func TestTerraformV2GPGHandler_Integration_HandleListGPGKeys_EmptyFilter(t *test
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
-	assert.Contains(t, response["error"], "Missing required parameter")
+	assert.Contains(t, response["message"], "Missing required parameter")
 }
 
 // TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_Success tests getting a specific GPG key
@@ -289,7 +289,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_NotFound(t *testing.T
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
-	assert.Contains(t, response["error"], "not found")
+	assert.Contains(t, response["message"], "not found")
 }
 
 // TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_MissingParameters tests missing path parameters
@@ -346,7 +346,7 @@ func TestTerraformV2GPGHandler_Integration_HandleGetGPGKey_MissingParameters(t *
 			var response map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			require.NoError(t, err)
-			assert.Contains(t, response["error"], "Missing required parameters")
+			assert.Contains(t, response["message"], "Missing required parameters")
 		})
 	}
 }

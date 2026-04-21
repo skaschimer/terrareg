@@ -250,8 +250,8 @@ func TestNamespaceHandler_HandleNamespaceDetails_MissingParameter(t *testing.T) 
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
-	assert.Contains(t, response["error"].(string), "namespace is required")
+	assert.Contains(t, response, "message")
+	assert.Contains(t, response["message"].(string), "namespace is required")
 }
 
 // TestNamespaceHandler_HandleNamespaceCreate_Success tests successful namespace creation
@@ -300,7 +300,7 @@ func TestNamespaceHandler_HandleNamespaceCreate_InvalidJSON(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	assert.Contains(t, response, "message")
 }
 
 // TestNamespaceHandler_HandleNamespaceDelete_Success tests successful namespace deletion
@@ -349,7 +349,7 @@ func TestNamespaceHandler_HandleNamespaceDelete_NotFound(t *testing.T) {
 	// Should return error for non-existent namespace
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	assert.Contains(t, response, "message")
 }
 
 // TestNamespaceHandler_HandleNamespaceUpdate_Success tests successful namespace update
@@ -409,7 +409,7 @@ func TestNamespaceHandler_HandleNamespaceUpdate_MissingParameter(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	assert.Contains(t, response, "message")
 }
 
 // TestNamespaceHandler_HandleNamespaceUpdate_InvalidJSON tests with invalid JSON
@@ -429,7 +429,7 @@ func TestNamespaceHandler_HandleNamespaceUpdate_InvalidJSON(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	response := testutils.GetJSONBody(t, w)
-	assert.Contains(t, response, "error")
+	assert.Contains(t, response, "message")
 }
 
 // TestNamespaceHandler_HandleNamespaceList_ResourceType_NoTypeParam tests with no type parameter (defaults to module)

@@ -154,7 +154,7 @@ func TestSubmoduleHandler_HandleSubmoduleDetails_MissingParameters(t *testing.T)
 
 			assert.Equal(t, http.StatusBadRequest, w.Code)
 			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			assert.Contains(t, response, "message")
 		})
 	}
 }
@@ -286,7 +286,7 @@ func TestSubmoduleHandler_HandleSubmoduleReadmeHTML_MissingParameters(t *testing
 
 			assert.Equal(t, http.StatusBadRequest, w.Code)
 			response := testutils.GetJSONBody(t, w)
-			assert.Contains(t, response, "error")
+			assert.Contains(t, response, "message")
 		})
 	}
 }
