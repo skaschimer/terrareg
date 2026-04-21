@@ -15,6 +15,8 @@ import (
 	"time"
 
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	storageModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/model"
+	domainStorageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	moduleRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
@@ -98,13 +100,14 @@ func (m *mockGitClient) GetCommitSHA(ctx context.Context, repoDir string) (strin
 	return m.commitSHA, nil
 }
 
-// mockStorageService is a mock implementation of StorageService
+// mockStorageService is a mock implementation of both domain and module StorageService
 type mockStorageService struct {
 	tempDirs     []string
 	removedPaths []string
 	mkdirTempErr error
 }
 
+// Module StorageService interface methods
 func (m *mockStorageService) CopyDir(src, dest string) error                { return nil }
 func (m *mockStorageService) Stat(name string) (os.FileInfo, error)         { return nil, nil }
 func (m *mockStorageService) MkdirAll(path string, perm os.FileMode) error  { return nil }
@@ -125,6 +128,82 @@ func (m *mockStorageService) MkdirTemp(dir, pattern string) (string, error) {
 func (m *mockStorageService) RemoveAll(path string) error {
 	m.removedPaths = append(m.removedPaths, path)
 	return os.RemoveAll(path)
+}
+
+// mockDomainStorageService is a mock implementation of domain StorageService
+type mockDomainStorageService struct {
+	// Can embed module storage service to reuse those methods if needed
+}
+
+func (m *mockDomainStorageService) UploadFile(ctx context.Context, sourcePath string, destDirectory string, destFilename string) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) ReadFile(ctx context.Context, path string, bytesMode bool) ([]byte, error) {
+	return nil, nil
+}
+
+func (m *mockDomainStorageService) WriteFile(ctx context.Context, path string, content any, binary bool) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) MakeDirectory(ctx context.Context, directory string) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) FileExists(ctx context.Context, path string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockDomainStorageService) DirectoryExists(ctx context.Context, path string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockDomainStorageService) DeleteFile(ctx context.Context, path string) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) DeleteDirectory(ctx context.Context, path string) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) UploadStream(ctx context.Context, reader io.Reader, destPath string) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) StreamToHTTPResponse(ctx context.Context, path string, writer io.Writer) error {
+	return nil
+}
+
+func (m *mockDomainStorageService) GetFileSize(ctx context.Context, path string) (int64, error) {
+	return 0, nil
+}
+
+// mockStorageFactory is a mock implementation of domain StorageFactory
+type mockStorageFactory struct {
+	domainStorageService *mockDomainStorageService
+	moduleStorageService  *mockStorageService
+	createTempErr         error
+}
+
+func (m *mockStorageFactory) CreateStorageService(config *storageModel.StorageConfig) (domainStorageService.StorageService, error) {
+	return m.domainStorageService, nil
+}
+
+func (m *mockStorageFactory) GetDefaultStorageService() (domainStorageService.StorageService, error) {
+	return m.domainStorageService, nil
+}
+
+func (m *mockStorageFactory) DetectStorageType(dataDirectory string) storageModel.StorageType {
+	return storageModel.StorageTypeLocal
+}
+
+func (m *mockStorageFactory) CreateTemporaryStorageService(baseDir string) (domainStorageService.StorageService, error) {
+	if m.createTempErr != nil {
+		return nil, m.createTempErr
+	}
+	// Return the domain storage service mock
+	return m.domainStorageService, nil
 }
 
 // mockArchiveProcessor is a mock implementation of ArchiveProcessor
@@ -269,6 +348,13 @@ func createTestSourcePreparationService(t *testing.T, moduleProvider *model.Modu
 
 	storageService := &mockStorageService{}
 
+	domainStorageService := &mockDomainStorageService{}
+
+	storageFactory := &mockStorageFactory{
+		domainStorageService: domainStorageService,
+		moduleStorageService:  storageService,
+	}
+
 	archiveProcessor := &mockArchiveProcessor{
 		detectType: 0,
 	}
@@ -277,6 +363,7 @@ func createTestSourcePreparationService(t *testing.T, moduleProvider *model.Modu
 		moduleProviderRepo,
 		gitClient,
 		storageService,
+		storageFactory,
 		archiveProcessor,
 		domainConfig,
 		infraConfig,

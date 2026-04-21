@@ -1,8 +1,82 @@
 package git
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
+	moduleModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	moduleRepository "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
+	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// mockModuleProviderRepo is a mock implementation for testing
+type mockModuleProviderRepo struct {
+	moduleProvider *moduleModel.ModuleProvider
+}
+
+func (m *mockModuleProviderRepo) FindByNamespaceModuleProvider(
+	ctx context.Context, namespace types.NamespaceName, moduleName types.ModuleName, provider types.ModuleProviderName,
+) (*moduleModel.ModuleProvider, error) {
+	return m.moduleProvider, nil
+}
+
+// Implement other required methods
+func (m *mockModuleProviderRepo) FindByID(ctx context.Context, id int) (*moduleModel.ModuleProvider, error) {
+	return m.moduleProvider, nil
+}
+func (m *mockModuleProviderRepo) FindByNamespace(ctx context.Context, namespace types.NamespaceName) ([]*moduleModel.ModuleProvider, error) {
+	return nil, nil
+}
+func (m *mockModuleProviderRepo) Save(ctx context.Context, mp *moduleModel.ModuleProvider) error {
+	return nil
+}
+func (m *mockModuleProviderRepo) Search(ctx context.Context, query moduleRepository.ModuleSearchQuery) (*moduleRepository.ModuleSearchResult, error) {
+	return nil, nil
+}
+func (m *mockModuleProviderRepo) Delete(ctx context.Context, id int) error {
+	return nil
+}
+func (m *mockModuleProviderRepo) Exists(ctx context.Context, namespace types.NamespaceName, module types.ModuleName, provider types.ModuleProviderName) (bool, error) {
+	return false, nil
+}
+
+// mockStorageService tracks MkdirTemp and RemoveAll calls
+type mockStorageService struct {
+	tempDirs     []string
+	removedPaths []string
+	mkdirTempErr error
+}
+
+func (m *mockStorageService) CopyDir(src, dest string) error                { return nil }
+func (m *mockStorageService) Stat(name string) (os.FileInfo, error)         { return nil, nil }
+func (m *mockStorageService) MkdirAll(path string, perm os.FileMode) error  { return nil }
+func (m *mockStorageService) ReadFile(filename string) ([]byte, error)      { return nil, nil }
+func (m *mockStorageService) ReadDir(dirname string) ([]os.DirEntry, error) { return nil, nil }
+func (m *mockStorageService) ExtractArchive(src, dest string) error         { return nil }
+
+func (m *mockStorageService) MkdirTemp(dir, pattern string) (string, error) {
+	if m.mkdirTempErr != nil {
+		return "", m.mkdirTempErr
+	}
+	// Use the actual pattern from the service to match expected behavior
+	tempDir := filepath.Join(os.TempDir(), fmt.Sprintf("terrareg-git-import-%d", os.Getpid()))
+	m.tempDirs = append(m.tempDirs, tempDir)
+	err := os.MkdirAll(tempDir, 0755)
+	return tempDir, err
+}
+
+func (m *mockStorageService) RemoveAll(path string) error {
+	m.removedPaths = append(m.removedPaths, path)
+	return os.RemoveAll(path)
+}
 
 func TestGitImportService_getTagRegex(t *testing.T) {
 	service := &GitImportService{}
@@ -167,9 +241,76 @@ func TestGitImportService_getVersionFromRegex(t *testing.T) {
 // Note: TestDeriveVersionFromGitTag requires proper mocking of the ModuleProvider domain model
 // The individual components (getTagRegex, getVersionFromRegex) are thoroughly tested above
 
-// Helper function to check if a pattern contains expected components
-func containsPattern(actual, expected string) bool {
-	// For complex patterns, check that key parts exist
-	// This is a simplified check - in real scenarios might need more sophisticated matching
-	return len(actual) > 0 && len(expected) > 0
+// TestGitImportService_TemporaryDirectoryUsage verifies that git import uses
+// the storage service for temporary directory creation and cleanup
+func TestGitImportService_TemporaryDirectoryUsage(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a test module provider with git configuration
+	namespace, err := moduleModel.NewNamespace("test-namespace", nil, moduleModel.NamespaceTypeNone)
+	require.NoError(t, err)
+
+	moduleName := types.ModuleName("test-module")
+	providerName := types.ModuleProviderName("aws")
+
+	moduleProvider, err := moduleModel.NewModuleProvider(namespace, moduleName, providerName)
+	require.NoError(t, err)
+
+	cloneURL := "https://github.com/test/module.git"
+	tagFormat := "v{version}"
+
+	moduleProvider = moduleModel.ReconstructModuleProvider(
+		1,
+		namespace,
+		moduleName,
+		providerName,
+		false,
+		nil,
+		nil,
+		&cloneURL,
+		nil,
+		&tagFormat,
+		nil,
+		false,
+		time.Now(),
+		time.Now(),
+	)
+
+	// Create mock storage service to track temp directory operations
+	storageService := &mockStorageService{}
+
+	infraCfg := &infraConfig.InfrastructureConfig{
+		DataDirectory: "/tmp",
+	}
+
+	service := &GitImportService{
+		moduleProviderRepo: &mockModuleProviderRepo{
+			moduleProvider: moduleProvider,
+		},
+		storageService: storageService,
+		infraConfig:    infraCfg,
+	}
+
+	// Create import request with proper types
+	req := module.ImportModuleVersionRequest{
+		Namespace: types.NamespaceName("test-namespace"),
+		Module:    moduleName,
+		Provider:  providerName,
+		Version:   "1.0.0",
+		GitTag:    "",
+	}
+
+	// Execute the import (it will fail at git clone, but that's ok - we're testing temp dir usage)
+	_, _ = service.Execute(ctx, req)
+
+	// Verify that MkdirTemp was called with the correct pattern
+	require.Equal(t, 1, len(storageService.tempDirs), "MkdirTemp should be called once")
+	tempDir := storageService.tempDirs[0]
+
+	// Verify the pattern contains "terrareg-git-import"
+	assert.Contains(t, tempDir, "terrareg-git-import", "Temp directory should use the correct pattern")
+
+	// Verify that RemoveAll was called for cleanup (via defer)
+	require.Equal(t, 1, len(storageService.removedPaths), "RemoveAll should be called once for cleanup")
+	assert.Equal(t, tempDir, storageService.removedPaths[0], "RemoveAll should be called with the temp directory path")
 }

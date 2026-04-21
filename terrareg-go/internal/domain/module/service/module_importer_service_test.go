@@ -26,6 +26,7 @@ func TestNewModuleImporterService_NilChecks(t *testing.T) {
 		{"moduleProviderRepo", "moduleProviderRepo", nil},
 		{"gitClient", "gitClient", nil},
 		{"storageService", "storageService", nil},
+		{"storageFactory", "storageFactory", nil},
 		{"moduleParser", "moduleParser", nil},
 		{"domainConfig", "domainConfig", nil},
 		{"infraConfig", "infraConfig", nil},
@@ -42,39 +43,43 @@ func TestNewModuleImporterService_NilChecks(t *testing.T) {
 				// Note: We can't create ModuleCreationWrapperService without valid dependencies
 				// due to nil checking, so we pass nil directly to test the nil check
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "moduleCreationWrapper":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "savepointHelper":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "moduleProviderRepo":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "gitClient":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "storageService":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+				)
+			case "storageFactory":
+				service, err = NewModuleImporterService(
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "moduleParser":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, infraCfg, logger,
 				)
 			case "domainConfig":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, nil, infraCfg, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, nil, infraCfg, logger,
 				)
 			case "infraConfig":
 				service, err = NewModuleImporterService(
-					nil, nil, nil, nil, nil, nil, nil, domainCfg, nil, logger,
+					nil, nil, nil, nil, nil, nil, nil, nil, domainCfg, nil, logger,
 				)
 			}
 
