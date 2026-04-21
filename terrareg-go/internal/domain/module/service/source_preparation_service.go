@@ -10,12 +10,14 @@ import (
 	"time"
 
 	configmodel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
 	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
+	storageInfrastructure "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/storage"
 )
 
 const (
@@ -53,10 +55,11 @@ type PrepareFromArchiveRequest struct {
 
 // PreparedSource represents the result of source preparation
 type PreparedSource struct {
-	SourcePath string  // Path to prepared source files
-	CommitSHA  *string // Git commit SHA (nil for non-git sources)
-	SourceType SourceType
-	Cleanup    func() // Cleanup function to remove temporary resources
+	SourcePath      string         // Path to prepared source files
+	CommitSHA       *string        // Git commit SHA (nil for non-git sources)
+	SourceType      SourceType
+	Cleanup         func()         // Cleanup function to remove temporary resources
+	StorageService  StorageService // Scoped storage service for this source (nil for non-temp sources)
 }
 
 // SourcePreparationService prepares module sources for processing
@@ -64,6 +67,7 @@ type SourcePreparationService struct {
 	moduleProviderRepo repository.ModuleProviderRepository
 	gitClient          gitService.GitClient
 	storageService     StorageService
+	storageFactory     service.StorageFactory
 	archiveProcessor   ArchiveProcessor
 	domainConfig       *configmodel.DomainConfig
 	infraConfig        *infraConfig.InfrastructureConfig
@@ -75,6 +79,7 @@ func NewSourcePreparationService(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	gitClient gitService.GitClient,
 	storageService StorageService,
+	storageFactory service.StorageFactory,
 	archiveProcessor ArchiveProcessor,
 	domainConfig *configmodel.DomainConfig,
 	infraConfig *infraConfig.InfrastructureConfig,
@@ -84,6 +89,7 @@ func NewSourcePreparationService(
 		moduleProviderRepo: moduleProviderRepo,
 		gitClient:          gitClient,
 		storageService:     storageService,
+		storageFactory:     storageFactory,
 		archiveProcessor:   archiveProcessor,
 		domainConfig:       domainConfig,
 		infraConfig:        infraConfig,
@@ -179,7 +185,7 @@ func (s *SourcePreparationService) PrepareFromGit(
 	cloneURL := s.buildCloneURL(req, moduleProvider)
 
 	// 3. Create temp directory for clone
-	cloneDir, err := s.storageService.MkdirTemp("", "terrareg-git-*")
+	cloneDir, err := s.storageService.MkdirTemp("", "terrareg-git-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -243,6 +249,16 @@ func (s *SourcePreparationService) PrepareFromGit(
 			Msg("Using git_path for source directory")
 	}
 
+	// 8. Create scoped storage service for the temporary directory
+	domainStorageService, err := s.storageFactory.CreateTemporaryStorageService(cloneDir)
+	if err != nil {
+		s.storageService.RemoveAll(cloneDir)
+		return nil, fmt.Errorf("failed to create temporary storage service: %w", err)
+	}
+
+	// Wrap domain storage service with module storage adapter to get module-specific methods
+	tempStorageService := storageInfrastructure.NewModuleStorageAdapter(domainStorageService, nil)
+
 	return &PreparedSource{
 		SourcePath: sourceDir,
 		CommitSHA:  commitSHA,
@@ -251,6 +267,7 @@ func (s *SourcePreparationService) PrepareFromGit(
 			s.logger.Debug().Str("path", cloneDir).Msg("Cleaning up git clone directory")
 			s.storageService.RemoveAll(cloneDir)
 		},
+		StorageService: tempStorageService,
 	}, nil
 }
 

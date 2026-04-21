@@ -481,6 +481,9 @@ func NewContainer(
 	pathConfig := storageService.GetDefaultPathConfig(infraConfig.DataDirectory)
 	c.PathBuilder = storageService.NewPathBuilderService(pathConfig)
 
+	// Initialize storage factory for creating storage services
+	storageFactory := storageInfrastructure.NewStorageFactory(c.PathBuilder)
+
 	// Initialize domain storage service (8 core methods)
 	domainStorageService, err := storageInfrastructure.NewLocalStorageService(infraConfig.DataDirectory, c.PathBuilder)
 	if err != nil {
@@ -715,6 +718,7 @@ func NewContainer(
 		c.ModuleProviderRepo,
 		c.GitClient,
 		c.ModuleStorageService,
+		storageFactory,
 		archiveProcessor,
 		c.DomainConfig,
 		infraConfig,
@@ -737,6 +741,7 @@ func NewContainer(
 		c.ModuleProviderRepo,
 		c.GitClient,
 		c.ModuleStorageService,
+		storageFactory,
 		c.ModuleParser,
 		domainConfig,
 		infraConfig,

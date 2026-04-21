@@ -83,6 +83,9 @@ type ProcessingRequest struct {
 	ArchivePath string  // Path to module archive (if applicable)
 	SourceType  SourceType
 	Options     ProcessingOptions
+	// StorageService is an optional scoped storage service for processing temp directories
+	// If nil, the default storage service will be used
+	StorageService StorageService
 }
 
 // ProcessingOptions represents options for module processing

@@ -53,6 +53,8 @@ type StorageFactory interface {
 	CreateStorageService(config *model.StorageConfig) (StorageService, error)
 	GetDefaultStorageService() (StorageService, error)
 	DetectStorageType(dataDirectory string) model.StorageType
+	// CreateTemporaryStorageService creates a storage service scoped to a specific temporary directory
+	CreateTemporaryStorageService(baseDir string) (StorageService, error)
 }
 
 // PathBuilder defines the interface for constructing storage paths

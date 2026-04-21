@@ -99,12 +99,12 @@ func (s *GitImportService) Execute(ctx context.Context, req module.ImportModuleV
 		return nil, fmt.Errorf("module provider is not configured with a repository")
 	}
 
-	// Create temporary directory for cloning
-	tmpDir, err := os.MkdirTemp("", "terrareg-git-import-")
+	// Create temporary directory for cloning using storage service
+	tmpDir, err := s.storageService.MkdirTemp("", "terrareg-git-import-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir for git clone: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer s.storageService.RemoveAll(tmpDir)
 
 	// Determine git reference for cloning
 	var gitRef string

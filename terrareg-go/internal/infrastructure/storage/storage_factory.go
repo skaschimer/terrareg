@@ -69,6 +69,13 @@ func (f *StorageFactoryImpl) DetectStorageType(dataDirectory string) model.Stora
 	return model.StorageTypeLocal
 }
 
+// CreateTemporaryStorageService creates a storage service scoped to a specific temporary directory
+// This allows processing files from temp directories (e.g., git clones, archive extraction)
+// Returns a domain StorageService (LocalStorageService with basePath set to temp directory)
+func (f *StorageFactoryImpl) CreateTemporaryStorageService(baseDir string) (service.StorageService, error) {
+	return NewLocalStorageService(baseDir, f.pathBuilder)
+}
+
 // CreateStorageConfigFromDirectory creates a storage config from a directory string
 func (f *StorageFactoryImpl) CreateStorageConfigFromDirectory(
 	dataDirectory string,

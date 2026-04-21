@@ -9,6 +9,7 @@ import (
 	"time"
 
 	domainConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	storageService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/storage/service"
 	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
@@ -18,6 +19,7 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared/types"
 	infraConfig "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
+	storageInfrastructure "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/storage"
 )
 
 // ModuleImporterService handles module importing with comprehensive
@@ -37,6 +39,8 @@ type ModuleImporterService struct {
 	gitClient gitService.GitClient
 	// Storage service for file operations (required)
 	storageService StorageService
+	// Storage factory for creating scoped storage services (required)
+	storageFactory storageService.StorageFactory
 	// Module parser for analyzing module contents (required)
 	moduleParser ModuleParser
 	// Domain-level configuration (required)
@@ -57,6 +61,7 @@ func NewModuleImporterService(
 	moduleProviderRepo repository.ModuleProviderRepository,
 	gitClient gitService.GitClient,
 	storageService StorageService,
+	storageFactory storageService.StorageFactory,
 	moduleParser ModuleParser,
 	domainConfig *domainConfig.DomainConfig,
 	infraConfig *infraConfig.InfrastructureConfig,
@@ -80,6 +85,9 @@ func NewModuleImporterService(
 	if storageService == nil {
 		return nil, fmt.Errorf("storageService cannot be nil")
 	}
+	if storageFactory == nil {
+		return nil, fmt.Errorf("storageFactory cannot be nil")
+	}
 	if moduleParser == nil {
 		return nil, fmt.Errorf("moduleParser cannot be nil")
 	}
@@ -97,6 +105,7 @@ func NewModuleImporterService(
 		moduleProviderRepo:     moduleProviderRepo,
 		gitClient:              gitClient,
 		storageService:         storageService,
+		storageFactory:         storageFactory,
 		moduleParser:           moduleParser,
 		domainConfig:           domainConfig,
 		infraConfig:            infraConfig,
@@ -145,8 +154,9 @@ type ModuleImportResult struct {
 
 // SourcePreparationResult represents the result of source preparation
 type SourcePreparationResult struct {
-	SourcePath string  // Path to the prepared source files
-	CommitSHA  *string // Git commit SHA if applicable (nil for non-git sources)
+	SourcePath      string         // Path to the prepared source files
+	CommitSHA       *string        // Git commit SHA if applicable (nil for non-git sources)
+	StorageService  StorageService // Scoped storage service for this source (nil for non-temp sources)
 }
 
 // ImportModuleVersionWithTransaction performs a complete module import with transaction safety
@@ -179,16 +189,17 @@ func (s *ModuleImporterService) ImportModuleVersionWithTransaction(
 
 		// Phase 3: Execute complete processing pipeline
 		processingReq := ProcessingRequest{
-			Namespace:   req.Input.Namespace,
-			ModuleName:  req.Input.Module,
-			Provider:    req.Input.Provider,
-			Version:     req.Input.GetVersionString(),
-			GitTag:      req.Input.GitTag,
-			CommitSHA:   sourcePrepResult.CommitSHA,
-			ModulePath:  sourcePrepResult.SourcePath,
-			ArchivePath: req.ArchivePath,
-			SourceType:  SourceType(req.SourceType),
-			Options:     req.ProcessingOptions,
+			Namespace:      req.Input.Namespace,
+			ModuleName:     req.Input.Module,
+			Provider:       req.Input.Provider,
+			Version:        req.Input.GetVersionString(),
+			GitTag:         req.Input.GitTag,
+			CommitSHA:      sourcePrepResult.CommitSHA,
+			ModulePath:     sourcePrepResult.SourcePath,
+			ArchivePath:    req.ArchivePath,
+			SourceType:     SourceType(req.SourceType),
+			Options:        req.ProcessingOptions,
+			StorageService: sourcePrepResult.StorageService,
 		}
 
 		processingResult, err := s.processingOrchestrator.ProcessModuleWithTransaction(ctx, processingReq)
@@ -514,9 +525,20 @@ func (s *ModuleImporterService) prepareGitSource(
 		srcDir = filepath.Join(tmpDir, *gitPath)
 	}
 
+	// Create scoped storage service for the temporary directory
+	domainStorageService, err := s.storageFactory.CreateTemporaryStorageService(tmpDir)
+	if err != nil {
+		s.storageService.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to create temporary storage service: %w", err)
+	}
+
+	// Wrap domain storage service with module storage adapter to get module-specific methods
+	tempStorageService := storageInfrastructure.NewModuleStorageAdapter(domainStorageService, nil)
+
 	return &SourcePreparationResult{
-		SourcePath: srcDir,
-		CommitSHA:  commitSHA,
+		SourcePath:     srcDir,
+		CommitSHA:      commitSHA,
+		StorageService: tempStorageService,
 	}, nil
 }
 
