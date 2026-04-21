@@ -94,10 +94,11 @@ RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
 WORKDIR /app
 
 # Copy built binary from builder
-COPY --from=builder /app/server /app/terrareg-go/server
+COPY --from=builder /app/server /app/server
 
 # Copy static assets, templates, and scripts from Python implementation
-COPY terrareg/ ./terrareg/
+COPY terrareg-go/templates ./templates
+COPY terrareg-go/static ./static
 COPY scripts ./scripts
 COPY alembic.ini .
 COPY LICENSE .
@@ -145,11 +146,11 @@ RUN mkdir -p licenses/static && \
     done'
 
 # Set version
-RUN echo "$VERSION" > /app/terrareg/version.txt
+RUN echo "$VERSION" > /app/version.txt
 
 ENV MANAGE_TERRAFORM_RC_FILE=True
 
 EXPOSE 5000
 
 # Use the Go server binary
-CMD ["/app/terrareg-go/server"]
+CMD ["/app/server"]
