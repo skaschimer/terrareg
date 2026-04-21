@@ -67,13 +67,11 @@ func AuthSecurityHeaders(next http.Handler) http.Handler {
 		SecurityHeaders(next).ServeHTTP(w, r)
 
 		// Add auth-specific headers
-		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, private")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
-
-		// Prevent caching of authentication responses
+		// Prevent caching of authentication responses, except for metadata endpoint
 		if r.URL.Path != "/v1/terrareg/auth/saml/metadata" {
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, private")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
 		}
 	})
 }
