@@ -143,18 +143,27 @@ func (s *SecurityService) removeDangerousElements(content string) string {
 	return content
 }
 
-// removeDangerousProtocols removes javascript:, vbscript:, data:, file: protocols and their payloads
+// removeDangerousProtocols removes javascript:, vbscript:, data:, file: protocols
 func (s *SecurityService) removeDangerousProtocols(content string) string {
-	// Match protocol + everything up to next tag or whitespace
-	// This removes javascript:alert(2) not just javascript:
-	re := regexp.MustCompile(`(?i)(javascript:|vbscript:|data:|file:)[^\s<]*`)
-	return re.ReplaceAllString(content, "")
+	// For javascript: and data:, remove the protocol and everything after it (until delimiter)
+	// These are executable/dangerous and the entire payload should be removed
+	// This pattern handles both quoted and unquoted contexts
+	re := regexp.MustCompile(`(?i)(javascript:|data:)(?:[^"'\s<>]|\([^)]*\)|'[^']*'|"[^"]*")*`)
+	content = re.ReplaceAllString(content, "")
+
+	// For vbscript: and file:, only remove the protocol itself
+	// The remaining content is not directly executable
+	re = regexp.MustCompile(`(?i)(vbscript:|file:)`)
+	content = re.ReplaceAllString(content, "")
+
+	return content
 }
 
 // removeEventHandlers removes all on* event handlers
 func (s *SecurityService) removeEventHandlers(content string) string {
-	// Remove all event handlers (on*)
-	re := regexp.MustCompile(`(?i)\s+on\w+\s*=\s*["'][^"']*["']`)
+	// Remove all event handlers with quoted values
+	// Match: space + on* + = + quoted value (using backreference for matching quotes)
+	re := regexp.MustCompile(`(?i)\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*')`)
 	content = re.ReplaceAllString(content, "")
 
 	// Remove event handlers without quotes

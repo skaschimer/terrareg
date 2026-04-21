@@ -77,27 +77,27 @@ func TestSecurityService_SanitizeContent(t *testing.T) {
 		{
 			name:     "Safe content",
 			input:    "This is safe content",
-			expected: "this is safe content", // The implementation converts to lowercase
+			expected: "This is safe content", // Safe content passes through unchanged
 		},
 		{
 			name:     "Script tag",
 			input:    "<script>alert('xss')</script>",
-			expected: ">alert('xss')>", // Implementation removes tags but keeps content
+			expected: "", // Script tags and their content are completely removed
 		},
 		{
 			name:     "Mixed case dangerous tags",
 			input:    "<SCRIPT>alert('xss')</SCRIPT><iframe src='evil'></iframe>",
-			expected: ">alert('xss')> src='evil'>>", // Complex case with multiple removals
+			expected: "", // All dangerous tags and their content are removed
 		},
 		{
 			name:     "Event handlers",
 			input:    "<div onclick=\"alert('xss')\">content</div>",
-			expected: "<div \"alert('xss')\">content</div>", // Specific regex replacement
+			expected: "<div>content</div>", // Event handlers are removed
 		},
 		{
 			name:     "JavaScript protocol",
 			input:    "<a href=\"javascript:alert('xss')\">link</a>",
-			expected: "<a href=\"alert('xss')\">link</a>", // Protocol removal keeps rest
+			expected: "<a href=\"\">link</a>", // Dangerous protocol is removed from href
 		},
 	}
 
