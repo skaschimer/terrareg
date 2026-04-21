@@ -822,13 +822,19 @@ func NewContainer(
 	// Initialize Terraform IDP service (may be nil if not configured)
 	var terraformIdpService *authservice.TerraformIdpService
 	if infraConfig.TerraformOidcIdpSigningKeyPath != "" {
-		terraformIdpService = authservice.NewTerraformIdpService(
-			c.TerraformIdpAuthorizationCodeRepo,
-			c.TerraformIdpAccessTokenRepo,
-			c.TerraformIdpSubjectIdentifierRepo,
-			infraConfig.TerraformOidcIdpSigningKeyPath,
-			infraConfig.PublicURL,
-		)
+		if _, err := os.Stat(infraConfig.TerraformOidcIdpSigningKeyPath); err == nil {
+			terraformIdpService = authservice.NewTerraformIdpService(
+				c.TerraformIdpAuthorizationCodeRepo,
+				c.TerraformIdpAccessTokenRepo,
+				c.TerraformIdpSubjectIdentifierRepo,
+				infraConfig.TerraformOidcIdpSigningKeyPath,
+				infraConfig.PublicURL,
+			)
+		} else {
+			logger.With().Warn().Msg("Disabling Terraform IDP Service as signing key does not exist")
+		}
+	} else {
+		logger.With().Warn().Msg("Disabling Terraform IDP Service as signing key is not set")
 	}
 	c.TerraformIdpService = terraformIdpService
 
