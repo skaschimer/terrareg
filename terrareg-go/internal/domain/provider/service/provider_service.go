@@ -209,16 +209,14 @@ func (s *ProviderService) PublishVersion(ctx context.Context, providerID int, re
 		newVersion.SetGitTag(req.GitTag)
 	}
 
+	// Save provider with updated latestVersionID (set by PublishVersion)
+	if err := s.providerRepo.Save(ctx, providerEntity); err != nil {
+		return nil, fmt.Errorf("failed to save provider: %w", err)
+	}
+
 	// Save version
 	if err := s.providerRepo.SaveVersion(ctx, newVersion); err != nil {
 		return nil, fmt.Errorf("failed to save version: %w", err)
-	}
-
-	// Set as latest version if this is the first version or explicitly requested
-	// TODO: Add logic to determine if this should be latest
-	if err := s.providerRepo.SetLatestVersion(ctx, providerID, newVersion.ID()); err != nil {
-		// Non-critical error, log but don't fail
-		fmt.Printf("Warning: failed to set latest version: %v\n", err)
 	}
 
 	return newVersion, nil

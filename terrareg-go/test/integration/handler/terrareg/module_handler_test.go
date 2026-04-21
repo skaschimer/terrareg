@@ -18,6 +18,7 @@ import (
 	moduleRepo "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terrareg"
 	"github.com/matthewjohn/terrareg/terrareg-go/test/integration/testutils"
+	sqldb "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // TestModuleHandler_HandleModuleList_Success tests the module list endpoint
@@ -34,6 +35,13 @@ func TestModuleHandler_HandleModuleList_Success(t *testing.T) {
 	published := true
 	moduleVersion.Published = &published
 	db.DB.Save(&moduleVersion)
+
+	// Set this version as the latest version for the module provider
+	// This is required for the search query to find the module
+	err := db.DB.Model(&sqldb.ModuleProviderDB{}).
+		Where("id = ?", moduleProvider.ID).
+		Update("latest_version_id", moduleVersion.ID).Error
+	require.NoError(t, err)
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
@@ -142,6 +150,12 @@ func TestModuleHandler_HandleNamespaceModules_Success(t *testing.T) {
 	published := true
 	moduleVersion.Published = &published
 	db.DB.Save(&moduleVersion)
+
+		// Set this version as the latest version for the module provider
+		err := db.DB.Model(&sqldb.ModuleProviderDB{}).
+			Where("id = ?", moduleProvider.ID).
+			Update("latest_version_id", moduleVersion.ID).Error
+		require.NoError(t, err)
 
 	// Create handler
 	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)

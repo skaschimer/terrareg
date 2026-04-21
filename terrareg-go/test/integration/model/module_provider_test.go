@@ -3,6 +3,7 @@ package model
 import (
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -960,4 +961,135 @@ func TestModuleProvider_GitConfigHandling(t *testing.T) {
 	assert.Equal(t, gitPath, *retrieved.GitPath)
 	assert.NotNil(t, retrieved.GitTagFormat)
 	assert.Equal(t, tagFormat, *retrieved.GitTagFormat)
+}
+
+// TestModuleProvider_LatestVersionWith190And110 tests that 1.10.0 is correctly
+// identified as newer than 1.9.0 when determining the latest version
+// This is a regression test for the bug where 1.9.0 was marked as latest
+// even though 1.10.0 existed
+func TestModuleProvider_LatestVersionWith190And110(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create namespace
+	namespace := model.ReconstructNamespace(1, "testns", nil, model.NamespaceTypeNone)
+	err := db.DB.Create(&sqldb.NamespaceDB{
+		ID:            namespace.ID(),
+		Namespace:     "testns",
+		DisplayName:   nil,
+		NamespaceType: sqldb.NamespaceType(namespace.Type()),
+	}).Error
+	require.NoError(t, err)
+
+	now := time.Now()
+
+	// Reconstruct module provider with database ID
+	moduleProvider := model.ReconstructModuleProvider(
+		1, // id
+		namespace,
+		types.ModuleName("testmod"),
+		types.ModuleProviderName("aws"),
+		false, // verified
+		nil, // gitProviderID
+		nil, nil, nil, // repoBaseURLTemplate, repoCloneURLTemplate, repoBrowseURLTemplate
+		nil, nil, // gitTagFormat, gitPath
+		false, // archiveGitPath
+		now, now, // createdAt, updatedAt
+	)
+
+	// Save to database
+	dbModuleProvider := sqldb.ModuleProviderDB{
+		ID:              1,
+		NamespaceID:     namespace.ID(),
+		Module:          "testmod",
+		Provider:        "aws",
+		LatestVersionID: nil,
+	}
+	err = db.DB.Create(&dbModuleProvider).Error
+	require.NoError(t, err)
+
+	// Test 1: Add 1.10.0 first, then 1.9.0
+	t.Run("Add 1.10.0 first, then 1.9.0", func(t *testing.T) {
+		// Add version 1.10.0
+		v110, err := model.NewModuleVersion("1.10.0", nil, false)
+		require.NoError(t, err)
+		err = moduleProvider.AddVersion(v110)
+		require.NoError(t, err)
+
+		// Publish version 1.10.0
+		err = v110.Publish()
+		require.NoError(t, err)
+
+		// Add version 1.9.0
+		v190, err := model.NewModuleVersion("1.9.0", nil, false)
+		require.NoError(t, err)
+		err = moduleProvider.AddVersion(v190)
+		require.NoError(t, err)
+
+		// Publish version 1.9.0
+		err = v190.Publish()
+		require.NoError(t, err)
+
+		// Verify latest version is 1.10.0
+		latest := moduleProvider.GetLatestVersion()
+		require.NotNil(t, latest)
+		assert.Equal(t, "1.10.0", latest.Version().String())
+	})
+
+	// Test 2: Add 1.9.0 first, then 1.10.0
+	t.Run("Add 1.9.0 first, then 1.10.0", func(t *testing.T) {
+		// Create a new module provider for this test
+		moduleProvider2 := model.ReconstructModuleProvider(
+			2, // id
+			namespace,
+			types.ModuleName("testmod2"),
+			types.ModuleProviderName("aws"),
+			false, // verified
+			nil, // gitProviderID
+			nil, nil, nil, // repoBaseURLTemplate, repoCloneURLTemplate, repoBrowseURLTemplate
+			nil, nil, // gitTagFormat, gitPath
+			false, // archiveGitPath
+			now, now, // createdAt, updatedAt
+		)
+
+		dbModuleProvider2 := sqldb.ModuleProviderDB{
+			ID:              2,
+			NamespaceID:     namespace.ID(),
+			Module:          "testmod2",
+			Provider:        "aws",
+			LatestVersionID: nil,
+		}
+		err = db.DB.Create(&dbModuleProvider2).Error
+		require.NoError(t, err)
+
+		// Add version 1.9.0 first
+		v190, err := model.NewModuleVersion("1.9.0", nil, false)
+		require.NoError(t, err)
+		err = moduleProvider2.AddVersion(v190)
+		require.NoError(t, err)
+
+		// Publish version 1.9.0
+		err = v190.Publish()
+		require.NoError(t, err)
+
+		// Verify latest version is 1.9.0
+		latest := moduleProvider2.GetLatestVersion()
+		require.NotNil(t, latest)
+		assert.Equal(t, "1.9.0", latest.Version().String())
+
+		// Add version 1.10.0
+		v110, err := model.NewModuleVersion("1.10.0", nil, false)
+		require.NoError(t, err)
+		err = moduleProvider2.AddVersion(v110)
+		require.NoError(t, err)
+
+		// Publish version 1.10.0
+		err = v110.Publish()
+		require.NoError(t, err)
+
+		// Verify latest version is now 1.10.0
+		latest = moduleProvider2.GetLatestVersion()
+		require.NotNil(t, latest)
+		assert.Equal(t, "1.10.0", latest.Version().String())
+	})
 }

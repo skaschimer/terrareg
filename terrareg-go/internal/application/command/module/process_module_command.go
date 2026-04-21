@@ -60,11 +60,10 @@ func NewProcessModuleCommand(
 // Execute processes a module using the unified pipeline
 func (c *ProcessModuleCommand) Execute(ctx context.Context, req ProcessModuleRequest) error {
 	// 1. Parse version
-	version, err := shared.ParseVersion(req.Version)
+	_, err := shared.ParseVersion(req.Version)
 	if err != nil {
 		return fmt.Errorf("invalid version: %w", err)
 	}
-	_ = version // Use validated version
 
 	// 2. Determine source type and prepare source
 	var preparedSource *service.PreparedSource

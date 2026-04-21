@@ -121,11 +121,28 @@ func (r *ModuleVersionRepositoryImpl) Save(ctx context.Context, moduleVersion *m
 		}
 	}
 
-	// After successful save, return the updated domain model with proper database-assigned values
+	// After successful save, update module provider's latest_version_id if appropriate
+	// This matches Python's behavior where the latest version is automatically updated
 	updatedModuleVersion, err := r.mapToDomainModel(ctx, *dbVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map updated module version: %w", err)
 	}
+
+	// Update module provider's latest_version_id for published non-beta versions
+	// This ensures the module list endpoint can find modules
+	if updatedModuleVersion.IsPublished() && !updatedModuleVersion.IsBeta() {
+		var moduleProvider sqldb.ModuleProviderDB
+		if err := db.First(&moduleProvider, dbVersion.ModuleProviderID).Error; err == nil {
+			logger.Debug().
+				Int("module_version_id", dbVersion.ID).
+				Str("version", dbVersion.Version).
+				Msg("Updating module provider's latest_version_id")
+			if err := db.Model(&moduleProvider).Update("latest_version_id", dbVersion.ID).Error; err != nil {
+				logger.Warn().Err(err).Msg("Failed to update module provider's latest_version_id")
+			}
+		}
+	}
+
 
 	return updatedModuleVersion, nil
 }

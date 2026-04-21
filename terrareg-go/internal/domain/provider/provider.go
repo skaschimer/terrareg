@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/model"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/shared"
 	repositoryModel "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/repository/model"
 )
 
@@ -676,6 +677,55 @@ func (p *Provider) AddVersion(version *ProviderVersion) {
 	}
 
 	p.versions = append(p.versions, version)
+
+	// Update latest version if this is published and not beta
+	if version.PublishedAt() != nil && !version.Beta() {
+		p.updateLatestVersion()
+	}
+}
+
+// updateLatestVersion updates the latest version to the highest published, non-beta version
+// using semantic version comparison
+func (p *Provider) updateLatestVersion() {
+	var latest *ProviderVersion
+	for _, v := range p.versions {
+		// Skip unpublished versions (no publishedAt timestamp)
+		if v.PublishedAt() == nil {
+			continue
+		}
+		// Skip beta versions
+		if v.Beta() {
+			continue
+		}
+
+		if latest == nil {
+			latest = v
+			continue
+		}
+
+		// Parse versions for semantic comparison
+		latestVer, err := shared.ParseVersion(latest.Version())
+		if err != nil {
+			// If we can't parse the current latest, skip and keep trying
+			continue
+		}
+
+		vVer, err := shared.ParseVersion(v.Version())
+		if err != nil {
+			// If we can't parse this version, skip it
+			continue
+		}
+
+		// Update if this version is newer
+		if vVer.GreaterThan(latestVer) {
+			latest = v
+		}
+	}
+
+	if latest != nil {
+		id := latest.ID()
+		p.latestVersionID = &id
+	}
 }
 
 // PublishVersion publishes a new version of the provider
@@ -703,6 +753,12 @@ func (p *Provider) PublishVersion(version string, protocolVersions []string, isB
 	)
 
 	p.versions = append(p.versions, providerVersion)
+
+	// Update latest version if this is not a beta
+	if !isBeta {
+		p.updateLatestVersion()
+	}
+
 	return providerVersion, nil
 }
 
@@ -735,6 +791,9 @@ func (p *Provider) RemoveVersion(versionID int) error {
 	for i, version := range p.versions {
 		if version.ID() == versionID {
 			p.versions = append(p.versions[:i], p.versions[i+1:]...)
+
+			// Update latest version after removal
+			p.updateLatestVersion()
 			return nil
 		}
 	}

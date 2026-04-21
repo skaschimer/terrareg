@@ -143,18 +143,20 @@ func (s *ProviderPublisherService) Publish(ctx context.Context, req PublishReque
 		return nil, fmt.Errorf("failed to save version: %w", err)
 	}
 
+	// Save provider with updated latestVersionID (set by PublishVersion)
+	if err := s.providerRepo.Save(ctx, providerEntity); err != nil {
+		return nil, fmt.Errorf("failed to save provider: %w", err)
+	}
+
+	// Save version
+	if err := s.providerRepo.SaveVersion(ctx, newVersion); err != nil {
+		return nil, fmt.Errorf("failed to save version: %w", err)
+	}
+
 	// Extract and publish binaries
 	binaries, err := s.publishBinaries(ctx, newVersion, req.SourcePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to publish binaries: %w", err)
-	}
-
-	// Set as latest version if not beta
-	if !req.IsBeta {
-		if err := s.providerRepo.SetLatestVersion(ctx, req.ProviderID, newVersion.ID()); err != nil {
-			// Non-critical error, log but don't fail
-			fmt.Printf("Warning: failed to set latest version: %v\n", err)
-		}
 	}
 
 	// Generate checksums

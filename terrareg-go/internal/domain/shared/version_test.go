@@ -88,6 +88,7 @@ func TestVersion_GreaterThan(t *testing.T) {
 	}{
 		{"major greater", "2.0.0", "1.9.9", true},
 		{"minor greater", "1.3.0", "1.2.9", true},
+		{"minor greater - 1.10.0 > 1.9.0", "1.10.0", "1.9.0", true},
 		{"patch greater", "1.2.4", "1.2.3", true},
 		{"equal", "1.2.3", "1.2.3", false},
 		{"less than", "1.2.3", "1.2.4", false},
@@ -124,6 +125,7 @@ func TestVersion_LessThan(t *testing.T) {
 	}{
 		{"major less", "1.0.0", "2.0.0", true},
 		{"minor less", "1.2.0", "1.3.0", true},
+		{"minor less - 1.9.0 < 1.10.0", "1.9.0", "1.10.0", true},
 		{"patch less", "1.2.3", "1.2.4", true},
 		{"equal", "1.2.3", "1.2.3", false},
 		{"greater than", "1.2.4", "1.2.3", false},
