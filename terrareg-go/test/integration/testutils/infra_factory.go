@@ -8,10 +8,12 @@ import (
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/repository"
 	moduleService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/module/service"
+	providerrepo "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/provider/repository"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 	sqldbAnalytics "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/analytics"
 	sqldbAuth "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/auth"
 	sqldbModule "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/module"
+	sqldbProvider "github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb/provider"
 	"github.com/stretchr/testify/require"
 )
 
@@ -111,6 +113,7 @@ type TestRepositories struct {
 	ModuleVersion  repository.ModuleVersionRepository
 	UserGroup      authRepository.UserGroupRepository
 	Analytics      analyticsCmd.AnalyticsRepository
+	Provider       providerrepo.ProviderRepository
 }
 
 // CreateTestRepositories creates all common repositories with consistent config
@@ -139,11 +142,15 @@ func CreateTestRepositories(t *testing.T, db *sqldb.Database, opts ...ConfigOpti
 	analyticsRepoImpl, err := sqldbAnalytics.NewAnalyticsRepository(db.DB, nsRepo, namespaceSvc)
 	require.NoError(t, err, "Failed to create AnalyticsRepository")
 
+	// Create provider repository
+	providerRepo := sqldbProvider.NewProviderRepository(db.DB)
+
 	return &TestRepositories{
 		Namespace:      nsRepo,
 		ModuleProvider: mpRepo,
 		ModuleVersion:  mvRepo,
 		UserGroup:      ugRepo,
 		Analytics:      analyticsRepoImpl,
+		Provider:       providerRepo,
 	}
 }

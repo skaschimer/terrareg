@@ -942,3 +942,207 @@ func TestModuleHandler_MultipleProviders(t *testing.T) {
 	assert.Contains(t, providers, "azure")
 	assert.Contains(t, providers, "gcp")
 }
+
+// TestModuleHandler_HandleTerraregModuleProviders_Success tests the terrareg module providers endpoint
+// Python reference: /app/test/unit/terrareg/server/test_api_module_details.py
+func TestModuleHandler_HandleTerraregModuleProviders_Success(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create test data with multiple providers for same module
+	namespace := testutils.CreateNamespace(t, db, "testns", nil)
+	moduleProvider1 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider1.ID, "1.0.0")
+	moduleProvider2 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "azure")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider2.ID, "2.0.0")
+	// Module provider without versions
+	moduleProvider3 := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "gcp")
+
+	// Create handler
+	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
+	require.NoError(t, err)
+	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
+	require.NoError(t, err)
+
+	handler := terrareg.NewModuleReadHandlerForTesting(
+		nil,
+		nil,
+		nil,
+		listModuleProvidersQuery,
+		analyticsRepository,
+		nil, // versionPresenter not needed
+	)
+
+	// Create request for terrareg module providers endpoint
+	req := httptest.NewRequest("GET", "/v1/terrareg/modules/testns/testmodule", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "testns")
+	rctx.URLParams.Add("name", "testmodule")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act - HandleModuleDetails is used for both /v1/modules and /v1/terrareg/modules endpoints
+	handler.HandleModuleDetails(w, req)
+
+	// Assert - Validate response format matches Python's ApiTerraregModuleProviders
+	// Python reference: /app/test/unit/terrareg/server/test_api_module_details.py::test_existing_module
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	// Validate meta structure (Python validates pagination metadata)
+	assert.Contains(t, response, "meta")
+	meta := response["meta"].(map[string]interface{})
+	assert.Contains(t, meta, "limit")
+	assert.Contains(t, meta, "current_offset")
+
+	// Validate modules array exists and has expected providers
+	assert.Contains(t, response, "modules")
+	modules := response["modules"].([]interface{})
+	assert.Len(t, modules, 3, "Should return exactly three module providers")
+
+	// Validate each module provider
+	// Python reference: modules with versions have full fields, modules without versions have minimal fields
+	providers := make(map[string]map[string]interface{})
+	for _, m := range modules {
+		module := m.(map[string]interface{})
+		providerName := module["provider"].(string)
+		providers[providerName] = module
+
+		// Common fields for all providers
+		assert.Contains(t, module, "id")
+		assert.NotEmpty(t, module["id"], "Module ID should not be empty")
+		assert.Equal(t, "testns", module["namespace"])
+		assert.Equal(t, "testmodule", module["name"])
+		assert.Contains(t, module, "provider")
+
+		assert.Contains(t, module, "verified")
+		assert.IsType(t, false, module["verified"], "Verified should be a boolean")
+
+		assert.Contains(t, module, "trusted")
+		assert.IsType(t, false, module["trusted"], "Trusted should be a boolean")
+	}
+
+	// Validate aws provider (with version)
+	awsModule := providers["aws"]
+	assert.Contains(t, awsModule, "version")
+	assert.Equal(t, "1.0.0", awsModule["version"])
+	assert.Contains(t, awsModule, "published_at")
+
+	// Validate azure provider (with version)
+	azureModule := providers["azure"]
+	assert.Contains(t, azureModule, "version")
+	assert.Equal(t, "2.0.0", azureModule["version"])
+	assert.Contains(t, azureModule, "published_at")
+
+	// Validate gcp provider (without version) - should have minimal fields
+	gcpModule := providers["gcp"]
+	assert.NotContains(t, gcpModule, "version", "Provider without versions should not have version field")
+	assert.NotContains(t, gcpModule, "published_at", "Provider without versions should not have published_at field")
+}
+
+// TestModuleHandler_HandleTerraregModuleProviders_NotFound tests the terrareg module providers endpoint with non-existent module
+// Python reference: /app/test/unit/terrareg/server/test_api_module_details.py::test_non_existent_module
+func TestModuleHandler_HandleTerraregModuleProviders_NotFound(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create handler (no test data - module doesn't exist)
+	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
+	require.NoError(t, err)
+	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
+	require.NoError(t, err)
+
+	handler := terrareg.NewModuleReadHandlerForTesting(
+		nil,
+		nil,
+		nil,
+		listModuleProvidersQuery,
+		analyticsRepository,
+		nil,
+	)
+
+	// Create request for non-existent module
+	req := httptest.NewRequest("GET", "/v1/terrareg/modules/doesnotexist/nonexistent", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "doesnotexist")
+	rctx.URLParams.Add("name", "nonexistent")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleModuleDetails(w, req)
+
+	// Assert - Should return 404 like Python
+	// Python reference: assert res.json == {'errors': ['Not Found']}
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, err)
+
+	assert.Contains(t, response, "errors")
+	errors := response["errors"].([]interface{})
+	assert.NotEmpty(t, errors, "Should have errors array")
+}
+
+// TestModuleHandler_HandleTerraregModuleProviders_AnalyticsToken tests that analytics tokens are NOT converted for terrareg endpoint
+// Python reference: /app/test/unit/terrareg/server/test_api_terrareg_namespace_modules.py::test_analytics_token_not_converted
+func TestModuleHandler_HandleTerraregModuleProviders_AnalyticsToken(t *testing.T) {
+	db := testutils.SetupTestDatabase(t)
+	defer testutils.CleanupTestDatabase(t, db)
+
+	// Create namespace with analytics token-like name
+	// Note: Analytics tokens are in format "token__namespace", but for terrareg endpoint
+	// the token should NOT be converted (unlike /v1/modules endpoint)
+	namespace := testutils.CreateNamespace(t, db, "test_token-name__testnamespace", nil)
+	moduleProvider := testutils.CreateModuleProvider(t, db, namespace.ID, "testmodule", "aws")
+	_ = testutils.CreatePublishedModuleVersion(t, db, moduleProvider.ID, "1.0.0")
+
+	// Create handler
+	namespaceRepository := moduleRepo.NewNamespaceRepository(db.DB)
+	domainConfig := testutils.CreateTestDomainConfig(t)
+	moduleProviderRepository, err := moduleRepo.NewModuleProviderRepository(db.DB, namespaceRepository, domainConfig)
+	require.NoError(t, err)
+	listModuleProvidersQuery := moduleQuery.NewListModuleProvidersQuery(moduleProviderRepository)
+	namespaceSvc := namespaceService.NewNamespaceService(domainConfig)
+	analyticsRepository, err := analyticsRepo.NewAnalyticsRepository(db.DB, namespaceRepository, namespaceSvc)
+	require.NoError(t, err)
+
+	handler := terrareg.NewModuleReadHandlerForTesting(
+		nil,
+		nil,
+		nil,
+		listModuleProvidersQuery,
+		analyticsRepository,
+		nil,
+	)
+
+	// Create request with analytics token in namespace name
+	req := httptest.NewRequest("GET", "/v1/terrareg/modules/test_token-name__testnamespace/testmodule", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("namespace", "test_token-name__testnamespace")
+	rctx.URLParams.Add("name", "testmodule")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	w := httptest.NewRecorder()
+
+	// Act
+	handler.HandleModuleDetails(w, req)
+
+	// Assert - Should return 404 because the namespace with analytics token is not converted
+	// Python reference: Analytics tokens are NOT converted for /v1/terrareg/modules/ endpoint
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}

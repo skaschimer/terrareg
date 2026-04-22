@@ -79,7 +79,7 @@ func CreateTestApplicationServices(t *testing.T, db *sqldb.Database, repos *Test
 	// Create namespace commands
 	createNamespaceCmd := namespaceCmd.NewCreateNamespaceCommand(repos.Namespace, namespaceAuditService)
 	updateNamespaceCmd := namespaceCmd.NewUpdateNamespaceCommand(repos.Namespace, namespaceAuditService)
-	deleteNamespaceCmd := namespaceCmd.NewDeleteNamespaceCommand(repos.Namespace, namespaceAuditService)
+	deleteNamespaceCmd := namespaceCmd.NewDeleteNamespaceCommand(repos.Namespace, repos.ModuleProvider, repos.Provider, namespaceAuditService)
 
 	return &TestApplicationServices{
 		// Module Queries

@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/security/csrf"
@@ -74,11 +77,28 @@ func (m *CSRFMiddleware) getCSRFTokenFromSession(r *http.Request) csrf.CSRFToken
 }
 
 // getCSRFTokenFromRequest extracts CSRF token from HTTP request
+// For backwards compatibility with Python implementation, this checks:
+// 1. JSON body csrf_token field
+// 2. Form data csrf_token field
+// 3. X-CSRF-Token header
 func (m *CSRFMiddleware) getCSRFTokenFromRequest(r *http.Request) csrf.CSRFToken {
 	// Check in request body for JSON requests
 	if r.Header.Get("Content-Type") == "application/json" {
-		// TODO: Parse JSON body to extract csrf_token field
-		// This will require a custom request parser
+		// Read body to extract CSRF token
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err == nil && len(bodyBytes) > 0 {
+			// Parse JSON to extract csrf_token
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal(bodyBytes, &jsonData); err == nil {
+				if csrfToken, ok := jsonData["csrf_token"].(string); ok {
+					// Replace body so it can be read again by the handler
+					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+					return csrf.CSRFToken(csrfToken)
+				}
+			}
+			// Replace body even if parsing failed
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
 		return ""
 	}
 

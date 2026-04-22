@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"github.com/stretchr/testify/assert"
@@ -482,7 +483,8 @@ func fillOutModuleFieldByLabel(st *SeleniumTest, label, input string) {
 					var form = document.getElementById('create-module-form');
 					var labels = form.getElementsByTagName('label');
 					for (var i = 0; i < labels.length; i++) {
-						if (labels[i].textContent === %q) {
+						// Trim whitespace for comparison to handle label text variations
+						if (labels[i].textContent.trim() === %q) {
 							var parent = labels[i].parentElement;
 							var inputElem = parent.querySelector('input');
 							if (inputElem) {
@@ -515,4 +517,29 @@ func clickCreateModuleButton(st *SeleniumTest) {
 		}),
 	)
 	require.NoError(st.t, err, "Failed to call createModuleProvider function")
+
+	// Check for error messages after a short delay to let the AJAX request complete
+	st.runChromedp(chromedp.Sleep(500 * time.Millisecond))
+
+	// Check if there's an error message displayed
+	if st.GetElementCount("#create-error") > 0 {
+		// Check if the error element is visible
+		err := st.runChromedp(
+			chromedp.ActionFunc(func(ctx context.Context) error {
+				return chromedp.Evaluate(`
+					(function() {
+						var elem = document.getElementById('create-error');
+						return elem && window.getComputedStyle(elem).display !== 'none';
+					})()
+				`, nil).Do(ctx)
+			}),
+		)
+		if err == nil {
+			// Error might be visible, get the text
+			errorText := st.GetElementText("#create-error")
+			if errorText != "" {
+				st.t.Logf("Error message from form: %s", errorText)
+			}
+		}
+	}
 }

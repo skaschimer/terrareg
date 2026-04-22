@@ -167,8 +167,10 @@ func (h *TerraformV2GPGHandler) HandleCreateGPGKey(w http.ResponseWriter, r *htt
 			terrareg.RespondError(w, http.StatusConflict, err.Error())
 			return
 		}
+		// Check for invalid GPG key errors (invalid ASCII armor, invalid key ID, etc.)
+		// Python reference: /app/terrareg/models.py:1358 - InvalidGpgKeyError
 		if strings.Contains(err.Error(), "invalid") {
-			terrareg.RespondError(w, http.StatusBadRequest, err.Error())
+			terrareg.RespondError(w, http.StatusBadRequest, "GPG key provided is invalid or could not be read")
 			return
 		}
 		terrareg.RespondError(w, http.StatusInternalServerError, "Failed to create GPG key")

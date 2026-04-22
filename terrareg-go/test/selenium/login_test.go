@@ -43,12 +43,44 @@ var loginNoAuthWarningTests = []loginNoAuthWarningTest{
 func testNoAuthenticationMethodsWarning(t *testing.T) {
 	for _, tt := range loginNoAuthWarningTests {
 		t.Run(tt.adminToken+"_"+boolToStr(tt.openidEnabled)+"_"+boolToStr(tt.samlEnabled), func(t *testing.T) {
-			st := NewSeleniumTest(t)
+			// Build config overrides for this test case
+			// Python: self.update_multiple_mocks(...)
+			configOverrides := map[string]string{
+				"ADMIN_AUTHENTICATION_TOKEN": tt.adminToken,
+				"PROVIDER_SOURCES":           "[]",
+			}
+
+			// Set OIDC config if enabled
+			if tt.openidEnabled {
+				configOverrides["OPENID_CONNECT_ISSUER"]       = "https://example.com"
+				configOverrides["OPENID_CONNECT_CLIENT_ID"]     = "test-client-id"
+				configOverrides["OPENID_CONNECT_CLIENT_SECRET"] = "test-client-secret"
+			}
+
+			// Set SAML config if enabled
+			if tt.samlEnabled {
+				configOverrides["SAML2_ENTITY_ID"]         = "test-entity-id"
+				configOverrides["SAML2_IDP_METADATA_URL"]   = "https://example.com/metadata"
+				configOverrides["SAML2_PUBLIC_KEY"]        = "test-public-key"
+				configOverrides["SAML2_PRIVATE_KEY"]       = "test-private-key"
+			}
+
+			st := NewSeleniumTestWithConfig(t, configOverrides)
 			defer st.TearDown()
 			st.DeleteCookiesAndLocalStorage()
 
 			st.NavigateTo("/login")
 			waitForLoginFormReady(st)
+
+			// Wait for JavaScript to execute and show/hide warning
+			// The warning is shown/hidden by JavaScript based on config
+			// We need to wait for the config to be loaded and processed
+			st.WaitForJavaScriptEval(`
+				(function() {
+					return document.getElementById('login-title') !== null &&
+					       window.getComputedStyle(document.getElementById('login-title')).display !== 'none';
+				})()
+			`)
 
 			// Python: warning = selenium_instance.find_element(By.ID, 'no-authentication-methods-warning')
 			//         assert warning.is_displayed() == warning_shown
@@ -57,7 +89,7 @@ func testNoAuthenticationMethodsWarning(t *testing.T) {
 				st.AssertElementVisible("#no-authentication-methods-warning")
 				st.AssertTextContent("#no-authentication-methods-warning", "Login is not available as there are no authentication methods configured")
 			} else {
-				st.AssertElementNotExists("#no-authentication-methods-warning")
+				st.AssertElementNotVisible("#no-authentication-methods-warning")
 			}
 		})
 	}

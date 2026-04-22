@@ -856,7 +856,7 @@ func NewContainer(
 	// Initialize commands
 	c.CreateNamespaceCmd = namespace.NewCreateNamespaceCommand(c.NamespaceRepo, namespaceAuditService)
 	c.UpdateNamespaceCmd = namespace.NewUpdateNamespaceCommand(c.NamespaceRepo, namespaceAuditService)
-	c.DeleteNamespaceCmd = namespace.NewDeleteNamespaceCommand(c.NamespaceRepo, namespaceAuditService)
+	c.DeleteNamespaceCmd = namespace.NewDeleteNamespaceCommand(c.NamespaceRepo, c.ModuleProviderRepo, c.ProviderRepo, namespaceAuditService)
 	c.CreateModuleProviderCmd = moduleCmd.NewCreateModuleProviderCommand(c.NamespaceRepo, c.ModuleProviderRepo, moduleAuditService)
 	publishModuleVersionCmd, err := moduleCmd.NewPublishModuleVersionCommand(c.ModuleProviderRepo, moduleAuditService)
 	if err != nil {

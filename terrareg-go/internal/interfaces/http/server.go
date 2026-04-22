@@ -694,7 +694,7 @@ func (s *Server) handleTerraregNamespaceModules(w http.ResponseWriter, r *http.R
 	s.ModuleHandler.HandleNamespaceModules(w, r)
 }
 func (s *Server) handleTerraregModuleProviders(w http.ResponseWriter, r *http.Request) {
-	s.ModuleHandler.HandleModuleProviderDetails(w, r)
+	s.ModuleHandler.HandleModuleDetails(w, r)
 }
 func (s *Server) handleTerraregModuleProviderDetails(w http.ResponseWriter, r *http.Request) {
 	s.ModuleHandler.HandleTerraregModuleProviderDetails(w, r)
@@ -1100,9 +1100,12 @@ func (s *Server) handleModulesPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (s *Server) handleNamespacePage(w http.ResponseWriter, r *http.Request) {
+	namespace := chi.URLParam(r, "namespace")
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
 		"TEMPLATE_NAME": "namespace.html",
+		"namespace":     namespace,
 	}, r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -1110,9 +1113,18 @@ func (s *Server) handleNamespacePage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (s *Server) handleModulePage(w http.ResponseWriter, r *http.Request) {
+	namespace := chi.URLParam(r, "namespace")
+	name := chi.URLParam(r, "name")
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "module.html", map[string]interface{}{
 		"TEMPLATE_NAME": "module.html",
+		"namespace": map[string]string{
+			"name": namespace,
+		},
+		"module": map[string]string{
+			"name": name,
+		},
 	}, r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

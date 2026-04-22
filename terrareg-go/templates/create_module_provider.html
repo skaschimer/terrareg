@@ -6,20 +6,41 @@
         if (! $('#create-module-form')[0].reportValidity()) {
             return;
         }
+        
+        // Build request data with only non-empty values
+        var requestData = {};
+        
+        // Only include git_provider_id if it's not empty
+        var gitProviderId = $('select[id=create-module-git-provider] option').filter(':selected').val();
+        if (gitProviderId && gitProviderId !== "") {
+            requestData.git_provider_id = gitProviderId;
+        }
+        
+        // Only include URL templates if they're not empty
+        var repoBaseUrlTemplate = $('#create-module-base-url-template').val();
+        if (repoBaseUrlTemplate && repoBaseUrlTemplate !== "") {
+            requestData.repo_base_url_template = repoBaseUrlTemplate;
+        }
+        var repoCloneUrlTemplate = $('#create-module-clone-url-template').val();
+        if (repoCloneUrlTemplate && repoCloneUrlTemplate !== "") {
+            requestData.repo_clone_url_template = repoCloneUrlTemplate;
+        }
+        var repoBrowseUrlTemplate = $('#create-module-browse-url-template').val();
+        if (repoBrowseUrlTemplate && repoBrowseUrlTemplate !== "") {
+            requestData.repo_browse_url_template = repoBrowseUrlTemplate;
+        }
+        
+        // Always include git_tag_format and git_path (they have defaults)
+        requestData.git_tag_format = $('#create-module-git-tag-format').val() || null;
+        requestData.git_path = $('#create-module-git-path').val() || null;
+        requestData.csrf_token = '{{ .csrf_token }}';
+
         $.post({
             url: '/v1/terrareg/modules/' +
                 $('#create-module-namespace').val() + '/' +
                 $('#create-module-module').val() + '/' +
                 $('#create-module-provider').val() + '/create',
-            data: JSON.stringify({
-                git_provider_id: $('select[id=create-module-git-provider] option').filter(':selected').val(),
-                repo_base_url_template: $('#create-module-base-url-template').val(),
-                repo_clone_url_template: $('#create-module-clone-url-template').val(),
-                repo_browse_url_template: $('#create-module-browse-url-template').val(),
-                git_tag_format: $('#create-module-git-tag-format').val(),
-                git_path: $('#create-module-git-path').val(),
-                csrf_token: '{{ .csrf_token }}'
-            }),
+            data: JSON.stringify(requestData),
             contentType: 'application/json'
         }).done((res) => {
             // Obtain get parameters from URL
