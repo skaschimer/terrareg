@@ -326,7 +326,7 @@ func (st *SeleniumTest) AssertElementNotVisible(selector string) {
 	err := st.runChromedp(chromedp.Evaluate(fmt.Sprintf(`
 		(function() {
 			var el = document.querySelector(%q);
-			if (!el) return true;
+			if (!el) return false;
 			var rect = el.getBoundingClientRect();
 			return rect.width > 0 && rect.height > 0;
 		})()
@@ -781,4 +781,27 @@ func (st *SeleniumTest) ClearInput(selector string) {
 		chromedp.Clear(selector, chromedp.ByQuery),
 	)
 	require.NoError(st.t, err, "Failed to clear input: %s", selector)
+}
+
+// WaitForJavaScriptEval waits for a JavaScript expression to evaluate to true.
+// This is useful for waiting on JavaScript execution or async operations.
+func (st *SeleniumTest) WaitForJavaScriptEval(jsExpression string) {
+	timeout := time.After(30 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			require.Fail(st.t, "JavaScript expression did not evaluate to true within timeout")
+		case <-ticker.C:
+			var result bool
+			err := st.runChromedp(
+				chromedp.Evaluate(jsExpression, &result),
+			)
+			if err == nil && result {
+				return
+			}
+		}
+	}
 }

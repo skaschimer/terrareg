@@ -435,3 +435,32 @@ func SetupIntegrationTestData(t *testing.T, db *sqldb.Database) {
 	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, trustedMp.ID, "4.4.1")
 	_ = integrationTestUtils.CreateModuleDetails(t, db, "# Trusted Module\n\nThis is a trusted module.")
 }
+
+// SetupEditNamespaceTestData creates test data for edit namespace tests.
+// Creates moduledetails, initial-providers, and second-provider-namespace
+// with required providers and GPG keys.
+// Python reference: /app/test/integration/terrareg/test_data.py
+func SetupEditNamespaceTestData(t *testing.T, db *sqldb.Database) {
+	// Create moduledetails namespace with module
+	moduledetailsNs := integrationTestUtils.CreateNamespace(t, db, "moduledetails", nil)
+	mp := integrationTestUtils.CreateModuleProvider(t, db, moduledetailsNs.ID, "fullypopulated", "testprovider")
+	_ = integrationTestUtils.CreatePublishedModuleVersion(t, db, mp.ID, "1.0.0")
+
+	// Create initial-providers namespace with providers
+	initialProvidersNs := integrationTestUtils.CreateNamespace(t, db, "initial-providers", nil)
+	description := "Test provider"
+	provider := integrationTestUtils.CreateProvider(t, db, initialProvidersNs.ID, "terraform-provider-test-initial",
+		&description, sqldb.ProviderTierCommunity, nil)
+	gpgKey := integrationTestUtils.CreateGPGKey(t, db, "test-gpg-key", provider.ID,
+		"E8B4C3C6FE51E8FC1AFFCC6DEA2F2F9F9989A6E5")
+	publishedAt := time.Now()
+	_ = integrationTestUtils.CreateProviderVersion(t, db, provider.ID, "1.0.0",
+		gpgKey.ID, false, &publishedAt)
+
+	// Create second-provider-namespace with GPG key
+	secondNs := integrationTestUtils.CreateNamespace(t, db, "second-provider-namespace", nil)
+	provider2 := integrationTestUtils.CreateProvider(t, db, secondNs.ID, "terraform-provider-multiple-versions",
+		&description, sqldb.ProviderTierOfficial, nil)
+	_ = integrationTestUtils.CreateGPGKey(t, db, "test-gpg-key-2", provider2.ID,
+		"7F3B2A3E2F9E04AF389D1D67E42600BAB40EE715")
+}

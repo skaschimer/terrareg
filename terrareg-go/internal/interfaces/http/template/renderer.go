@@ -183,6 +183,10 @@ func (r *Renderer) RenderWithContext(ctx context.Context, w io.Writer, name stri
 	data["TERRAFORM_EXAMPLE_VERSION_TEMPLATE_PRE_MAJOR"] = r.domainConfig.TerraformExampleVersionTemplatePreMajor
 	data["DEFAULT_TERRAFORM_VERSION"] = r.domainConfig.DefaultTerraformVersion
 
+	// Create module provider
+	data["ALLOW_CUSTOM_GIT_URL_MODULE_PROVIDER"] = r.domainConfig.AllowCustomGitURLModuleProvider
+	data["ALLOW_CUSTOM_GIT_URL_MODULE_VERSION"] = r.domainConfig.AllowCustomGitURLModuleVersion
+
 	// GitHub integration configuration
 	data["GITHUB_LOGIN_TEXT"] = r.domainConfig.GithubLoginText
 	data["GITHUB_APP_CLIENT_ID"] = r.domainConfig.GithubAppClientId

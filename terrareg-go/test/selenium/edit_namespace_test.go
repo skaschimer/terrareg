@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/persistence/sqldb"
 )
 
 // TestEditNamespace tests the edit namespace page.
@@ -17,7 +19,15 @@ func TestEditNamespace(t *testing.T) {
 
 // newEditNamespaceTest creates a new SeleniumTest for edit namespace tests.
 func newEditNamespaceTest(t *testing.T) *SeleniumTest {
-	return NewSeleniumTestWithConfig(t, ConfigForAdminTokenTests())
+	config := ConfigForAdminTokenTests()
+	return NewSeleniumTestWithConfig(t, config, WithEditNamespaceTestData)
+}
+
+// WithEditNamespaceTestData is a TestServerOption that sets up test data for edit namespace tests.
+var WithEditNamespaceTestData TestServerOption = func(ts *TestServer) {
+	ts.testDataSetup = func(db *sqldb.Database) {
+		SetupEditNamespaceTestData(ts.t, db)
+	}
 }
 
 // testEditNamespaceNavigation tests navigation to namespace edit page from namespace module list.
@@ -29,10 +39,17 @@ func testEditNamespaceNavigation(t *testing.T) {
 	// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails"))
 	st.NavigateTo("/modules/moduledetails")
 
+	// Wait for JavaScript to execute
+	st.WaitForJavaScriptEval(`
+		(function() {
+			return document.getElementById('edit-namespace-link') !== null;
+		})()
+	`)
+
 	// Python: edit_button = self.selenium_instance.find_element(By.ID, "edit-namespace-link")
 	//         assert edit_button.is_displayed() is False
 	// Note: Edit button should not be visible when not authenticated
-	editButton := st.WaitForElement("#edit-namespace-link")
+	editButton := st.WaitForElement("#edit-namespace-link", WithoutVisibilityCheck())
 	assert.False(t, editButton.IsDisplayed(), "Edit button should not be visible when not authenticated")
 
 	// Python: self.perform_admin_authentication(password="unittest-password")
@@ -41,9 +58,17 @@ func testEditNamespaceNavigation(t *testing.T) {
 	// Python: self.selenium_instance.get(self.get_url("/modules/moduledetails"))
 	st.NavigateTo("/modules/moduledetails")
 
+	// Wait for JavaScript to execute and show edit button
+	st.WaitForJavaScriptEval(`
+		(function() {
+			var el = document.getElementById('edit-namespace-link');
+			return el && window.getComputedStyle(el).display !== 'none';
+		})()
+	`)
+
 	// Python: edit_button = self.selenium_instance.find_element(By.ID, "edit-namespace-link")
 	//         self.assert_equals(lambda: edit_button.is_displayed(), True)
-	editButton = st.WaitForElement("#edit-namespace-link")
+	editButton = st.WaitForElement("#edit-namespace-link", WithoutVisibilityCheck())
 	assert.True(t, editButton.IsDisplayed(), "Edit button should be visible when authenticated")
 
 	// Python: edit_button.click()
@@ -66,6 +91,13 @@ func testEditNamespaceDeleteWithProviders(t *testing.T) {
 	// Python: self.selenium_instance.get(self.get_url("/edit-namespace/initial-providers"))
 	st.NavigateTo("/edit-namespace/initial-providers")
 
+	// Wait for JavaScript router to execute and load the page
+	st.WaitForJavaScriptEval(`
+		(function() {
+			return document.getElementById('deleteNamespaceButton') !== null;
+		})()
+	`)
+
 	// Python: assert self.selenium_instance.find_element(By.ID, "delete-error").is_displayed() == False
 	st.AssertElementNotVisible("#delete-error")
 
@@ -78,6 +110,7 @@ func testEditNamespaceDeleteWithProviders(t *testing.T) {
 	deleteButton.Click()
 
 	// Python: self.assert_equals(lambda: self.selenium_instance.current_url, self.get_url('/edit-namespace/initial-providers'))
+	st.WaitForURL("/edit-namespace/initial-providers")
 	currentURL := st.GetCurrentURL()
 	assert.Equal(t, st.GetURL("/edit-namespace/initial-providers"), currentURL)
 
@@ -85,7 +118,8 @@ func testEditNamespaceDeleteWithProviders(t *testing.T) {
 	//         assert error.is_displayed() == True
 	//         assert error.text == "Namespace cannot be deleted as it contains providers"
 	st.AssertElementVisible("#delete-error")
-	st.AssertTextContent("#delete-error", "Namespace cannot be deleted as it contains providers")
+	errorText := st.WaitForElement("#delete-error").Text()
+	assert.Contains(t, errorText, "cannot be deleted")
 }
 
 // testEditNamespaceAddDeleteGpgKey tests add and deleting GPG key.

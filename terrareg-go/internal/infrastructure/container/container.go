@@ -1211,6 +1211,7 @@ func NewContainer(
 		c.GraphHandler,
 		c.ProviderSourceHandler,
 		c.ProviderSourceAPIHandler,
+		c.GitProviderFactory,
 	)
 
 	return c, nil

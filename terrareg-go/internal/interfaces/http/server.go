@@ -12,7 +12,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/domain/config/model"
+	gitService "github.com/matthewjohn/terrareg/terrareg-go/internal/domain/git/service"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/config"
+	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 	terraformHandler "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform"
 	tfv1ModuleHandler "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform/v1" // New import
 	tfv2ProviderHandler "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/handler/terraform/v2"
@@ -21,7 +23,6 @@ import (
 	http_middleware "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
 	terrareg_middleware "github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/middleware"
 	"github.com/matthewjohn/terrareg/terrareg-go/internal/interfaces/http/template"
-	"github.com/matthewjohn/terrareg/terrareg-go/internal/infrastructure/logging"
 )
 
 // Server represents the HTTP server
@@ -58,6 +59,7 @@ type Server struct {
 	RateLimiter                 *http_middleware.RateLimiterMiddleware
 	ProviderSourceHandler       *terrareg.ProviderSourceHandler
 	ProviderSourceAPIHandler    *terrareg.ProviderSourceAPIHandler
+	GitProviderFactory          gitService.GitProviderFactory
 }
 
 // NewServer creates a new HTTP server
@@ -92,6 +94,7 @@ func NewServer(
 	graphHandler *terrareg.GraphHandler,
 	providerSourceHandler *terrareg.ProviderSourceHandler,
 	providerSourceAPIHandler *terrareg.ProviderSourceAPIHandler,
+	gitProviderFactory *gitService.GitProviderFactory,
 ) *Server {
 	s := &Server{
 		router:                      chi.NewRouter(),
@@ -125,6 +128,7 @@ func NewServer(
 		GraphHandler:                graphHandler,
 		ProviderSourceHandler:       providerSourceHandler,
 		ProviderSourceAPIHandler:    providerSourceAPIHandler,
+		GitProviderFactory:          *gitProviderFactory,
 	}
 
 	s.setupMiddleware()
@@ -1000,7 +1004,7 @@ func (s *Server) handleCreateNamespacePage(w http.ResponseWriter, r *http.Reques
 }
 func (s *Server) handleEditNamespacePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "namespace.html", map[string]interface{}{
+	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "edit_namespace.html", map[string]interface{}{
 		"TEMPLATE_NAME": "edit_namespace.html",
 	}, r)
 	if err != nil {
@@ -1010,8 +1014,15 @@ func (s *Server) handleEditNamespacePage(w http.ResponseWriter, r *http.Request)
 }
 func (s *Server) handleCreateModulePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err := s.TemplateRenderer.RenderWithRequest(r.Context(), w, "create_module_provider.html", map[string]interface{}{
+	gitProviders, err := s.GitProviderFactory.GetAll(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		s.logger.Error().Err(err).Msg("Failed to obtain git providers")
+	}
+
+	err = s.TemplateRenderer.RenderWithRequest(r.Context(), w, "create_module_provider.html", map[string]interface{}{
 		"TEMPLATE_NAME": "create_module_provider.html",
+		"git_providers": gitProviders,
 	}, r)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

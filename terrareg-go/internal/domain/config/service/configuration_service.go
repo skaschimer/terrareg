@@ -174,7 +174,8 @@ func (s *ConfigurationService) buildInfrastructureConfig(rawConfig map[string]st
 		Debug:      s.parseBool(rawConfig["DEBUG"], false),
 
 		// Database settings
-		DatabaseURL: s.getEnvStringWithDefault(rawConfig, "DATABASE_URL", "sqlite:///modules.db"),
+		DatabaseURL:     s.getEnvStringWithDefault(rawConfig, "DATABASE_URL", "sqlite:///modules.db"),
+		MigrateDatabase: s.parseBool(rawConfig["MIGRATE_DATABASE"], false),
 
 		// Storage settings
 		DataDirectory:   s.getEnvStringWithDefault(rawConfig, "DATA_DIRECTORY", "./data"),
@@ -187,6 +188,11 @@ func (s *ConfigurationService) buildInfrastructureConfig(rawConfig map[string]st
 		// SAML
 		SAML2IDPMetadataURL: rawConfig["SAML2_IDP_METADATA_URL"],
 		SAML2IssuerEntityID: rawConfig["SAML2_ISSUER_ENTITY_ID"],
+		SAML2EntityID:       rawConfig["SAML2_ENTITY_ID"],
+		SAML2PublicKey:      rawConfig["SAML2_PUBLIC_KEY"],
+		SAML2PrivateKey:     rawConfig["SAML2_PRIVATE_KEY"],
+		SAML2GroupAttribute: s.getEnvStringWithDefault(rawConfig, "SAML2_GROUP_ATTRIBUTE", "groups"),
+		SAML2Debug:          s.parseBool(rawConfig["SAML2_DEBUG"], false),
 
 		// OpenID Connect
 		OpenIDConnectClientID:     rawConfig["OPENID_CONNECT_CLIENT_ID"],
@@ -234,13 +240,6 @@ func (s *ConfigurationService) buildInfrastructureConfig(rawConfig map[string]st
 		// SSL/TLS Configuration with command-line argument priority
 		SSLCertPrivateKey: sslCertPrivateKey,
 		SSLCertPublicKey:  sslCertPublicKey,
-
-		// Complete SAML Configuration
-		SAML2EntityID:       rawConfig["SAML2_ENTITY_ID"],
-		SAML2PublicKey:      rawConfig["SAML2_PUBLIC_KEY"],
-		SAML2PrivateKey:     rawConfig["SAML2_PRIVATE_KEY"],
-		SAML2GroupAttribute: s.getEnvStringWithDefault(rawConfig, "SAML2_GROUP_ATTRIBUTE", "groups"),
-		SAML2Debug:          s.parseBool(rawConfig["SAML2_DEBUG"], false),
 
 		// Enhanced OpenID Connect Configuration
 		OpenIDConnectScopes: s.parseStringSlice(s.getEnvStringWithDefault(rawConfig, "OPENID_CONNECT_SCOPES", "openid,profile"), ","),

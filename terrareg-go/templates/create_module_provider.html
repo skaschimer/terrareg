@@ -124,9 +124,9 @@
                             {{ end }}
 
                             {{ range .git_providers }}
-                            <option value="{{ .pk }}" data-custom-provider="no" data-git-path="{{ .git_path_template }}">
+                            <option value="{{ .ID }}" data-custom-provider="no" data-git-path="{{ .GitPathTemplate }}">
 
-                                {{ .name }}
+                                {{ .Name }}
                             </option>
                             {{ end }}
                         </select>
