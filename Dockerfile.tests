@@ -42,7 +42,7 @@ RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
     rm /tmp/infracost.tar.gz'
 
 # Download tfswitch
-RUN bash -c 'curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/master/install.sh | bash /dev/stdin 1.2.2'
+RUN bash -c 'curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/master/install.sh | bash /dev/stdin 1.17.1'
 
 # Install go
 RUN bash -c 'if [ "$(uname -m)" == "aarch64" ]; \
@@ -74,7 +74,7 @@ WORKDIR /app
 RUN apt-get update
 RUN apt-get update && \
     apt-get install -y fonts-liberation xdg-utils \
-                       software-properties-common curl unzip wget \
+                       curl unzip wget \
                        xvfb && \
     apt-get clean all
 

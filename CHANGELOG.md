@@ -17,6 +17,17 @@ Merge branch '565-move-from-pip-file-to-alternative-depdency-locking' into 'main
 
 Resolve "Move from pip file to alternative dependency locking"
 
+
+## [3.13.6](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v3.13.5...v3.13.6) (2026-04-23)
+
+
+### Bug Fixes
+
+* **build:** Bump tfswitch version due to Hashicorp key expiry ([59ccbad](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/59ccbad64e17ca549ddecb41f466bd7596291cfe)), closes [#581](https://gitlab.dockstudios.co.uk/pub/terrareg/issues/581)
+* **build:** Remove software-properties-common which is no longer available ([53db08f](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/53db08faf7c2737328f1e99383789bad02cfe07b))
+* **build:** Update CI pipline to releaes "release/*" branches ([8b13971](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/8b139714963785697605465b4c7b5e40f3d60497)), closes [#581](https://gitlab.dockstudios.co.uk/pub/terrareg/issues/581)
+* **ci:** Update semantic release to handle release branches ([2167349](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/2167349d61105ca389232543001545d4ad66fe40))
+
 ## [3.13.5](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v3.13.4...v3.13.5) (2025-03-07)
 
 
@@ -67,6 +78,17 @@ Resolve "Move from pip file to alternative dependency locking"
 ### Features
 
 * Add API endpoint to manually register analytics ([52ac3a4](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/52ac3a4a6c6df01ebcba35d069441c8eade0ce53)), closes [#548](https://gitlab.dockstudios.co.uk/pub/terrareg/issues/548)
+
+## [3.12.3](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v3.12.2...v3.12.3) (2026-04-22)
+
+
+### Bug Fixes
+
+
+* **build:** Bump tfswitch version due to Hashicorp key expiry ([59ccbad](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/59ccbad64e17ca549ddecb41f466bd7596291cfe)), closes [#581](https://gitlab.dockstudios.co.uk/pub/terrareg/issues/581)
+* **build:** Remove software-properties-common which is no longer available ([53db08f](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/53db08faf7c2737328f1e99383789bad02cfe07b))
+* **build:** Update CI pipline to releaes "release/*" branches ([8b13971](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/8b139714963785697605465b4c7b5e40f3d60497)), closes [#581](https://gitlab.dockstudios.co.uk/pub/terrareg/issues/581)
+* **ci:** Update semantic release to handle release branches ([2167349](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/2167349d61105ca389232543001545d4ad66fe40))
 
 ## [3.12.2](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v3.12.1...v3.12.2) (2024-11-01)
 
