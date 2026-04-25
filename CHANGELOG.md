@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.3](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v4.3.2...v4.3.3) (2026-04-25)
+
+
+### Bug Fixes
+
+* Fix provider extractor to disable GPG signing to avoid spill in parent environment ([0ef9ca2](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/0ef9ca220bd88af3d0d8c1309347f4353350d47d))
+* **go:** Attempt to fix erroneous redirect for providers, due to invalid namespace id ([c7acb05](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/c7acb052e5b5d9caace2b87c3494f64dc0c7af17))
+* **go:** Fix filtering search results for module providers by beta/unpublished to match python ([22a874b](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/22a874b11f10204cf279a00b87090640496aa8e3))
+* **go:** Fix module endpoints for creating module (handling empty args) and delete namespace, including taking CSRF token in body. Further test updates ([0699652](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/069965213065cef76152682b33f480b201e72c28))
+* **go:** Fix scanning of sub-modules to adhere to modules directory (rather than scanning all directories) ([91fc718](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/91fc718eca55b0395bf934f9c42b544cbab0876a))
+* **go:** Fix templated used for edit namespace, git providers passed to create_module_provider and further work on tests ([cfaf8e4](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/cfaf8e4d2e1a6a5b3376dc7b956221ac509d6efa))
+* **go:** Only attempt to create Terraform IDP if key file exists ([2fb3439](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/2fb3439e80ad59271475ef58508aa73e6b358809))
+* **go:** Only instantiate the TerraformIdpService when a signing key path is provided, stopping panics when left empty ([cd81c3b](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/cd81c3b375bf208ce4b9ceb6b63108589e5e98f1))
+* **go:** Update enum for admin token type with value check to avoid AutoMigrate failures ([9f99831](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/9f9983137ea6d1dee0d724a1f2b1feb0d1dde43c))
+* **go:** Use storage service to generate temporary directory for git clone ([236edfa](https://gitlab.dockstudios.co.uk/pub/terrareg/commit/236edfaf340061cc3cb4e8c610f3dd1bea7e6fd7))
+
 ## [4.3.2](https://gitlab.dockstudios.co.uk/pub/terrareg/compare/v4.3.1...v4.3.2) (2026-04-25)
 
 
